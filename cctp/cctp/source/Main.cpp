@@ -110,13 +110,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Start a frame for the swap chain, retrieving the current back buffer index to render to
 		size_t currentFrameIndex;
-		Renderer::StartFrame(swapChain.get(), currentFrameIndex);
+		Renderer::Commands::StartFrame(swapChain.get(), currentFrameIndex);
 
 		// Clear the frame
-		Renderer::ClearFrame(swapChain.get(), currentFrameIndex);
+		Renderer::Commands::ClearFrame(swapChain.get(), currentFrameIndex);
 
 		// End the frame for for swap chain
-		Renderer::EndFrame(swapChain.get(), currentFrameIndex);
+		Renderer::Commands::EndFrame(swapChain.get(), currentFrameIndex);
 
 		// Present the frame
 		if (!swapChain->Present(Renderer::GetVSyncEnabled()))

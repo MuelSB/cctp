@@ -13,10 +13,11 @@ namespace Renderer
         bool Resize(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT width, UINT height, UINT rtvDescriptorSize);
         UINT GetCurrentBackBufferIndex() const;
         const Microsoft::WRL::ComPtr<ID3D12Resource>* GetBackBuffers() const;
-        ID3D12DescriptorHeap* GetRTVDescriptorHeap() const;
+        ID3D12DescriptorHeap* GetRTDescriptorHeap() const;
         const D3D12_VIEWPORT& GetViewport() const;
         const D3D12_RECT& GetScissorRect() const;
-        CD3DX12_CPU_DESCRIPTOR_HANDLE GetRTVDescriptorHandleForFrame(size_t frameIndex) const;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetRTDescriptorHandleForFrame(size_t frameIndex) const;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetDSDescriptorHandle() const;
 
     private:
         bool UpdateBackBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT rtvDescriptorSize);
@@ -24,9 +25,11 @@ namespace Renderer
     private:
         Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChain3;
         std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> BackBuffers;
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> RTVDescriptorHeap;
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> RTDescriptorHeap;
         bool TearingSupported = false;
         D3D12_VIEWPORT Viewport = {};
         D3D12_RECT ScissorRect = {};
+        Microsoft::WRL::ComPtr<ID3D12Resource> DepthStencilBuffer;
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DSDescriptorHeap;
     };
 }

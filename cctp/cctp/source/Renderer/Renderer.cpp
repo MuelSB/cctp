@@ -360,7 +360,7 @@ void Renderer::SetVSyncEnabled(const bool enabled)
 }
 
 // Commands
-bool Renderer::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
+bool Renderer::Commands::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
 {
     // Get current frame resources
     frameIndex = pSwapChain->GetCurrentBackBufferIndex();
@@ -397,7 +397,7 @@ bool Renderer::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
     return true;
 }
 
-bool Renderer::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
+bool Renderer::Commands::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
 {
     // Transition current frame render target from render target state to present state
     auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[frameIndex].Get(),
@@ -418,8 +418,17 @@ bool Renderer::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
     return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[frameIndex].Get(), FrameFenceValues[frameIndex]));
 }
 
-void Renderer::ClearFrame(SwapChain* pSwapChain, size_t frameIndex)
+void Renderer::Commands::ClearFrame(SwapChain* pSwapChain, size_t frameIndex)
 {
-    auto rtvHandle = pSwapChain->GetRTVDescriptorHandleForFrame(frameIndex);
+    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
+    auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
     DirectCommandList->ClearRenderTargetView(rtvHandle, Renderer::CLEAR_COLOR, 0, nullptr);
+    DirectCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+}
+
+void Renderer::Commands::SetRenderTargets(SwapChain* pSwapChain, size_t frameIndex)
+{
+    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
+    auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
+    DirectCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }

@@ -17,7 +17,11 @@ namespace Renderer
 	void SetVSyncEnabled(const bool enabled);
 
 	// Commands
-	bool StartFrame(SwapChain* pSwapChain, size_t& frameIndex);
-	bool EndFrame(SwapChain* pSwapChain, size_t frameIndex);
-	void ClearFrame(SwapChain* pSwapChain, size_t frameIndex);
+	namespace Commands
+	{
+		bool StartFrame(SwapChain* pSwapChain, size_t& frameIndex);
+		bool EndFrame(SwapChain* pSwapChain, size_t frameIndex);
+		void ClearFrame(SwapChain* pSwapChain, size_t frameIndex);
+		void SetRenderTargets(SwapChain* pSwapChain, size_t frameIndex);
+	}
 }
