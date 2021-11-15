@@ -26,3 +26,12 @@
 // Standard
 #include <iostream>
 #include <functional>
+#include <array>
+#include <chrono>
+
+// Macros
+#ifdef _DEBUG
+#define DEBUG_LOG(x) std::cout << x << "\n";
+#else
+#define DEBUG_LOG(x)
+#endif

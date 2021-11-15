@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "Window/Window.h"
 #include "Events/EventSystem.h"
+#include "Renderer/Renderer.h"
 
 void CreateConsole(const uint32_t maxLines)
 {
@@ -58,26 +59,50 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	CreateConsole(2048);
 #endif
 
-	Window::Init(glm::vec2(1280.0f, 720.0f), Window::STYLE_WINDOWED);
+	// Init window
+	if (!Window::Init(L"Demo window", glm::vec2(1280.0f, 720.0f), Window::STYLE_WINDOWED))
+	{
+		assert(false && "Failed to initialize window.");
+	}
+
 	Window::Show();
 
+	// Subscribe input event handler
 	EventSystem::SubscribeToEvent<InputEvent>([](InputEvent&& event)
 		{
+			// If escape key pressed
 			if (event.Input == InputCodes::Escape &&
 				event.Data == 1.0f &&
 				!event.RepeatedKey)
 			{
+				// Close the window
 				Window::Close();
 			}
 		});
 
+	// Init renderer
+	if (!Renderer::Init())
+	{
+		assert(false && "Failed to initialize renderer.");
+	}
+
+	// Enter main loop
 	bool quit = false;
 	while (!quit)
 	{
+		// Handle OS messages
 		if (quit = Window::RunOSMessageLoop())
 		{
 			continue;
 		}
+
+
+	}
+
+	// Shutdown the renderer
+	if (!Renderer::Shutdown())
+	{
+		assert(false && "Failed to shutdown renderer.");
 	}
 
 #ifdef _DEBUG

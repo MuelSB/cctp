@@ -8,7 +8,7 @@ namespace Window
 	constexpr uint32_t STYLE_WINDOWED = WS_OVERLAPPEDWINDOW;
 	constexpr uint32_t STYLE_NO_RESIZE = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
-	bool Init(const glm::vec2& size, const uint32_t style);
+	bool Init(const std::wstring& title, const glm::vec2& size, const uint32_t style);
 	bool RunOSMessageLoop();
 	HWND GetHandle();
 	bool GetWindowAreaRect(RECT& rect);

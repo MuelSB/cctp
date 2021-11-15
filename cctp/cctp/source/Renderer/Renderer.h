@@ -2,5 +2,6 @@
 
 namespace Renderer
 {
-
+	bool Init();
+	bool Shutdown();
 }

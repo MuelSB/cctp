@@ -261,10 +261,10 @@ bool EnterWindowed()
 	return true;
 }
 
-bool Window::Init(const glm::vec2& size, const uint32_t style)
+bool Window::Init(const std::wstring& title, const glm::vec2& size, const uint32_t style)
 {
 	auto hInstance = GetModuleHandle(NULL);
-	auto windowClassName = L"GameWindowClass";
+	auto windowClassName = L"WindowClass";
 
 	// Register window class
 	WNDCLASSEX windowClass = {};
@@ -287,7 +287,7 @@ bool Window::Init(const glm::vec2& size, const uint32_t style)
 	}
 
 	// Create window
-	Handle = CreateWindowExW(NULL, windowClassName, L"GameWindow Title", style,
+	Handle = CreateWindowExW(NULL, windowClassName, title.c_str(), style,
 		CW_USEDEFAULT, CW_USEDEFAULT, static_cast<int>(size.x), static_cast<int>(size.y), NULL, NULL, hInstance, nullptr);
 	if (Handle == NULL)
 	{
