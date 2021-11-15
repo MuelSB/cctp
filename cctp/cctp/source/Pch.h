@@ -6,6 +6,7 @@
 #include <wrl/client.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include "Renderer/d3dx12.h"
 
 #ifdef _DEBUG
 #include <dxgidebug.h>

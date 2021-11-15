@@ -15,6 +15,7 @@ Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DirectCommandList;
 std::array<Microsoft::WRL::ComPtr<ID3D12Fence>, BACK_BUFFER_COUNT> FrameFences;
 std::array<UINT64, BACK_BUFFER_COUNT> FrameFenceValues;
 HANDLE MainThreadFenceEvent;
+bool VSyncEnabled = true;
 
 bool EnableDebugLayer()
 {
@@ -195,27 +196,6 @@ bool WaitForFenceToReachValue(Microsoft::WRL::ComPtr<ID3D12Fence> fence, UINT64 
     return true;
 }
 
-bool Flush()
-{
-    size_t i = 0;
-    for (const auto& fence : FrameFences)
-    {
-        if (FAILED(DirectCommandQueue->Signal(fence.Get(), ++FrameFenceValues[i])))
-        {
-            return false;
-        }
-
-        if (!WaitForFenceToReachValue(fence, FrameFenceValues[i], MainThreadFenceEvent, static_cast<DWORD>(std::chrono::milliseconds::max().count())))
-        {
-            return false;
-        }
-
-        ++i;
-    }
-
-    return true;
-}
-
 bool Renderer::Init()
 {
     // Enable debug features if in debug configuration
@@ -326,4 +306,120 @@ bool Renderer::Shutdown()
     }
 
     return true;
+}
+
+bool Renderer::Flush()
+{
+    size_t i = 0;
+    for (const auto& fence : FrameFences)
+    {
+        if (FAILED(DirectCommandQueue->Signal(fence.Get(), ++FrameFenceValues[i])))
+        {
+            return false;
+        }
+
+        if (!WaitForFenceToReachValue(fence, FrameFenceValues[i], MainThreadFenceEvent, static_cast<DWORD>(std::chrono::milliseconds::max().count())))
+        {
+            return false;
+        }
+
+        ++i;
+    }
+
+    return true;
+}
+
+bool Renderer::CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::unique_ptr<SwapChain>& swapChain)
+{
+    auto temp = std::make_unique<SwapChain>();
+
+    if (!temp->Init(DXGIFactory, DirectCommandQueue, Device, windowHandle, width, height, BACK_BUFFER_COUNT,
+        TearingSupported, RTVIncrementSize))
+    {
+        return false;
+    }
+
+    swapChain = std::move(temp);
+
+    return true;
+}
+
+UINT Renderer::GetRTVDescriptorIncrementSize()
+{
+    return RTVIncrementSize;
+}
+
+bool Renderer::GetVSyncEnabled()
+{
+    return VSyncEnabled;
+}
+
+void Renderer::SetVSyncEnabled(const bool enabled)
+{
+    VSyncEnabled = enabled;
+}
+
+// Commands
+bool Renderer::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
+{
+    // Get current frame resources
+    frameIndex = pSwapChain->GetCurrentBackBufferIndex();
+    auto* pCurrentFrameCommandAllocator = DirectCommandAllocators[frameIndex].Get();
+    auto& frameFenceValue = FrameFenceValues[frameIndex];
+
+    // Wait for previous frame
+    if (!WaitForFenceToReachValue(FrameFences[frameIndex], frameFenceValue, MainThreadFenceEvent, static_cast<DWORD>(std::chrono::milliseconds::max().count())))
+    {
+        return false;
+    }
+
+    // Increment frame fence value for the next frame
+    ++frameFenceValue;
+
+    // Reset command recording objects
+    if (FAILED(pCurrentFrameCommandAllocator->Reset()))
+    {
+        return false;
+    }
+
+    if (FAILED(DirectCommandList->Reset(pCurrentFrameCommandAllocator, nullptr)))
+    {
+        return false;
+    }
+
+    // Start recording commands into direct command list
+    // Transition current frame render target from present state to render target state
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[frameIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+    DirectCommandList->ResourceBarrier(1, &barrier);
+
+    return true;
+}
+
+bool Renderer::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
+{
+    // Transition current frame render target from render target state to present state
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[frameIndex].Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
+    DirectCommandList->ResourceBarrier(1, &barrier);
+
+    // Stop recording commands into direct command lists
+    if (FAILED(DirectCommandList->Close()))
+    {
+        return false;
+    }
+
+    // Execute recorded command lists
+    ID3D12CommandList* commandListsToExecute[] = { DirectCommandList.Get() };
+    DirectCommandQueue->ExecuteCommandLists(_countof(commandListsToExecute), commandListsToExecute);
+
+    return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[frameIndex].Get(), FrameFenceValues[frameIndex]));
+}
+
+void Renderer::ClearFrame(SwapChain* pSwapChain, size_t frameIndex)
+{
+    auto rtvHandle = pSwapChain->GetRTVDescriptorHandleForFrame(frameIndex);
+    DirectCommandList->ClearRenderTargetView(rtvHandle, Renderer::CLEAR_COLOR, 0, nullptr);
 }

@@ -86,6 +86,18 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to initialize renderer.");
 	}
 
+	// Create a swap chain for the window
+	std::unique_ptr<Renderer::SwapChain> swapChain;
+	RECT clientRect;
+	if (!Window::GetClientAreaRect(clientRect))
+	{
+		assert(false && "Failed to get the window client area rect.");
+	}
+	if (!Renderer::CreateSwapChain(Window::GetHandle(), clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, swapChain))
+	{
+		assert(false && "Failed to create a swap chain for the window.");
+	}
+
 	// Enter main loop
 	bool quit = false;
 	while (!quit)
@@ -96,7 +108,21 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			continue;
 		}
 
+		// Start a frame for the swap chain, retrieving the current back buffer index to render to
+		size_t currentFrameIndex;
+		Renderer::StartFrame(swapChain.get(), currentFrameIndex);
 
+		// Clear the frame
+		Renderer::ClearFrame(swapChain.get(), currentFrameIndex);
+
+		// End the frame for for swap chain
+		Renderer::EndFrame(swapChain.get(), currentFrameIndex);
+
+		// Present the frame
+		if (!swapChain->Present(Renderer::GetVSyncEnabled()))
+		{
+			assert(false && "ERROR: Failed to present the swap chain.");
+		}
 	}
 
 	// Shutdown the renderer
