@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Input/InputCodes.h"
+
 struct InputEvent
 {
 	bool RepeatedKey;
-	int16_t Input;
+	InputCode Input;
 	uint32_t Port;
 	float Data;
 };

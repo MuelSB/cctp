@@ -1,5 +1,6 @@
 #include "Pch.h"
 #include "Window/Window.h"
+#include "Events/EventSystem.h"
 
 void CreateConsole(const uint32_t maxLines)
 {
@@ -59,6 +60,16 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 	Window::Init(glm::vec2(1280.0f, 720.0f), Window::STYLE_WINDOWED);
 	Window::Show();
+
+	EventSystem::SubscribeToEvent<InputEvent>([](InputEvent&& event)
+		{
+			if (event.Input == InputCodes::Escape &&
+				event.Data == 1.0f &&
+				!event.RepeatedKey)
+			{
+				Window::Close();
+			}
+		});
 
 	bool quit = false;
 	while (!quit)

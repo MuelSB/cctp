@@ -1,5 +1,7 @@
 #pragma once
 
+using InputCode = int16_t;
+
 namespace InputCodes
 {
 	constexpr int16_t Backspace{ VK_BACK };

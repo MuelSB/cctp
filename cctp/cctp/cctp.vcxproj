@@ -100,6 +100,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="source\Renderer\Renderer.cpp" />
     <ClCompile Include="source\Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +108,7 @@
     <ClInclude Include="source\Events\EventSystem.h" />
     <ClInclude Include="source\Input\InputCodes.h" />
     <ClInclude Include="source\Pch.h" />
+    <ClInclude Include="source\Renderer\Renderer.h" />
     <ClInclude Include="source\Window\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
