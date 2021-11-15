@@ -3,7 +3,7 @@
 #include "Renderer/Renderer.h"
 
 bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::ComPtr<ID3D12CommandQueue> directCommandQueue,
-    Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtvDescriptorIncrementSize)
+    Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtDescriptorIncrementSize)
 {
     // Describe swap chain
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
@@ -39,12 +39,12 @@ bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Mi
     }
 
     // Create descriptor heap for render target descriptors
-    D3D12_DESCRIPTOR_HEAP_DESC rtvDescriptorHeapDesc = {};
-    rtvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    rtvDescriptorHeapDesc.NumDescriptors = static_cast<UINT>(backBufferCount);
-    rtvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    rtvDescriptorHeapDesc.NodeMask = 0;
-    if (FAILED(device->CreateDescriptorHeap(&rtvDescriptorHeapDesc, IID_PPV_ARGS(&RTDescriptorHeap))))
+    D3D12_DESCRIPTOR_HEAP_DESC rtDescriptorHeapDesc = {};
+    rtDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+    rtDescriptorHeapDesc.NumDescriptors = static_cast<UINT>(backBufferCount);
+    rtDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    rtDescriptorHeapDesc.NodeMask = 0;
+    if (FAILED(device->CreateDescriptorHeap(&rtDescriptorHeapDesc, IID_PPV_ARGS(&RTDescriptorHeap))))
     {
         return false;
     }
@@ -53,44 +53,23 @@ bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Mi
     BackBuffers.resize(backBufferCount);
 
     // Update swap chain back buffers
-    if (!UpdateBackBuffers(device, rtvDescriptorIncrementSize))
+    if (!UpdateBackBuffers(device, rtDescriptorIncrementSize))
     {
         return false;
     }
 
     // Create descriptor heap for depth stencil buffer descriptors
-    D3D12_DESCRIPTOR_HEAP_DESC dsvDescriptorHeapDesc = {};
-    dsvDescriptorHeapDesc.NumDescriptors = 1;
-    dsvDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    if (FAILED(device->CreateDescriptorHeap(&dsvDescriptorHeapDesc, IID_PPV_ARGS(&DSDescriptorHeap))))
+    D3D12_DESCRIPTOR_HEAP_DESC dsDescriptorHeapDesc = {};
+    dsDescriptorHeapDesc.NumDescriptors = 1;
+    dsDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    if (FAILED(device->CreateDescriptorHeap(&dsDescriptorHeapDesc, IID_PPV_ARGS(&DSDescriptorHeap))))
     {
         return false;
     }
 
     // Create depth stencil buffer
-    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
-    depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
-    depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-    depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
-
-    D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-    depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-    depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-    depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-    auto dsvHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-    auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-    if (FAILED(device->CreateCommittedResource(&dsvHeapProperties, D3D12_HEAP_FLAG_NONE,
-        &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
-        &depthOptimizedClearValue,
-        IID_PPV_ARGS(&DepthStencilBuffer)
-    )))
-    {
-        return false;
-    }
-
-    device->CreateDepthStencilView(DepthStencilBuffer.Get(), &depthStencilDesc, DSDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+    UpdateDepthStencilBuffer(device, width, height);
 
     // Describe viewport and scissor rect
     Viewport.TopLeftX = 0.0f;
@@ -141,6 +120,9 @@ bool Renderer::SwapChain::Resize(Microsoft::WRL::ComPtr<ID3D12Device> device, UI
         BackBuffers[i].Reset();
     }
 
+    // Release depth stencil buffer resource
+    DepthStencilBuffer.Reset();
+
     // Resize back buffers
     DXGI_SWAP_CHAIN_DESC swapChainDesc;
     if (FAILED(SwapChain3->GetDesc(&swapChainDesc)))
@@ -155,6 +137,12 @@ bool Renderer::SwapChain::Resize(Microsoft::WRL::ComPtr<ID3D12Device> device, UI
 
     // Update back buffer resources
     if (!UpdateBackBuffers(device, rtvDescriptorSize))
+    {
+        return false;
+    }
+
+    // Recreate depth stencil buffer
+    if (!UpdateDepthStencilBuffer(device, width, height))
     {
         return false;
     }
@@ -203,7 +191,7 @@ const D3D12_RECT& Renderer::SwapChain::GetScissorRect() const
 CD3DX12_CPU_DESCRIPTOR_HANDLE Renderer::SwapChain::GetRTDescriptorHandleForFrame(size_t frameIndex) const
 {
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(RTDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), 
-        static_cast<INT>(frameIndex), Renderer::GetRTVDescriptorIncrementSize());
+        static_cast<INT>(frameIndex), Renderer::GetRTDescriptorIncrementSize());
 }
 
 CD3DX12_CPU_DESCRIPTOR_HANDLE Renderer::SwapChain::GetDSDescriptorHandle() const
@@ -225,6 +213,34 @@ bool Renderer::SwapChain::UpdateBackBuffers(Microsoft::WRL::ComPtr<ID3D12Device>
         BackBuffers[i] = backBuffer;
         rtv.Offset(1, rtvDescriptorSize);
     }
+
+    return true;
+}
+
+bool Renderer::SwapChain::UpdateDepthStencilBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT64 width, UINT height)
+{
+    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+    depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+    D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+    depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+    depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+    auto dsvHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    auto dsvResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+    if (FAILED(device->CreateCommittedResource(&dsvHeapProperties, D3D12_HEAP_FLAG_NONE,
+        &dsvResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
+        &depthOptimizedClearValue,
+        IID_PPV_ARGS(&DepthStencilBuffer)
+    )))
+    {
+        return false;
+    }
+
+    device->CreateDepthStencilView(DepthStencilBuffer.Get(), &depthStencilDesc, DSDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
     return true;
 }

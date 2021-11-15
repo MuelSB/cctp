@@ -98,6 +98,28 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create a swap chain for the window.");
 	}
 
+	// Subscribe window resized event handler
+	EventSystem::SubscribeToEvent<WindowResizedEvent>([&swapChain](WindowResizedEvent&& event)
+		{
+			// Get the resized client area width and height
+			RECT clientRect;
+			Window::GetClientAreaRect(clientRect);
+			auto newWidth = clientRect.right - clientRect.left;
+			auto newHeight = clientRect.bottom - clientRect.top;
+
+			// Check the new width and height are greater than 0
+			if ((newWidth <= 0) && (newHeight <= 0))
+			{
+				return;
+			}
+
+			// Wait for GPU queues to idle
+			Renderer::Flush();
+
+			// Resize the swap chain
+			Renderer::ResizeSwapChain(swapChain.get(), static_cast<UINT>(newWidth), static_cast<UINT>(newHeight));
+		});
+
 	// Enter main loop
 	bool quit = false;
 	while (!quit)
@@ -112,10 +134,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		size_t currentFrameIndex;
 		Renderer::Commands::StartFrame(swapChain.get(), currentFrameIndex);
 
-		// Clear the frame
-		Renderer::Commands::ClearFrame(swapChain.get(), currentFrameIndex);
+		// Set render targets
+		Renderer::Commands::SetRenderTargets(swapChain.get(), currentFrameIndex);
 
-		// End the frame for for swap chain
+		// Clear render targets
+		Renderer::Commands::ClearRenderTargets(swapChain.get(), currentFrameIndex);
+
+		// End the frame for the swap chain
 		Renderer::Commands::EndFrame(swapChain.get(), currentFrameIndex);
 
 		// Present the frame

@@ -6,7 +6,7 @@ namespace Renderer
     {
     public:
         bool Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::ComPtr<ID3D12CommandQueue> directCommandQueue,
-            Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtvDescriptorIncrementSize);
+            Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtDescriptorIncrementSize);
         bool Present(const bool vsync);
         float GetViewportWidth() const;
         float GetViewportHeight() const;
@@ -21,6 +21,7 @@ namespace Renderer
 
     private:
         bool UpdateBackBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT rtvDescriptorSize);
+        bool UpdateDepthStencilBuffer(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT64 width, UINT height);
 
     private:
         Microsoft::WRL::ComPtr<IDXGISwapChain3> SwapChain3;

@@ -8,7 +8,7 @@ bool TearingSupported;
 Microsoft::WRL::ComPtr<IDXGIAdapter4> Adapter;
 DXGI_ADAPTER_DESC1 AdapterDesc;
 Microsoft::WRL::ComPtr<ID3D12Device> Device;
-UINT RTVIncrementSize;
+UINT RTDescriptorIncrementSize;
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> DirectCommandQueue;
 std::array<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, BACK_BUFFER_COUNT> DirectCommandAllocators;
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DirectCommandList;
@@ -238,7 +238,7 @@ bool Renderer::Init()
     }
 
     // Get RTV increment size
-    RTVIncrementSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    RTDescriptorIncrementSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     // Create a direct command queue
     if (!CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, Device, DirectCommandQueue))
@@ -334,7 +334,7 @@ bool Renderer::CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::
     auto temp = std::make_unique<SwapChain>();
 
     if (!temp->Init(DXGIFactory, DirectCommandQueue, Device, windowHandle, width, height, BACK_BUFFER_COUNT,
-        TearingSupported, RTVIncrementSize))
+        TearingSupported, RTDescriptorIncrementSize))
     {
         return false;
     }
@@ -344,9 +344,14 @@ bool Renderer::CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::
     return true;
 }
 
-UINT Renderer::GetRTVDescriptorIncrementSize()
+bool Renderer::ResizeSwapChain(SwapChain* pSwapChain, UINT newWidth, UINT newHeight)
 {
-    return RTVIncrementSize;
+    return pSwapChain->Resize(Device, newWidth, newHeight, RTDescriptorIncrementSize);
+}
+
+UINT Renderer::GetRTDescriptorIncrementSize()
+{
+    return RTDescriptorIncrementSize;
 }
 
 bool Renderer::GetVSyncEnabled()
@@ -418,7 +423,7 @@ bool Renderer::Commands::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
     return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[frameIndex].Get(), FrameFenceValues[frameIndex]));
 }
 
-void Renderer::Commands::ClearFrame(SwapChain* pSwapChain, size_t frameIndex)
+void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain, size_t frameIndex)
 {
     auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
     auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
