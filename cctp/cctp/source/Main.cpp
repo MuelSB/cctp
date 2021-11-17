@@ -120,6 +120,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			Renderer::ResizeSwapChain(swapChain.get(), static_cast<UINT>(newWidth), static_cast<UINT>(newHeight));
 		});
 
+	// Create graphics pipeline
+	std::unique_ptr<Renderer::GraphicsPipelineBase> graphicsPipeline;
+	if (!Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(graphicsPipeline))
+	{
+		assert(false && "Failed to create graphics pipeline.");
+	}
+
 	// Enter main loop
 	bool quit = false;
 	while (!quit)
@@ -139,6 +146,15 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Clear render targets
 		Renderer::Commands::ClearRenderTargets(swapChain.get(), currentFrameIndex);
+
+		// Set primitive topology
+		Renderer::Commands::SetPrimitiveTopology();
+
+		// Set graphics pipeline
+		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
+
+		// Set viewport
+		Renderer::Commands::SetViewport(swapChain.get());
 
 		// End the frame for the swap chain
 		Renderer::Commands::EndFrame(swapChain.get(), currentFrameIndex);

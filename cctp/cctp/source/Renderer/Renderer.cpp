@@ -1,6 +1,8 @@
 #include "Pch.h"
 #include "Renderer.h"
 
+#include "Pipeline/GraphicsPipeline.h"
+
 constexpr size_t BACK_BUFFER_COUNT = 3;
 
 Microsoft::WRL::ComPtr<IDXGIFactory4> DXGIFactory;
@@ -349,6 +351,18 @@ bool Renderer::ResizeSwapChain(SwapChain* pSwapChain, UINT newWidth, UINT newHei
     return pSwapChain->Resize(Device, newWidth, newHeight, RTDescriptorIncrementSize);
 }
 
+template<>
+bool Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
+{
+    auto temp = std::make_unique<Renderer::GraphicsPipeline>();
+    if (!temp->Init(Device.Get()))
+    {
+        return false;
+    }
+    pipeline = std::move(temp);
+    return true;
+}
+
 UINT Renderer::GetRTDescriptorIncrementSize()
 {
     return RTDescriptorIncrementSize;
@@ -436,4 +450,21 @@ void Renderer::Commands::SetRenderTargets(SwapChain* pSwapChain, size_t frameInd
     auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
     auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
     DirectCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+}
+
+void Renderer::Commands::SetPrimitiveTopology()
+{
+    DirectCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void Renderer::Commands::SetViewport(SwapChain* pSwapChain)
+{
+    DirectCommandList->RSSetViewports(1, &pSwapChain->GetViewport());
+    DirectCommandList->RSSetScissorRects(1, &pSwapChain->GetScissorRect());
+}
+
+void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
+{
+    DirectCommandList->SetPipelineState(pPipeline->GetPipelineState());
+    DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }

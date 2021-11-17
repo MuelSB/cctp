@@ -29,6 +29,8 @@
 #include <functional>
 #include <array>
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 
 // Macros
 #ifdef _DEBUG

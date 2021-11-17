@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer/SwapChain.h"
+#include "Renderer/Pipeline/GraphicsPipeline.h"
 
 namespace Renderer
 {
@@ -12,6 +13,8 @@ namespace Renderer
 	bool Flush();
 	bool CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::unique_ptr<SwapChain>& swapChain);
 	bool ResizeSwapChain(SwapChain* pSwapChain, UINT newWidth, UINT newHeight);
+	template<typename T>
+	bool CreateGraphicsPipeline(std::unique_ptr<GraphicsPipelineBase>& pipeline);
 
 	UINT GetRTDescriptorIncrementSize();
 	bool GetVSyncEnabled();
@@ -24,5 +27,8 @@ namespace Renderer
 		bool EndFrame(SwapChain* pSwapChain, size_t frameIndex);
 		void ClearRenderTargets(SwapChain* pSwapChain, size_t frameIndex);
 		void SetRenderTargets(SwapChain* pSwapChain, size_t frameIndex);
+		void SetPrimitiveTopology();
+		void SetViewport(SwapChain* pSwapChain);
+		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
 	}
 }
