@@ -19,6 +19,12 @@ std::array<UINT64, BACK_BUFFER_COUNT> FrameFenceValues;
 HANDLE MainThreadFenceEvent;
 bool VSyncEnabled = true;
 
+Microsoft::WRL::ComPtr<ID3D12CommandQueue> GraphicsLoadCommandQueue;
+Microsoft::WRL::ComPtr<ID3D12CommandAllocator> GraphicsLoadCommandAllocator;
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GraphicsLoadCommandList;
+Microsoft::WRL::ComPtr<ID3D12Fence> GraphicsLoadFence;
+UINT64 GraphicsLoadFenceValue = 0;
+
 bool EnableDebugLayer()
 {
 #if defined(_DEBUG)
@@ -290,6 +296,37 @@ bool Renderer::Init()
         return false;
     }
 
+    // Create copy resources
+    if (!CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, Device, GraphicsLoadCommandQueue))
+    {
+        DEBUG_LOG("ERROR: Failed to create graphics load command queue.");
+        return false;
+    }
+
+    if (!CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, Device, GraphicsLoadCommandAllocator))
+    {
+        DEBUG_LOG("ERROR: Failed to create graphics load command allocator.");
+        return false;
+    }
+
+    if (!CreateCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, Device, GraphicsLoadCommandAllocator, GraphicsLoadCommandList))
+    {
+        DEBUG_LOG("ERROR: Failed to create graphics load command list.");
+        return false;
+    }
+
+    if (FAILED(GraphicsLoadCommandList->Close()))
+    {
+        DEBUG_LOG("ERROR: Failed to close graphics load command list.");
+        return false;
+    }
+
+    if (!CreateFence(Device, GraphicsLoadFenceValue, D3D12_FENCE_FLAG_NONE, GraphicsLoadFence))
+    {
+        DEBUG_LOG("ERROR: Failed to create graphics load fence.");
+        return false;
+    }
+
 	return true;
 }
 
@@ -363,6 +400,123 @@ bool Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(std::unique_pt
     return true;
 }
 
+void Renderer::CreateStagedMesh(const std::vector<Vertex1Pos1UV1Norm>& vertices, const std::vector<uint32_t>& indices,
+    const std::wstring& name, std::unique_ptr<Mesh>& mesh)
+{
+    mesh = std::make_unique<Mesh>(Device.Get(), vertices, indices, name);
+}
+
+bool Renderer::LoadStagedMeshesOntoGPU(std::unique_ptr<Mesh>* pMeshes, const size_t meshCount)
+{
+    auto CreateIntermediateUploadBuffer = [](const size_t bufferSize, const void* bufferData, 
+        Microsoft::WRL::ComPtr<ID3D12Resource>& intermediateBuffer, const std::wstring& name)
+    {
+        // Create intermediate vertex upload buffer
+        auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+        auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
+        if (FAILED(Device->CreateCommittedResource(&heapProperties,
+            D3D12_HEAP_FLAG_NONE,
+            &resourceDesc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&intermediateBuffer)))
+            )
+        {
+            assert(false && "Failed to create intermediate mesh buffer.");
+        }
+
+        // Set a debug name for the resource
+        if (FAILED(intermediateBuffer->SetName(name.c_str())))
+        {
+            assert(false && "Failed to set name for intermediate mesh buffer.");
+        }
+
+        // Map the intermediate buffer resource
+        D3D12_RANGE readRange(0, 0);
+        void* intermediateResourceStart;
+        if (FAILED(intermediateBuffer->Map(0, &readRange, &intermediateResourceStart)))
+        {
+            assert(false && "Failed to create intermediate mesh buffer.");
+        }
+
+        // Copy data into the intermediate upload buffer
+        memcpy(intermediateResourceStart, bufferData, bufferSize);
+
+        // Unmap intermediate buffer resource
+        intermediateBuffer->Unmap(0, nullptr);
+    };
+
+    std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> intermediateUploadBuffers(meshCount * 2);
+
+    // For each mesh
+    for (size_t i = 0, j = 0; i < meshCount; ++i, j += 2)
+    {
+        // Create and fill intermediate upload buffers with vertex and index data
+        // Intermediate buffers are stored next to each other for each mesh
+        // [[inter vertex buffer mesh 0][inter index buffer mesh 0][inter vertex buffer mesh 1][inter index buffer mesh 1]...]
+        auto* pMesh = pMeshes[i].get();
+        auto& intermediateVertexUploadBuffer = intermediateUploadBuffers[j];
+        auto& intermediateIndexUploadBuffer = intermediateUploadBuffers[j + 1];
+
+        CreateIntermediateUploadBuffer(pMesh->GetRequiredBufferWidthVertexBuffer(), pMesh->GetVerticesData(), 
+            intermediateVertexUploadBuffer, L"VerticesIntermediateUploadBuffer" + std::to_wstring(i));
+
+        CreateIntermediateUploadBuffer(pMesh->GetRequiredBufferWidthIndexBuffer(), pMesh->GetIndicesData(),
+            intermediateIndexUploadBuffer, L"IndexIntermediateUploadBuffer" + std::to_wstring(i));
+    }
+
+    if (FAILED(GraphicsLoadCommandAllocator->Reset()))
+    {
+        DEBUG_LOG("Failed to reset copy command allocator.");
+        return false;
+    }
+
+    if (FAILED(GraphicsLoadCommandList->Reset(GraphicsLoadCommandAllocator.Get(), nullptr)))
+    {
+        DEBUG_LOG("Failed to reset copy command list.");
+        return false;
+    }
+
+    std::vector<CD3DX12_RESOURCE_BARRIER> transitionBarriers(meshCount * 2);
+
+    // For each mesh
+    for (size_t i = 0, j = 0; i < meshCount; ++i, j += 2)
+    {
+        auto* pMesh = pMeshes[i].get();
+        auto* pMeshVertexBuffer = pMesh->GetVertexBuffer();
+        auto* pMeshIndexBuffer = pMesh->GetIndexBuffer();
+
+        GraphicsLoadCommandList->CopyResource(pMeshVertexBuffer, intermediateUploadBuffers[j].Get());
+        GraphicsLoadCommandList->CopyResource(pMeshIndexBuffer, intermediateUploadBuffers[j + 1].Get());
+
+        transitionBarriers[j] = CD3DX12_RESOURCE_BARRIER::Transition(pMeshVertexBuffer,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+        transitionBarriers[j + 1] = CD3DX12_RESOURCE_BARRIER::Transition(pMeshIndexBuffer,
+            D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+    }
+
+    GraphicsLoadCommandList->ResourceBarrier(static_cast<UINT>(transitionBarriers.size()), transitionBarriers.data());
+
+    if (FAILED(GraphicsLoadCommandList->Close()))
+    {
+        return false;
+    }
+
+    ID3D12CommandList* commandLists[] = { GraphicsLoadCommandList.Get() };
+    GraphicsLoadCommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+    ++GraphicsLoadFenceValue;
+    if (FAILED(GraphicsLoadCommandQueue->Signal(GraphicsLoadFence.Get(), GraphicsLoadFenceValue)))
+    {
+        return false;
+    }
+
+    // Wait on CPU for copy queue to finish
+    return WaitForFenceToReachValue(GraphicsLoadFence, GraphicsLoadFenceValue, MainThreadFenceEvent,
+        static_cast<DWORD>(std::chrono::milliseconds::max().count()));
+}
+
 UINT Renderer::GetRTDescriptorIncrementSize()
 {
     return RTDescriptorIncrementSize;
@@ -387,7 +541,8 @@ bool Renderer::Commands::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
     auto& frameFenceValue = FrameFenceValues[frameIndex];
 
     // Wait for previous frame
-    if (!WaitForFenceToReachValue(FrameFences[frameIndex], frameFenceValue, MainThreadFenceEvent, static_cast<DWORD>(std::chrono::milliseconds::max().count())))
+    if (!WaitForFenceToReachValue(FrameFences[frameIndex], frameFenceValue, MainThreadFenceEvent,
+        static_cast<DWORD>(std::chrono::milliseconds::max().count())))
     {
         return false;
     }

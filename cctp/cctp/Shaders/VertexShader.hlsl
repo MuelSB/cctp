@@ -12,11 +12,14 @@ cbuffer PerFrameConstants : register(b1)
 struct VertexIn
 {
     float3 LocalSpacePosition : LOCAL_SPACE_POSITION;
+    float2 UV : UV;
+    float3 VertexNormal : VERTEX_NORMAL;
 };
 
 struct VertexOut
 {
     float4 ProjectionSpacePosition : SV_POSITION;
+    float2 TextureCoordinate : TEXTURE_COORDINATE;
 };
 
 VertexOut main(VertexIn input)
@@ -26,6 +29,7 @@ VertexOut main(VertexIn input)
 
     VertexOut output;
     output.ProjectionSpacePosition = mul(ProjectionMatrix, viewSpacePosition);
+    output.TextureCoordinate = input.UV;
     
     return output;
 }

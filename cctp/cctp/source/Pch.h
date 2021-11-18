@@ -31,6 +31,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <vector>
 
 // Macros
 #ifdef _DEBUG

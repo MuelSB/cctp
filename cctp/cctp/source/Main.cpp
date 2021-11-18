@@ -127,6 +127,17 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create graphics pipeline.");
 	}
 
+	// Create meshes
+	std::vector<Renderer::Vertex1Pos1UV1Norm> cubeVertices;
+	std::vector<uint32_t> cubeIndices;
+	Renderer::Geometry::GenerateCubeGeometry(cubeVertices, cubeIndices, 1.0f);
+
+	std::vector<std::unique_ptr<Renderer::Mesh>> meshes(1);
+	Renderer::CreateStagedMesh(cubeVertices, cubeIndices, L"CubeMesh", meshes[0]);
+
+	// Load meshes onto GPU
+	Renderer::LoadStagedMeshesOntoGPU(meshes.data(), meshes.size());
+
 	// Enter main loop
 	bool quit = false;
 	while (!quit)
@@ -155,6 +166,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Set viewport
 		Renderer::Commands::SetViewport(swapChain.get());
+
+
 
 		// End the frame for the swap chain
 		Renderer::Commands::EndFrame(swapChain.get(), currentFrameIndex);

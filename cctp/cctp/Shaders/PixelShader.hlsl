@@ -1,6 +1,7 @@
 struct VertexOut
 {
     float4 ProjectionSpacePosition : SV_POSITION;
+    float2 TextureCoordinate : TEXTURE_COORDINATE;
 };
 
 float4 main(VertexOut input) : SV_TARGET
