@@ -8,7 +8,7 @@ constexpr float CLEAR_COLOR[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
 constexpr UINT64 CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES = 256;
 constexpr uint32_t SIZE_64KB = 65536;
 constexpr size_t BACK_BUFFER_COUNT = 3;
-constexpr uint32_t MAX_DRAWS_PER_FRAME = 256;
+constexpr uint32_t MAX_DRAWS_PER_FRAME = (SIZE_64KB / BACK_BUFFER_COUNT) / CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
 
 // Rendering objects
 Microsoft::WRL::ComPtr<IDXGIFactory4> DXGIFactory;
@@ -49,6 +49,10 @@ uint8_t* MappedPerFrameConstantBufferLocation;
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PerObjectConstantBuffer;
 uint8_t* MappedPerObjectConstantBufferLocation;
+
+// Rendering
+size_t FrameIndex = 0;
+uint32_t FrameDrawCount = 0;
 
 bool EnableDebugLayer()
 {
@@ -622,15 +626,15 @@ void Renderer::SetVSyncEnabled(const bool enabled)
 }
 
 // Commands
-bool Renderer::Commands::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
+bool Renderer::Commands::StartFrame(SwapChain* pSwapChain)
 {
     // Get current frame resources
-    frameIndex = pSwapChain->GetCurrentBackBufferIndex();
-    auto* pCurrentFrameCommandAllocator = DirectCommandAllocators[frameIndex].Get();
-    auto& frameFenceValue = FrameFenceValues[frameIndex];
+    FrameIndex = pSwapChain->GetCurrentBackBufferIndex();
+    auto* pCurrentFrameCommandAllocator = DirectCommandAllocators[FrameIndex].Get();
+    auto& frameFenceValue = FrameFenceValues[FrameIndex];
 
     // Wait for previous frame
-    if (!WaitForFenceToReachValue(FrameFences[frameIndex], frameFenceValue, MainThreadFenceEvent,
+    if (!WaitForFenceToReachValue(FrameFences[FrameIndex], frameFenceValue, MainThreadFenceEvent,
         static_cast<DWORD>(std::chrono::milliseconds::max().count())))
     {
         return false;
@@ -652,7 +656,7 @@ bool Renderer::Commands::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
 
     // Start recording commands into direct command list
     // Transition current frame render target from present state to render target state
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[frameIndex].Get(),
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[FrameIndex].Get(),
         D3D12_RESOURCE_STATE_PRESENT,
         D3D12_RESOURCE_STATE_RENDER_TARGET);
     DirectCommandList->ResourceBarrier(1, &barrier);
@@ -660,10 +664,10 @@ bool Renderer::Commands::StartFrame(SwapChain* pSwapChain, size_t& frameIndex)
     return true;
 }
 
-bool Renderer::Commands::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
+bool Renderer::Commands::EndFrame(SwapChain* pSwapChain)
 {
     // Transition current frame render target from render target state to present state
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[frameIndex].Get(),
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(pSwapChain->GetBackBuffers()[FrameIndex].Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATE_PRESENT);
     DirectCommandList->ResourceBarrier(1, &barrier);
@@ -678,20 +682,22 @@ bool Renderer::Commands::EndFrame(SwapChain* pSwapChain, size_t frameIndex)
     ID3D12CommandList* commandListsToExecute[] = { DirectCommandList.Get() };
     DirectCommandQueue->ExecuteCommandLists(_countof(commandListsToExecute), commandListsToExecute);
 
-    return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[frameIndex].Get(), FrameFenceValues[frameIndex]));
+    FrameDrawCount = 0;
+
+    return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[FrameIndex].Get(), FrameFenceValues[FrameIndex]));
 }
 
-void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain, size_t frameIndex)
+void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain)
 {
-    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
+    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
     auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
     DirectCommandList->ClearRenderTargetView(rtvHandle, CLEAR_COLOR, 0, nullptr);
     DirectCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
-void Renderer::Commands::SetRenderTargets(SwapChain* pSwapChain, size_t frameIndex)
+void Renderer::Commands::SetRenderTargets(SwapChain* pSwapChain)
 {
-    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
+    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
     auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
     DirectCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }
@@ -713,7 +719,7 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, size_t frameIndex, const Camera& camera)
+void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, const Camera& camera)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -739,7 +745,27 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, size_t f
         break;
     }
 
-    memcpy(MappedPerFrameConstantBufferLocation + (frameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES),
+    auto frameConstantBufferOffset = (FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES);
+    memcpy(MappedPerFrameConstantBufferLocation + frameConstantBufferOffset,
         &perFrameConstants,
         sizeof(PerFrameConstants));
+
+    DirectCommandList->SetGraphicsRootConstantBufferView(1, PerFrameConstantBuffer->GetGPUVirtualAddress() + frameConstantBufferOffset);
+}
+
+void Renderer::Commands::SubmitMesh(const Mesh& mesh, const Transform& transform)
+{
+    // Update per object constant buffer
+    PerObjectConstants perObjectConstants = {};
+    perObjectConstants.WorldMatrix = Math::CalculateWorldMatrix(transform);
+
+    auto objectConstantBufferOffset = (FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES) + (FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES);
+    memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));
+
+    DirectCommandList->SetGraphicsRootConstantBufferView(0, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
+    DirectCommandList->IASetVertexBuffers(0, 1, &mesh.GetVertexBufferView());
+    DirectCommandList->IASetIndexBuffer(&mesh.GetIndexBufferView());
+    DirectCommandList->DrawIndexedInstanced(mesh.GetIndexCount(), 1, 0, 0, 0);
+
+    ++FrameDrawCount;
 }

@@ -15,6 +15,9 @@ namespace Renderer
 		const uint32_t* GetIndicesData() const { return Indices.data(); }
 		ID3D12Resource* GetVertexBuffer() const { return VertexBuffer.Get(); }
 		ID3D12Resource* GetIndexBuffer() const { return IndexBuffer.Get(); }
+		const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const { return VertexBufferView; }
+		const D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView() const { return IndexBufferView; }
+		uint32_t GetIndexCount() const { return IndexBufferView.SizeInBytes / sizeof(uint32_t); }
 
 	private:
 		std::vector<Vertex1Pos1UV1Norm> Vertices;

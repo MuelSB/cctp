@@ -27,8 +27,8 @@ namespace Renderer
 			float PerspectiveFarClipPlane = 100.0f;
 		};
 
-		glm::vec3 Position;
-		glm::vec3 Rotation;
-		CameraSettings Settings;
+		glm::vec3 Position = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+		CameraSettings Settings = {};
 	};
 }

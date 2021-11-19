@@ -7,6 +7,8 @@
 #include "Mesh.h"
 #include "Camera.h"
 
+struct Transform;
+
 namespace Renderer
 {
 	bool Init();
@@ -27,13 +29,14 @@ namespace Renderer
 	// Commands
 	namespace Commands
 	{
-		bool StartFrame(SwapChain* pSwapChain, size_t& frameIndex);
-		bool EndFrame(SwapChain* pSwapChain, size_t frameIndex);
-		void ClearRenderTargets(SwapChain* pSwapChain, size_t frameIndex);
-		void SetRenderTargets(SwapChain* pSwapChain, size_t frameIndex);
+		bool StartFrame(SwapChain* pSwapChain);
+		bool EndFrame(SwapChain* pSwapChain);
+		void ClearRenderTargets(SwapChain* pSwapChain);
+		void SetRenderTargets(SwapChain* pSwapChain);
 		void SetPrimitiveTopology();
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
-		void UpdatePerFrameConstants(SwapChain* pSwapChain, size_t frameIndex, const Camera& camera);
+		void UpdatePerFrameConstants(SwapChain* pSwapChain, const Camera& camera);
+		void SubmitMesh(const Mesh& mesh, const Transform& transform);
 	}
 }

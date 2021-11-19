@@ -3,6 +3,8 @@
 #include "Events/EventSystem.h"
 #include "Renderer/Renderer.h"
 
+#include "Scene/Scenes/DemoScene.h"
+
 void CreateConsole(const uint32_t maxLines)
 {
 	CONSOLE_SCREEN_BUFFER_INFO console_info;
@@ -86,6 +88,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to initialize renderer.");
 	}
 
+	Renderer::SetVSyncEnabled(true);
+
 	// Create a swap chain for the window
 	std::unique_ptr<Renderer::SwapChain> swapChain;
 	RECT clientRect;
@@ -127,39 +131,39 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create graphics pipeline.");
 	}
 
-	// Create meshes
-	std::vector<Renderer::Vertex1Pos1UV1Norm> cubeVertices;
-	std::vector<uint32_t> cubeIndices;
-	Renderer::Geometry::GenerateCubeGeometry(cubeVertices, cubeIndices, 1.0f);
+	// Create demo scene
+	auto demoScene = std::make_unique<DemoScene>();
 
-	std::vector<std::unique_ptr<Renderer::Mesh>> meshes(1);
-	Renderer::CreateStagedMesh(cubeVertices, cubeIndices, L"CubeMesh", meshes[0]);
-
-	// Load meshes onto GPU
-	Renderer::LoadStagedMeshesOntoGPU(meshes.data(), meshes.size());
-
-	// Create camera
-	Renderer::Camera mainCamera = {};
+	// Begin demo scene
+	demoScene->Begin();
 
 	// Enter main loop
 	bool quit = false;
+	auto lastTime = std::chrono::high_resolution_clock::now();
 	while (!quit)
 	{
+		// Calculate frame delta time
+		auto currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> frameDeltaTime = currentTime - lastTime;
+		lastTime = currentTime;
+
 		// Handle OS messages
 		if (quit = Window::RunOSMessageLoop())
 		{
 			continue;
 		}
 
+		demoScene->Tick(frameDeltaTime.count());
+
 		// Start a frame for the swap chain, retrieving the current back buffer index to render to
-		size_t currentFrameIndex;
-		Renderer::Commands::StartFrame(swapChain.get(), currentFrameIndex);
+		auto* pSwapChain = swapChain.get();
+		Renderer::Commands::StartFrame(pSwapChain);
 
 		// Set render targets
-		Renderer::Commands::SetRenderTargets(swapChain.get(), currentFrameIndex);
+		Renderer::Commands::SetRenderTargets(pSwapChain);
 
 		// Clear render targets
-		Renderer::Commands::ClearRenderTargets(swapChain.get(), currentFrameIndex);
+		Renderer::Commands::ClearRenderTargets(pSwapChain);
 
 		// Set primitive topology
 		Renderer::Commands::SetPrimitiveTopology();
@@ -168,15 +172,18 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
 
 		// Set viewport
-		Renderer::Commands::SetViewport(swapChain.get());
+		Renderer::Commands::SetViewport(pSwapChain);
 
 		// Update per frame constants
-		Renderer::Commands::UpdatePerFrameConstants(swapChain.get(), currentFrameIndex, mainCamera);
+		static const auto& camera = demoScene->GetMainCamera();
+		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, camera);
 
-
+		// Submit draw calls
+		// Draw scene
+		demoScene->Draw();
 
 		// End the frame for the swap chain
-		Renderer::Commands::EndFrame(swapChain.get(), currentFrameIndex);
+		Renderer::Commands::EndFrame(pSwapChain);
 
 		// Present the frame
 		if (!swapChain->Present(Renderer::GetVSyncEnabled()))
