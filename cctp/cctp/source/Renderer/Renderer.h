@@ -8,8 +8,21 @@
 
 namespace Renderer
 {
+	constexpr uint32_t SIZE_64KB = 65536;
+
 	constexpr float CLEAR_COLOR[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
 	constexpr UINT64 CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES = 256;
+
+	struct PerObjectConstants
+	{
+		glm::mat4 WorldMatrix = glm::identity<glm::mat4>();
+	};
+
+	struct PerFrameConstants
+	{
+		glm::mat4 ViewMatrix = glm::identity<glm::mat4>();
+		glm::mat4 ProjectionMatrix = glm::identity<glm::mat4>();
+	};
 
 	bool Init();
 	bool Shutdown();

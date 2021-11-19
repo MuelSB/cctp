@@ -4,7 +4,9 @@
 #include "Pipeline/GraphicsPipeline.h"
 
 constexpr size_t BACK_BUFFER_COUNT = 3;
+constexpr uint32_t MAX_DRAWS_PER_FRAME = 256;
 
+// Rendering objects
 Microsoft::WRL::ComPtr<IDXGIFactory4> DXGIFactory;
 bool TearingSupported;
 Microsoft::WRL::ComPtr<IDXGIAdapter4> Adapter;
@@ -19,11 +21,19 @@ std::array<UINT64, BACK_BUFFER_COUNT> FrameFenceValues;
 HANDLE MainThreadFenceEvent;
 bool VSyncEnabled = true;
 
+// Asset loading command objects
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> GraphicsLoadCommandQueue;
 Microsoft::WRL::ComPtr<ID3D12CommandAllocator> GraphicsLoadCommandAllocator;
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GraphicsLoadCommandList;
 Microsoft::WRL::ComPtr<ID3D12Fence> GraphicsLoadFence;
 UINT64 GraphicsLoadFenceValue = 0;
+
+// Constant buffers
+Microsoft::WRL::ComPtr<ID3D12Resource> PerFrameConstantBuffer;
+uint8_t* MappedPerFrameConstantBufferLocation;
+
+Microsoft::WRL::ComPtr<ID3D12Resource> PerObjectConstantBuffer;
+uint8_t* MappedPerObjectConstantBufferLocation;
 
 bool EnableDebugLayer()
 {
@@ -326,6 +336,70 @@ bool Renderer::Init()
         DEBUG_LOG("ERROR: Failed to create graphics load fence.");
         return false;
     }
+
+    // Create per frame constant buffer
+    auto perFrameHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto perFrameResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(SIZE_64KB);
+
+    if (FAILED(Device->CreateCommittedResource(&perFrameHeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &perFrameResourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&PerFrameConstantBuffer))))
+    {
+        DEBUG_LOG("ERROR: Failed to create per frame constant buffer.");
+        return false;
+    }
+
+    // Set a debug name for the resource
+    if (FAILED(PerFrameConstantBuffer->SetName(L"PerFrameConstantBuffer")))
+    {
+        DEBUG_LOG("ERROR: Failed to name per frame constant buffer.");
+        return false;
+    }
+
+    // Map the per frame constant buffer
+    D3D12_RANGE perFrameReadRange(0, 0);
+    void* mappedPerFrameConstantBufferResource;
+    if FAILED(PerFrameConstantBuffer->Map(0, &perFrameReadRange, &mappedPerFrameConstantBufferResource))
+    {
+        DEBUG_LOG("ERROR: Failed to map per frame constant buffer.");
+        return false;
+    }
+    MappedPerFrameConstantBufferLocation = static_cast<uint8_t*>(mappedPerFrameConstantBufferResource);
+
+    // Create per object constant buffer
+    auto perObjectHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto perObjectResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(SIZE_64KB);
+
+    if (FAILED(Device->CreateCommittedResource(&perObjectHeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &perObjectResourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&PerObjectConstantBuffer))))
+    {
+        DEBUG_LOG("ERROR: Failed to create per object constant buffer.");
+        return false;
+    }
+
+    // Set a debug name for the resource
+    if (FAILED(PerFrameConstantBuffer->SetName(L"PerObjectConstantBuffer")))
+    {
+        DEBUG_LOG("ERROR: Failed to name per object constant buffer.");
+        return false;
+    }
+
+    // Map the per object constant buffer
+    D3D12_RANGE perObjectReadRange(0, 0);
+    void* mappedPerObjectConstantBufferResource;
+    if FAILED(PerObjectConstantBuffer->Map(0, &perObjectReadRange, &mappedPerObjectConstantBufferResource))
+    {
+        DEBUG_LOG("ERROR: Failed to map per frame constant buffer.");
+        return false;
+    }
+    MappedPerObjectConstantBufferLocation = static_cast<uint8_t*>(mappedPerObjectConstantBufferResource);
 
 	return true;
 }
