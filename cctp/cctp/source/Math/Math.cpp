@@ -1,0 +1,36 @@
+#include "Pch.h"
+#include "Math.h"
+#include "Transform.h"
+
+glm::mat4 Math::CalculateWorldMatrix(const Transform& transform)
+{
+	glm::vec3 eulerAnglesRadians = { glm::radians(transform.Rotation.x),
+	glm::radians(transform.Rotation.y),
+	glm::radians(transform.Rotation.z) };
+	glm::quat rotationQuaternion = glm::quat(eulerAnglesRadians);
+
+	return glm::scale(glm::identity<glm::mat4>(), transform.Scale) * // Scale matrix
+		glm::mat4_cast(rotationQuaternion) * // Rotation matrix
+		glm::translate(glm::identity<glm::mat4>(), transform.Position); // Translation matrix
+}
+
+glm::mat4 Math::CalculateViewMatrix(const glm::vec3& viewPosition, const glm::vec3& viewRotation)
+{
+	glm::vec3 eulerAnglesRadians = { glm::radians(viewRotation.x),
+		glm::radians(viewRotation.y),
+		glm::radians(viewRotation.z) };
+	glm::quat rotationQuaternion = glm::quat(eulerAnglesRadians);
+
+	return glm::inverse(glm::translate(glm::identity<glm::mat4>(), viewPosition) *
+		glm::mat4_cast(rotationQuaternion));
+}
+
+glm::mat4 Math::CalculatePerspectiveProjectionMatrix(const float fov, const float width, const float height, const float nearClipPlane, const float farClipPlane)
+{
+	return glm::perspectiveFovLH(glm::radians(fov), width, height, nearClipPlane, farClipPlane);
+}
+
+glm::mat4 Math::CalculateOrthographicProjectionMatrix(const float width, const float height, const float nearClipPlane, const float farClipPlane)
+{
+	return glm::orthoLH(-width, width, -height, height, nearClipPlane, farClipPlane);
+}

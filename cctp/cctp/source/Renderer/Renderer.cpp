@@ -1,5 +1,6 @@
 #include "Pch.h"
 #include "Renderer.h"
+#include "Math/Math.h"
 
 #include "Pipeline/GraphicsPipeline.h"
 
@@ -32,6 +33,17 @@ Microsoft::WRL::ComPtr<ID3D12Fence> GraphicsLoadFence;
 UINT64 GraphicsLoadFenceValue = 0;
 
 // Constant buffers
+struct PerObjectConstants
+{
+    glm::mat4 WorldMatrix = glm::identity<glm::mat4>();
+};
+
+struct PerFrameConstants
+{
+    glm::mat4 ViewMatrix = glm::identity<glm::mat4>();
+    glm::mat4 ProjectionMatrix = glm::identity<glm::mat4>();
+};
+
 Microsoft::WRL::ComPtr<ID3D12Resource> PerFrameConstantBuffer;
 uint8_t* MappedPerFrameConstantBufferLocation;
 
@@ -699,4 +711,35 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
 {
     DirectCommandList->SetPipelineState(pPipeline->GetPipelineState());
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
+}
+
+void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, size_t frameIndex, const Camera& camera)
+{
+    PerFrameConstants perFrameConstants = {};
+
+    // Calculate frame view matrix
+    perFrameConstants.ViewMatrix = Math::CalculateViewMatrix(camera.Position, camera.Rotation);
+
+    // Calculate frame projection matrix
+    switch (camera.Settings.ProjectionMode)
+    {
+    case Camera::CameraSettings::ProjectionMode::PERSPECTIVE:
+        perFrameConstants.ProjectionMatrix = Math::CalculatePerspectiveProjectionMatrix(camera.Settings.PerspectiveFOV,
+            pSwapChain->GetViewportWidth(),
+            pSwapChain->GetViewportHeight(),
+            camera.Settings.PerspectiveNearClipPlane,
+            camera.Settings.PerspectiveFarClipPlane);
+        break;
+
+    case Camera::CameraSettings::ProjectionMode::ORTHOGRAPHIC:
+        perFrameConstants.ProjectionMatrix = Math::CalculateOrthographicProjectionMatrix(camera.Settings.OrthographicWidth,
+            camera.Settings.OrthographicHeight,
+            camera.Settings.OrthographicNearClipPlane,
+            camera.Settings.OrthographicFarClipPlane);
+        break;
+    }
+
+    memcpy(MappedPerFrameConstantBufferLocation + (frameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES),
+        &perFrameConstants,
+        sizeof(PerFrameConstants));
 }

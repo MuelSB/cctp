@@ -138,6 +138,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Load meshes onto GPU
 	Renderer::LoadStagedMeshesOntoGPU(meshes.data(), meshes.size());
 
+	// Create camera
+	Renderer::Camera mainCamera = {};
+
 	// Enter main loop
 	bool quit = false;
 	while (!quit)
@@ -166,6 +169,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Set viewport
 		Renderer::Commands::SetViewport(swapChain.get());
+
+		// Update per frame constants
+		Renderer::Commands::UpdatePerFrameConstants(swapChain.get(), currentFrameIndex, mainCamera);
 
 
 

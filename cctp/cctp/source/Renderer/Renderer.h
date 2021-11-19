@@ -5,20 +5,10 @@
 
 #include "Geometry.h"
 #include "Mesh.h"
+#include "Camera.h"
 
 namespace Renderer
 {
-	struct PerObjectConstants
-	{
-		glm::mat4 WorldMatrix = glm::identity<glm::mat4>();
-	};
-
-	struct PerFrameConstants
-	{
-		glm::mat4 ViewMatrix = glm::identity<glm::mat4>();
-		glm::mat4 ProjectionMatrix = glm::identity<glm::mat4>();
-	};
-
 	bool Init();
 	bool Shutdown();
 	bool Flush();
@@ -44,5 +34,6 @@ namespace Renderer
 		void SetPrimitiveTopology();
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
+		void UpdatePerFrameConstants(SwapChain* pSwapChain, size_t frameIndex, const Camera& camera);
 	}
 }
