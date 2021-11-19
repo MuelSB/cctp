@@ -3,6 +3,9 @@
 
 #include "Pipeline/GraphicsPipeline.h"
 
+constexpr float CLEAR_COLOR[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+constexpr UINT64 CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES = 256;
+constexpr uint32_t SIZE_64KB = 65536;
 constexpr size_t BACK_BUFFER_COUNT = 3;
 constexpr uint32_t MAX_DRAWS_PER_FRAME = 256;
 
@@ -670,7 +673,7 @@ void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain, size_t frameI
 {
     auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(frameIndex);
     auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
-    DirectCommandList->ClearRenderTargetView(rtvHandle, Renderer::CLEAR_COLOR, 0, nullptr);
+    DirectCommandList->ClearRenderTargetView(rtvHandle, CLEAR_COLOR, 0, nullptr);
     DirectCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
