@@ -62,7 +62,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 #endif
 
 	// Init window
-	if (!Window::Init(L"Demo window", glm::vec2(1280.0f, 720.0f), Window::STYLE_WINDOWED))
+	if (!Window::Init(L"Demo window", glm::vec2(1620.0f, 780.0f), Window::STYLE_WINDOWED))
 	{
 		assert(false && "Failed to initialize window.");
 	}

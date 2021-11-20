@@ -34,3 +34,19 @@ glm::mat4 Math::CalculateOrthographicProjectionMatrix(const float width, const f
 {
 	return glm::orthoLH(-width, width, -height, height, nearClipPlane, farClipPlane);
 }
+
+glm::vec3 Math::RotateVector(const glm::vec3& rotation, const glm::vec3& vector)
+{
+	glm::vec3 eulerRotationRadians = {
+	glm::radians(rotation.x),
+	glm::radians(rotation.y),
+	glm::radians(rotation.z)
+	};
+
+	glm::quat rotationQuaternion = glm::quat(eulerRotationRadians);
+	glm::mat3 rotationMatrix = glm::mat3_cast(rotationQuaternion);
+
+	// Rotate the vector to match the rotation
+	return rotationMatrix * vector;
+}
+
