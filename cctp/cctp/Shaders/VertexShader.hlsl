@@ -1,6 +1,7 @@
 cbuffer PerObjectConstants : register(b0)
 {
     float4x4 WorldMatrix;
+    float4 Color;
 }
 
 cbuffer PerFrameConstants : register(b1)
@@ -20,6 +21,7 @@ struct VertexOut
 {
     float4 ProjectionSpacePosition : SV_POSITION;
     float2 TextureCoordinate : TEXTURE_COORDINATE;
+    float4 SurfaceColor : SURFACE_COLOR;
 };
 
 VertexOut main(VertexIn input)
@@ -30,6 +32,7 @@ VertexOut main(VertexIn input)
     VertexOut output;
     output.ProjectionSpacePosition = mul(ProjectionMatrix, viewSpacePosition);
     output.TextureCoordinate = input.UV;
+    output.SurfaceColor = Color;
     
     return output;
 }

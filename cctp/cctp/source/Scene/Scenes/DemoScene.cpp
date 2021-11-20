@@ -30,6 +30,41 @@ DemoScene::DemoScene()
 	// Load meshes onto GPU
 	Renderer::LoadStagedMeshesOntoGPU(Meshes.data(), Meshes.size());
 
+	// Setup scene mesh transforms and colors
+	MeshTransforms.resize(SceneMeshTransformCount);
+	MeshColors.resize(SceneMeshTransformCount);
+
+	// Floor
+	MeshTransforms[0].Position = glm::vec3(0.0f, -0.5f, 0.0f);
+	MeshTransforms[0].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
+	MeshColors[0] = glm::vec4(0.85f, 0.85f, 0.8f, 1.0f);
+
+	// Identity cube
+	MeshTransforms[1].Position = glm::vec3(1.0f, 0.25f, -0.5f);
+	MeshTransforms[1].Scale = glm::vec3(1.0f, 1.0f, 1.0f);
+	MeshColors[1] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	// Right wall
+	MeshTransforms[2].Position = glm::vec3(2.75f, 1.75f, 0.0f);
+	MeshTransforms[2].Scale = glm::vec3(0.5f, 5.0f, 5.0f);
+	MeshColors[2] = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+	// Left wall
+	MeshTransforms[3].Position = glm::vec3(-2.75f, 1.75f, 0.0f);
+	MeshTransforms[3].Scale = glm::vec3(0.5f, 5.0f, 5.0f);
+	MeshColors[3] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+	// Back wall
+	MeshTransforms[4].Position = glm::vec3(0.0f, 1.75f, 2.75f);
+	MeshTransforms[4].Scale = glm::vec3(5.0f, 5.0f, 0.5f);
+	MeshColors[4] = glm::vec4(0.85f, 0.85f, 0.8f, 1.0f);
+
+	// Transformed cube
+	MeshTransforms[5].Position = glm::vec3(-1.0f, 0.5f, 0.5f);
+	MeshTransforms[5].Rotation = glm::vec3(0.0f, 45.0f, 0.0f);
+	MeshTransforms[5].Scale = glm::vec3(1.0f, 2.0f, 1.0f);
+	MeshColors[5] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
 	// Move main camera back
 	MainCamera.Position.z = -5.0f;
 
@@ -49,7 +84,10 @@ void DemoScene::Tick(float deltaTime)
 
 void DemoScene::Draw()
 {
-	Renderer::Commands::SubmitMesh(*Meshes[0].get(), Transform());
+	for (size_t i = 0; i < SceneMeshTransformCount; ++i)
+	{
+		Renderer::Commands::SubmitMesh(*Meshes[0].get(), MeshTransforms[i], MeshColors[i]);
+	}
 }
 
 void DemoScene::OnInputEvent(InputEvent&& event)
@@ -108,18 +146,10 @@ void DemoScene::PollInputs(float deltaTime)
 	}
 	if (IsInputPressed(InputCodes::E))
 	{
-		auto cameraUpVector = glm::normalize(Math::RotateVector(
-			MainCamera.Rotation,
-			SceneUpVector));
-
-		MainCamera.Position += cameraUpVector * deltaTime * CameraFlySpeed;
+		MainCamera.Position += SceneUpVector * deltaTime * CameraFlySpeed;
 	}
 	if (IsInputPressed(InputCodes::Q))
 	{
-		auto cameraUpVector = glm::normalize(Math::RotateVector(
-			MainCamera.Rotation,
-			SceneUpVector));
-
-		MainCamera.Position -= cameraUpVector * deltaTime * CameraFlySpeed;
+		MainCamera.Position -= SceneUpVector * deltaTime * CameraFlySpeed;
 	}
 }

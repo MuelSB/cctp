@@ -33,8 +33,8 @@ void Renderer::Geometry::GenerateCubeGeometry(std::vector<Vertex1Pos1UV1Norm>& o
     Vertex1Pos1UV1Norm(glm::vec3(halfWidth,  -halfWidth,  halfWidth) , glm::vec2(1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f))
     };
 
-    outIndices = 
+    outIndices =
     {
-        13,18,23,13,23,11,9,21,15,21,17,15,12,14,19,14,16,19,7,6,22,6,20,22,5,4,10,4,8,10,3,2,0,2,1,0
+        0,1,2,0,2,3,10,8,4,10,4,5,22,20,6,22,6,7,19,16,14,19,14,12,15,17,21,15,21,9,11,23,13,23,18,13
     };
 }

@@ -9,9 +9,10 @@ glm::mat4 Math::CalculateWorldMatrix(const Transform& transform)
 	glm::radians(transform.Rotation.z) };
 	glm::quat rotationQuaternion = glm::quat(eulerAnglesRadians);
 
-	return glm::scale(glm::identity<glm::mat4>(), transform.Scale) * // Scale matrix
+	return
+		glm::translate(glm::identity<glm::mat4>(), transform.Position) *  // Translation matrix
 		glm::mat4_cast(rotationQuaternion) * // Rotation matrix
-		glm::translate(glm::identity<glm::mat4>(), transform.Position); // Translation matrix
+		glm::scale(glm::identity<glm::mat4>(), transform.Scale); // Scale matrix
 }
 
 glm::mat4 Math::CalculateViewMatrix(const glm::vec3& viewPosition, const glm::vec3& viewRotation)

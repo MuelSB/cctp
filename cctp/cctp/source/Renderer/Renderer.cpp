@@ -36,6 +36,7 @@ UINT64 GraphicsLoadFenceValue = 0;
 struct PerObjectConstants
 {
     glm::mat4 WorldMatrix = glm::identity<glm::mat4>();
+    glm::vec4 Color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
 struct PerFrameConstants
@@ -753,11 +754,12 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, const Ca
     DirectCommandList->SetGraphicsRootConstantBufferView(1, PerFrameConstantBuffer->GetGPUVirtualAddress() + frameConstantBufferOffset);
 }
 
-void Renderer::Commands::SubmitMesh(const Mesh& mesh, const Transform& transform)
+void Renderer::Commands::SubmitMesh(const Mesh& mesh, const Transform& transform, const glm::vec4& color)
 {
     // Update per object constant buffer
     PerObjectConstants perObjectConstants = {};
     perObjectConstants.WorldMatrix = Math::CalculateWorldMatrix(transform);
+    perObjectConstants.Color = color;
 
     auto objectConstantBufferOffset = (FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES) + (FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES);
     memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));

@@ -37,6 +37,6 @@ namespace Renderer
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
 		void UpdatePerFrameConstants(SwapChain* pSwapChain, const Camera& camera);
-		void SubmitMesh(const Mesh& mesh, const Transform& transform);
+		void SubmitMesh(const Mesh& mesh, const Transform& transform, const glm::vec4& color);
 	}
 }
