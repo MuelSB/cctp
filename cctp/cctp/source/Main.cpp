@@ -176,6 +176,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
 
+		// Set descriptor heaps
+		Renderer::Commands::SetDescriptorHeaps();
+
 		// Update per frame constants
 		static const auto& camera = demoScene->GetMainCamera();
 		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, 1, camera);
@@ -183,6 +186,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Submit draw calls
 		// Draw scene
 		demoScene->Draw();
+
+		// Draw ImGui
+		Renderer::Commands::DrawImgui();
 
 		// End the frame for the swap chain
 		Renderer::Commands::EndFrame(pSwapChain);

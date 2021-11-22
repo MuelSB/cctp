@@ -12,6 +12,11 @@
 #include <dxgidebug.h>
 #endif
 
+// Imgui
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx12.h"
+
 // Glm
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_RADIANS

@@ -38,5 +38,7 @@ namespace Renderer
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
 		void UpdatePerFrameConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera);
 		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color);
+		void SetDescriptorHeaps();
+		void DrawImgui();
 	}
 }

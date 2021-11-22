@@ -1,16 +1,19 @@
 #include "Pch.h"
 #include "Renderer.h"
 #include "Math/Math.h"
+#include "Window/Window.h"
 
 #include "Pipeline/GraphicsPipeline.h"
+#include "DescriptorHeap.h"
 
 constexpr float CLEAR_COLOR[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
 constexpr UINT64 CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES = 256;
 constexpr uint32_t SIZE_64KB = 65536;
 constexpr size_t BACK_BUFFER_COUNT = 3;
 constexpr uint32_t MAX_DRAWS_PER_FRAME = (SIZE_64KB / BACK_BUFFER_COUNT) / CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
+constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 1;
 
-// Rendering objects
+// Renderer
 Microsoft::WRL::ComPtr<IDXGIFactory4> DXGIFactory;
 bool TearingSupported;
 Microsoft::WRL::ComPtr<IDXGIAdapter4> Adapter;
@@ -24,6 +27,7 @@ std::array<Microsoft::WRL::ComPtr<ID3D12Fence>, BACK_BUFFER_COUNT> FrameFences;
 std::array<UINT64, BACK_BUFFER_COUNT> FrameFenceValues;
 HANDLE MainThreadFenceEvent;
 bool VSyncEnabled = true;
+std::unique_ptr<DescriptorHeap> ShaderResourceDescriptorHeap;
 
 // Asset loading command objects
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> GraphicsLoadCommandQueue;
@@ -421,6 +425,22 @@ bool Renderer::Init()
     }
     MappedPerObjectConstantBufferLocation = static_cast<uint8_t*>(mappedPerObjectConstantBufferResource);
 
+    // Initialize shader visible descriptor heap
+    ShaderResourceDescriptorHeap = std::make_unique<DescriptorHeap>();
+    ShaderResourceDescriptorHeap->Init(Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
+        SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT, true);
+
+    // Initialize imgui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::StyleColorsDark();
+    ImGui_ImplWin32_Init(Window::GetHandle());
+    ImGui_ImplDX12_Init(Device.Get(), BACK_BUFFER_COUNT,
+        DXGI_FORMAT_R8G8B8A8_UNORM, ShaderResourceDescriptorHeap->Get(),
+        ShaderResourceDescriptorHeap->GetCPUDescriptorHandle(0),
+        ShaderResourceDescriptorHeap->GetGPUDescriptorHandle(0));
+
 	return true;
 }
 
@@ -437,6 +457,11 @@ bool Renderer::Shutdown()
     {
         return false;
     }
+
+    // Shutdown imgui
+    ImGui_ImplDX12_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
 
     return true;
 }
@@ -746,7 +771,7 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT per
         break;
     }
 
-    auto frameConstantBufferOffset = (FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES);
+    auto frameConstantBufferOffset = FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
     memcpy(MappedPerFrameConstantBufferLocation + frameConstantBufferOffset,
         &perFrameConstants,
         sizeof(PerFrameConstants));
@@ -770,4 +795,22 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
     DirectCommandList->DrawIndexedInstanced(mesh.GetIndexCount(), 1, 0, 0, 0);
 
     ++FrameDrawCount;
+}
+
+void Renderer::Commands::SetDescriptorHeaps()
+{
+    ID3D12DescriptorHeap* heaps[] = { ShaderResourceDescriptorHeap->Get() };
+    DirectCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
+}
+
+void Renderer::Commands::DrawImgui()
+{
+    ImGui_ImplDX12_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
+
+    ImGui::Render();
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectCommandList.Get());
 }
