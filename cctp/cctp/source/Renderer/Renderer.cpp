@@ -59,6 +59,9 @@ uint8_t* MappedPerObjectConstantBufferLocation;
 size_t FrameIndex = 0;
 uint32_t FrameDrawCount = 0;
 
+// ImGui
+
+
 bool EnableDebugLayer()
 {
 #if defined(_DEBUG)
@@ -806,7 +809,16 @@ void Renderer::Commands::DrawImgui()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+    ImGui::BeginMainMenuBar();
+    if (ImGui::BeginMenu("File"))
+    {
+        if (ImGui::MenuItem("Exit"))
+        {
+            Window::Close();
+        }
+        ImGui::EndMenu();
+    }
+    ImGui::EndMainMenuBar();
 
     ImGui::Render();
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectCommandList.Get());
