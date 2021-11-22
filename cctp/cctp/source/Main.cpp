@@ -62,7 +62,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 #endif
 
 	// Init window
-	if (!Window::Init(L"Demo window", glm::vec2(1620.0f, 880.0f), Window::STYLE_WINDOWED))
+	if (!Window::Init(L"Demo window", glm::vec2(1920.0f, 1080.0f), Window::STYLE_WINDOWED))
 	{
 		assert(false && "Failed to initialize window.");
 	}
@@ -176,7 +176,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Update per frame constants
 		static const auto& camera = demoScene->GetMainCamera();
-		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, camera);
+		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, 1, camera);
 
 		// Submit draw calls
 		// Draw scene

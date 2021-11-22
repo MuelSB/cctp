@@ -720,7 +720,7 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, const Camera& camera)
+void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -751,10 +751,10 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, const Ca
         &perFrameConstants,
         sizeof(PerFrameConstants));
 
-    DirectCommandList->SetGraphicsRootConstantBufferView(1, PerFrameConstantBuffer->GetGPUVirtualAddress() + frameConstantBufferOffset);
+    DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress() + frameConstantBufferOffset);
 }
 
-void Renderer::Commands::SubmitMesh(const Mesh& mesh, const Transform& transform, const glm::vec4& color)
+void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color)
 {
     // Update per object constant buffer
     PerObjectConstants perObjectConstants = {};
@@ -764,7 +764,7 @@ void Renderer::Commands::SubmitMesh(const Mesh& mesh, const Transform& transform
     auto objectConstantBufferOffset = (FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES) + (FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES);
     memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));
 
-    DirectCommandList->SetGraphicsRootConstantBufferView(0, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
+    DirectCommandList->SetGraphicsRootConstantBufferView(perObjectConstantsParameterIndex, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
     DirectCommandList->IASetVertexBuffers(0, 1, &mesh.GetVertexBufferView());
     DirectCommandList->IASetIndexBuffer(&mesh.GetIndexBufferView());
     DirectCommandList->DrawIndexedInstanced(mesh.GetIndexCount(), 1, 0, 0, 0);

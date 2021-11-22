@@ -66,7 +66,7 @@ DemoScene::DemoScene()
 	MeshColors[5] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Move main camera back
-	MainCamera.Position.z = -5.0f;
+	MainCamera.Position = CameraStartPosition;
 
 	// Set main camera fov
 	MainCamera.Settings.PerspectiveFOV = 45.0f;
@@ -86,7 +86,7 @@ void DemoScene::Draw()
 {
 	for (size_t i = 0; i < SceneMeshTransformCount; ++i)
 	{
-		Renderer::Commands::SubmitMesh(*Meshes[0].get(), MeshTransforms[i], MeshColors[i]);
+		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshColors[i]);
 	}
 }
 
