@@ -79,8 +79,7 @@ void DemoScene::Begin()
 
 void DemoScene::Tick(float deltaTime)
 {
-	DeltaTime = deltaTime;
-	PollInputs(DeltaTime);
+	PollInputs(deltaTime);
 }
 
 void DemoScene::Draw()
@@ -112,14 +111,14 @@ void DemoScene::OnInputEvent(InputEvent&& event)
 	{
 		if (IsInputPressed(InputCodes::Right_Mouse_Button))
 		{
-			MainCamera.Rotation.y += event.Data * DeltaTime * CameraYawSensitivity;
+			MainCamera.Rotation.y += event.Data * CameraYawSensitivity;
 		}
 	}
 	else if (event.Input == InputCodes::Mouse_Y)
 	{
 		if (IsInputPressed(InputCodes::Right_Mouse_Button))
 		{
-			auto newPitch = MainCamera.Rotation.x + event.Data * DeltaTime * CameraPitchSensitivity;
+			auto newPitch = MainCamera.Rotation.x + event.Data * CameraPitchSensitivity;
 			newPitch = std::clamp(newPitch, CameraPitchMin, CameraPitchMax);
 			MainCamera.Rotation.x = newPitch;
 		}

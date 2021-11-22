@@ -88,7 +88,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to initialize renderer.");
 	}
 
-	Renderer::SetVSyncEnabled(true);
+	Renderer::SetVSyncEnabled(false);
 
 	// Create a swap chain for the window
 	std::unique_ptr<Renderer::SwapChain> swapChain;
@@ -146,7 +146,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> frameTime = currentTime - lastTime;
 		lastTime = currentTime;
-		auto frameDeltaTime = frameTime.count();
 
 		// Handle OS messages
 		if (Window::RunOSMessageLoop())
@@ -155,7 +154,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			continue;
 		}
 
-		demoScene->Tick(frameDeltaTime);
+		// Tick demo scene
+		demoScene->Tick(frameTime.count());
 
 		// Start a frame for the swap chain, retrieving the current back buffer index to render to
 		auto* pSwapChain = swapChain.get();
