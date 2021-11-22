@@ -634,6 +634,13 @@ bool Renderer::Commands::StartFrame(SwapChain* pSwapChain)
     auto* pCurrentFrameCommandAllocator = DirectCommandAllocators[FrameIndex].Get();
     auto& frameFenceValue = FrameFenceValues[FrameIndex];
 
+    // Wait for previous frame
+    if (!WaitForFenceToReachValue(FrameFences[FrameIndex], frameFenceValue, MainThreadFenceEvent,
+        static_cast<DWORD>(std::chrono::milliseconds::max().count())))
+    {
+        return false;
+    }
+
     // Increment frame fence value for the next frame
     ++frameFenceValue;
 
@@ -678,19 +685,7 @@ bool Renderer::Commands::EndFrame(SwapChain* pSwapChain)
 
     FrameDrawCount = 0;
 
-    if (FAILED(DirectCommandQueue->Signal(FrameFences[FrameIndex].Get(), FrameFenceValues[FrameIndex])))
-    {
-        return false;
-    }
-
-    // Wait for previous frame
-    if (!WaitForFenceToReachValue(FrameFences[FrameIndex], FrameFenceValues[FrameIndex], MainThreadFenceEvent,
-        static_cast<DWORD>(std::chrono::milliseconds::max().count())))
-    {
-        return false;
-    }
-
-    return true;
+    return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[FrameIndex].Get(), FrameFenceValues[FrameIndex]));
 }
 
 void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain)
@@ -766,7 +761,7 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
     perObjectConstants.WorldMatrix = Math::CalculateWorldMatrix(transform);
     perObjectConstants.Color = color;
 
-    auto objectConstantBufferOffset = (FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES) + (FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES);
+    auto objectConstantBufferOffset = FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
     memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));
 
     DirectCommandList->SetGraphicsRootConstantBufferView(perObjectConstantsParameterIndex, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);

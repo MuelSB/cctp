@@ -17,8 +17,7 @@ bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Mi
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    swapChainDesc.Flags = 0;
-    //swapChainDesc.Flags = tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    swapChainDesc.Flags = tearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
     // Create swap chain
     Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
@@ -93,15 +92,14 @@ bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Mi
 
 bool Renderer::SwapChain::Present(const bool vsync)
 {
-    return SUCCEEDED(SwapChain3->Present(vsync ? 1 : 0, 0));
-    //if (TearingSupported)
-    //{
-    //    return SUCCEEDED(SwapChain3->Present(0, DXGI_PRESENT_ALLOW_TEARING));
-    //}
-    //else
-    //{
-    //    return SUCCEEDED(SwapChain3->Present(vsync ? 1 : 0, 0));
-    //}
+    if (TearingSupported)
+    {
+        return SUCCEEDED(SwapChain3->Present(0, DXGI_PRESENT_ALLOW_TEARING));
+    }
+    else
+    {
+        return SUCCEEDED(SwapChain3->Present(vsync ? 1 : 0, 0));
+    }
 }
 
 float Renderer::SwapChain::GetViewportWidth() const
