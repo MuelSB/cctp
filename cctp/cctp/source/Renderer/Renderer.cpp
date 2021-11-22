@@ -771,12 +771,9 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT per
         break;
     }
 
-    auto frameConstantBufferOffset = FrameIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
-    memcpy(MappedPerFrameConstantBufferLocation + frameConstantBufferOffset,
-        &perFrameConstants,
-        sizeof(PerFrameConstants));
+    memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
 
-    DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress() + frameConstantBufferOffset);
+    DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress());
 }
 
 void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color)
