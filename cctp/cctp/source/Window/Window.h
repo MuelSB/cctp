@@ -17,4 +17,6 @@ namespace Window
 	void Show();
 	bool SetSize(const glm::vec2& size);
 	bool Close();
+	bool CaptureCursor();
+	bool ReleaseCursor();
 };

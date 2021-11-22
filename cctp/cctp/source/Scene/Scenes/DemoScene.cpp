@@ -4,6 +4,7 @@
 #include "Math/Math.h"
 #include "Input/InputCodes.h"
 #include "Events/EventSystem.h"
+#include "Window/Window.h"
 
 bool IsInputPressed(InputCode input)
 {
@@ -92,7 +93,22 @@ void DemoScene::Draw()
 
 void DemoScene::OnInputEvent(InputEvent&& event)
 {
-	if (event.Input == InputCodes::Mouse_X)
+	if (event.Input == InputCodes::Right_Mouse_Button && event.Data == 1.0f)
+	{
+		ShowCursor(false);
+		Window::CaptureCursor();
+	}
+	else if (event.Input == InputCodes::Right_Mouse_Button && event.Data == 0.0f)
+	{
+		Window::ReleaseCursor();
+
+		RECT windowRect;
+		Window::GetWindowAreaRect(windowRect);
+		SetCursorPos((windowRect.right - windowRect.left) / 2, (windowRect.bottom - windowRect.top) / 2);
+	
+		ShowCursor(true);
+	}
+	else if (event.Input == InputCodes::Mouse_X)
 	{
 		if (IsInputPressed(InputCodes::Right_Mouse_Button))
 		{
@@ -112,44 +128,47 @@ void DemoScene::OnInputEvent(InputEvent&& event)
 
 void DemoScene::PollInputs(float deltaTime)
 {
-	if (IsInputPressed(InputCodes::W))
+	if (IsInputPressed(InputCodes::Right_Mouse_Button))
 	{
-		auto cameraForwardVector = glm::normalize(Math::RotateVector(
-			MainCamera.Rotation,
-			SceneForwardVector));
+		if (IsInputPressed(InputCodes::W))
+		{
+			auto cameraForwardVector = glm::normalize(Math::RotateVector(
+				MainCamera.Rotation,
+				SceneForwardVector));
 
-		MainCamera.Position += cameraForwardVector * deltaTime * CameraFlySpeed;
-	}
-	if (IsInputPressed(InputCodes::S))
-	{
-		auto cameraForwardVector = glm::normalize(Math::RotateVector(
-			MainCamera.Rotation,
-			SceneForwardVector));
+			MainCamera.Position += cameraForwardVector * deltaTime * CameraFlySpeed;
+		}
+		if (IsInputPressed(InputCodes::S))
+		{
+			auto cameraForwardVector = glm::normalize(Math::RotateVector(
+				MainCamera.Rotation,
+				SceneForwardVector));
 
-		MainCamera.Position -= cameraForwardVector * deltaTime * CameraFlySpeed;
-	}
-	if (IsInputPressed(InputCodes::D))
-	{
-		auto cameraRightVector = glm::normalize(Math::RotateVector(
-			MainCamera.Rotation,
-			SceneRightVector));
+			MainCamera.Position -= cameraForwardVector * deltaTime * CameraFlySpeed;
+		}
+		if (IsInputPressed(InputCodes::D))
+		{
+			auto cameraRightVector = glm::normalize(Math::RotateVector(
+				MainCamera.Rotation,
+				SceneRightVector));
 
-		MainCamera.Position += cameraRightVector * deltaTime * CameraFlySpeed;
-	}
-	if (IsInputPressed(InputCodes::A))
-	{
-		auto cameraRightVector = glm::normalize(Math::RotateVector(
-			MainCamera.Rotation,
-			SceneRightVector));
+			MainCamera.Position += cameraRightVector * deltaTime * CameraFlySpeed;
+		}
+		if (IsInputPressed(InputCodes::A))
+		{
+			auto cameraRightVector = glm::normalize(Math::RotateVector(
+				MainCamera.Rotation,
+				SceneRightVector));
 
-		MainCamera.Position -= cameraRightVector * deltaTime * CameraFlySpeed;
-	}
-	if (IsInputPressed(InputCodes::E))
-	{
-		MainCamera.Position += SceneUpVector * deltaTime * CameraFlySpeed;
-	}
-	if (IsInputPressed(InputCodes::Q))
-	{
-		MainCamera.Position -= SceneUpVector * deltaTime * CameraFlySpeed;
+			MainCamera.Position -= cameraRightVector * deltaTime * CameraFlySpeed;
+		}
+		if (IsInputPressed(InputCodes::E))
+		{
+			MainCamera.Position += SceneUpVector * deltaTime * CameraFlySpeed;
+		}
+		if (IsInputPressed(InputCodes::Q))
+		{
+			MainCamera.Position -= SceneUpVector * deltaTime * CameraFlySpeed;
+		}
 	}
 }

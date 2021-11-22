@@ -144,16 +144,18 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		// Calculate frame delta time
 		auto currentTime = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<float, std::milli> frameDeltaTime = currentTime - lastTime;
+		std::chrono::duration<float, std::milli> frameTime = currentTime - lastTime;
 		lastTime = currentTime;
+		auto frameDeltaTime = frameTime.count();
 
 		// Handle OS messages
-		if (quit = Window::RunOSMessageLoop())
+		if (Window::RunOSMessageLoop())
 		{
+			quit = true;
 			continue;
 		}
 
-		demoScene->Tick(frameDeltaTime.count());
+		demoScene->Tick(frameDeltaTime);
 
 		// Start a frame for the swap chain, retrieving the current back buffer index to render to
 		auto* pSwapChain = swapChain.get();

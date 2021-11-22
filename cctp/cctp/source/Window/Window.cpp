@@ -404,3 +404,36 @@ bool Window::Close()
 {
 	return ::DestroyWindow(Handle) != 0;
 }
+
+bool Window::CaptureCursor()
+{
+	RECT clientRect;
+	if (!Window::GetClientAreaRect(clientRect))
+	{
+		return false;
+	}
+
+	POINT ul;
+	ul.x = clientRect.left;
+	ul.y = clientRect.top;
+
+	POINT lr;
+	lr.x = clientRect.right;
+	lr.y = clientRect.bottom;
+
+	MapWindowPoints(Handle, nullptr, &ul, 1);
+	MapWindowPoints(Handle, nullptr, &lr, 1);
+
+	clientRect.left = ul.x;
+	clientRect.top = ul.y;
+
+	clientRect.right = lr.x;
+	clientRect.bottom = lr.y;
+
+	return ClipCursor(&clientRect) != 0;
+}
+
+bool Window::ReleaseCursor()
+{
+	return ClipCursor(NULL) != 0;
+}

@@ -19,8 +19,8 @@ private:
 
 private:
 	static constexpr size_t SceneMeshTransformCount = 6;
-	static constexpr float CameraYawSensitivity = 0.75f;
-	static constexpr float CameraPitchSensitivity = 0.75f;
+	static constexpr float CameraYawSensitivity = 0.0075f;
+	static constexpr float CameraPitchSensitivity = 0.0075f;
 	static constexpr float CameraPitchMin = -90.0f;
 	static constexpr float CameraPitchMax = 90.0f;
 	static constexpr float CameraFlySpeed = 0.0075f;
