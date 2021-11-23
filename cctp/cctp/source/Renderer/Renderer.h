@@ -6,6 +6,7 @@
 #include "Geometry.h"
 #include "Mesh.h"
 #include "Camera.h"
+#include "BottomLevelAccelerationStructure.h"
 
 struct Transform;
 
@@ -21,6 +22,8 @@ namespace Renderer
 	void CreateStagedMesh(const std::vector<Vertex1Pos1UV1Norm>& vertices, const std::vector<uint32_t>& indices,
 		const std::wstring& name, std::unique_ptr<Mesh>& mesh);
 	bool LoadStagedMeshesOntoGPU(std::unique_ptr<Mesh>* pMeshes, const size_t meshCount);
+	void CreateStagedBottomLevelAccelerationStructure(Mesh& mesh, std::unique_ptr<BottomLevelAccelerationStructure>& blas);
+	bool BuildStagedBottomLevelAccelerationStructureOnGPU(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount);
 
 	UINT GetRTDescriptorIncrementSize();
 	bool GetVSyncEnabled();

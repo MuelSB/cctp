@@ -31,6 +31,7 @@ private:
 	static constexpr glm::vec3 SceneUpVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	std::vector<std::unique_ptr<Renderer::Mesh>> Meshes;
+	std::vector<std::unique_ptr<Renderer::BottomLevelAccelerationStructure>> blAccelStructures;
 	std::vector<Transform> MeshTransforms;
 	std::vector<glm::vec4> MeshColors;
 };

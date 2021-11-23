@@ -35,7 +35,22 @@ DemoScene::DemoScene()
 	Renderer::CreateStagedMesh(sphereVertices, sphereIndices, L"SphereMesh", Meshes[1]);
 
 	// Load meshes onto GPU
-	Renderer::LoadStagedMeshesOntoGPU(Meshes.data(), Meshes.size());
+	if (!Renderer::LoadStagedMeshesOntoGPU(Meshes.data(), Meshes.size()))
+	{
+		assert(false && "Failed to load mesh data onto GPU.");
+	}
+
+	// Create bottom level acceleration structures
+	blAccelStructures.resize(1);
+
+	// Cube blas
+	Renderer::CreateStagedBottomLevelAccelerationStructure(*Meshes[0].get(), blAccelStructures[0]);
+
+	// Build bl acceleration structures on GPU
+	if (!Renderer::BuildStagedBottomLevelAccelerationStructureOnGPU(blAccelStructures.data(), blAccelStructures.size()))
+	{
+		assert(false && "Failed to build bottom level acceleration structure.");
+	}
 
 	// Setup scene mesh transforms and colors
 	MeshTransforms.resize(SceneMeshTransformCount);

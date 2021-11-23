@@ -32,7 +32,7 @@ std::unique_ptr<DescriptorHeap> ShaderResourceDescriptorHeap;
 // Asset loading command objects
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> GraphicsLoadCommandQueue;
 Microsoft::WRL::ComPtr<ID3D12CommandAllocator> GraphicsLoadCommandAllocator;
-Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GraphicsLoadCommandList;
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> GraphicsLoadCommandList;
 Microsoft::WRL::ComPtr<ID3D12Fence> GraphicsLoadFence;
 UINT64 GraphicsLoadFenceValue = 0;
 
@@ -218,16 +218,8 @@ bool CreateCommandAllocator(const D3D12_COMMAND_LIST_TYPE type, Microsoft::WRL::
     return SUCCEEDED(device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
 }
 
-// Create graphics command list 4
 bool CreateCommandList(const D3D12_COMMAND_LIST_TYPE type, Microsoft::WRL::ComPtr<ID3D12Device> device,
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>& commandList)
-{
-    return SUCCEEDED(device->CreateCommandList(0, type, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
-}
-
-// Create graphics command list
-bool CreateCommandList(const D3D12_COMMAND_LIST_TYPE type, Microsoft::WRL::ComPtr<ID3D12Device> device,
-    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
     return SUCCEEDED(device->CreateCommandList(0, type, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 }
@@ -652,7 +644,56 @@ bool Renderer::LoadStagedMeshesOntoGPU(std::unique_ptr<Mesh>* pMeshes, const siz
         return false;
     }
 
-    // Wait on CPU for copy queue to finish
+    // Wait on CPU for graphics load queue to finish
+    return WaitForFenceToReachValue(GraphicsLoadFence, GraphicsLoadFenceValue, MainThreadFenceEvent,
+        static_cast<DWORD>(std::chrono::milliseconds::max().count()));
+}
+
+void Renderer::CreateStagedBottomLevelAccelerationStructure(Mesh& mesh, std::unique_ptr<BottomLevelAccelerationStructure>& blas)
+{
+    blas = std::make_unique<BottomLevelAccelerationStructure>(Device.Get(), mesh);
+}
+
+bool Renderer::BuildStagedBottomLevelAccelerationStructureOnGPU(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount)
+{
+    if (FAILED(GraphicsLoadCommandAllocator->Reset()))
+    {
+        DEBUG_LOG("Failed to reset copy command allocator.");
+        return false;
+    }
+
+    if (FAILED(GraphicsLoadCommandList->Reset(GraphicsLoadCommandAllocator.Get(), nullptr)))
+    {
+        DEBUG_LOG("Failed to reset copy command list.");
+        return false;
+    }
+
+    std::vector<D3D12_RESOURCE_BARRIER> barriers(structureCount);
+
+    for (size_t i = 0; i < structureCount; ++i)
+    {
+        auto& structure = pStructures[i];
+        GraphicsLoadCommandList->BuildRaytracingAccelerationStructure(&structure->GetBuildDesc(), 0, nullptr);
+        barriers[i] = CD3DX12_RESOURCE_BARRIER::UAV(structure->GetBlas());
+    }
+
+    GraphicsLoadCommandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
+
+    if (FAILED(GraphicsLoadCommandList->Close()))
+    {
+        return false;
+    }
+
+    ID3D12CommandList* commandLists[] = { GraphicsLoadCommandList.Get() };
+    GraphicsLoadCommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+    ++GraphicsLoadFenceValue;
+    if (FAILED(GraphicsLoadCommandQueue->Signal(GraphicsLoadFence.Get(), GraphicsLoadFenceValue)))
+    {
+        return false;
+    }
+
+    // Wait on CPU for graphics load queue to finish
     return WaitForFenceToReachValue(GraphicsLoadFence, GraphicsLoadFenceValue, MainThreadFenceEvent,
         static_cast<DWORD>(std::chrono::milliseconds::max().count()));
 }

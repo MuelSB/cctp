@@ -18,6 +18,7 @@ namespace Renderer
 		const D3D12_VERTEX_BUFFER_VIEW& GetVertexBufferView() const { return VertexBufferView; }
 		const D3D12_INDEX_BUFFER_VIEW& GetIndexBufferView() const { return IndexBufferView; }
 		uint32_t GetIndexCount() const { return IndexBufferView.SizeInBytes / sizeof(uint32_t); }
+		uint32_t GetVertexCount() const { return static_cast<uint32_t>(Vertices.size()); }
 
 	private:
 		std::vector<Vertex1Pos1UV1Norm> Vertices;

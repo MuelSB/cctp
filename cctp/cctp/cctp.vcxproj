@@ -116,6 +116,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="source\Renderer\BottomLevelAccelerationStructure.cpp" />
     <ClCompile Include="source\Renderer\DescriptorHeap.cpp" />
     <ClCompile Include="source\Renderer\Geometry.cpp" />
     <ClCompile Include="source\Renderer\Mesh.cpp" />
@@ -142,7 +143,7 @@
     <ClInclude Include="source\Math\Math.h" />
     <ClInclude Include="source\Math\Transform.h" />
     <ClInclude Include="source\Pch.h" />
-    <ClInclude Include="source\Renderer\Blas.h" />
+    <ClInclude Include="source\Renderer\BottomLevelAccelerationStructure.h" />
     <ClInclude Include="source\Renderer\Camera.h" />
     <ClInclude Include="source\Renderer\d3dx12.h" />
     <ClInclude Include="source\Renderer\DescriptorHeap.h" />
