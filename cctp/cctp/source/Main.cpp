@@ -191,6 +191,18 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::BeginImGui();
 
 		// Submit ImGui calls
+		// Main menu bar
+		ImGui::BeginMainMenuBar();
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Exit"))
+			{
+				Window::Close();
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+
 		// Draw scene ImGui
 		demoScene->DrawImGui();
 

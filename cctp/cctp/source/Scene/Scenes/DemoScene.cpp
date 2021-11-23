@@ -92,16 +92,7 @@ void DemoScene::Draw()
 
 void DemoScene::DrawImGui()
 {
-	ImGui::BeginMainMenuBar();
-	if (ImGui::BeginMenu("File"))
-	{
-		if (ImGui::MenuItem("Exit"))
-		{
-			Window::Close();
-		}
-		ImGui::EndMenu();
-	}
-	ImGui::EndMainMenuBar();
+
 }
 
 void DemoScene::OnInputEvent(InputEvent&& event)
