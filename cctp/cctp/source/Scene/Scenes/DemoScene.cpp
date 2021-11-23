@@ -20,13 +20,19 @@ DemoScene::DemoScene()
 		});
 
 	// Create meshes
-	Meshes.resize(1);
+	Meshes.resize(2);
 
 	// Cube mesh
 	std::vector<Renderer::Vertex1Pos1UV1Norm> cubeVertices;
 	std::vector<uint32_t> cubeIndices;
 	Renderer::Geometry::GenerateCubeGeometry(cubeVertices, cubeIndices, 1.0f);
 	Renderer::CreateStagedMesh(cubeVertices, cubeIndices, L"CubeMesh", Meshes[0]);
+
+	// Sphere mesh
+	std::vector<Renderer::Vertex1Pos1UV1Norm> sphereVertices;
+	std::vector<uint32_t> sphereIndices;
+	Renderer::Geometry::GenerateSphereGeometry(sphereVertices, sphereIndices, 1.0f, 32, 32);
+	Renderer::CreateStagedMesh(sphereVertices, sphereIndices, L"SphereMesh", Meshes[1]);
 
 	// Load meshes onto GPU
 	Renderer::LoadStagedMeshesOntoGPU(Meshes.data(), Meshes.size());
