@@ -44,10 +44,10 @@ DemoScene::DemoScene()
 	blAccelStructures.resize(1);
 
 	// Cube blas
-	Renderer::CreateStagedBottomLevelAccelerationStructure(*Meshes[0].get(), blAccelStructures[0]);
+	Renderer::CreateBottomLevelAccelerationStructure(*Meshes[0].get(), blAccelStructures[0]);
 
 	// Build bl acceleration structures on GPU
-	if (!Renderer::BuildStagedBottomLevelAccelerationStructureOnGPU(blAccelStructures.data(), blAccelStructures.size()))
+	if (!Renderer::BuildBottomLevelAccelerationStructures(blAccelStructures.data(), blAccelStructures.size()))
 	{
 		assert(false && "Failed to build bottom level acceleration structure.");
 	}
@@ -86,6 +86,18 @@ DemoScene::DemoScene()
 	MeshTransforms[5].Rotation = glm::vec3(0.0f, 45.0f, 0.0f);
 	MeshTransforms[5].Scale = glm::vec3(1.0f, 2.0f, 1.0f);
 	MeshColors[5] = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	// Create top level acceleration structure
+	Renderer::CreateTopLevelAccelerationStructure(tlAccelStructure, true, static_cast<uint32_t>(SceneMeshTransformCount));
+
+	// Set tlas instances
+	for (size_t i = 0; i < SceneMeshTransformCount; ++i)
+	{
+		tlAccelStructure->SetInstanceBlasAndTransform(static_cast<uint32_t>(i), *blAccelStructures[0].get(), Math::CalculateWorldMatrix(MeshTransforms[i]));
+	}
+
+	// Build tlas
+	Renderer::BuildTopLevelAccelerationStructures(&tlAccelStructure, 1);
 
 	// Move main camera back
 	MainCamera.Position = CameraStartPosition;

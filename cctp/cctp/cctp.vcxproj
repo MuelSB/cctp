@@ -123,6 +123,7 @@
     <ClCompile Include="source\Renderer\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="source\Renderer\Renderer.cpp" />
     <ClCompile Include="source\Renderer\SwapChain.cpp" />
+    <ClCompile Include="source\Renderer\TopLevelAccelerationStructure.cpp" />
     <ClCompile Include="source\Scene\Scenes\DemoScene.cpp" />
     <ClCompile Include="source\Window\Window.cpp" />
   </ItemGroup>
@@ -153,6 +154,7 @@
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipelineBase.h" />
     <ClInclude Include="source\Renderer\Renderer.h" />
     <ClInclude Include="source\Renderer\SwapChain.h" />
+    <ClInclude Include="source\Renderer\TopLevelAccelerationStructure.h" />
     <ClInclude Include="source\Renderer\Vertices\Vertex1Pos1UV1Norm.h" />
     <ClInclude Include="source\Scene\Scenes\DemoScene.h" />
     <ClInclude Include="source\Scene\SceneBase.h" />

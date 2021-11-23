@@ -7,6 +7,7 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "BottomLevelAccelerationStructure.h"
+#include "TopLevelAccelerationStructure.h"
 
 struct Transform;
 
@@ -22,8 +23,10 @@ namespace Renderer
 	void CreateStagedMesh(const std::vector<Vertex1Pos1UV1Norm>& vertices, const std::vector<uint32_t>& indices,
 		const std::wstring& name, std::unique_ptr<Mesh>& mesh);
 	bool LoadStagedMeshesOntoGPU(std::unique_ptr<Mesh>* pMeshes, const size_t meshCount);
-	void CreateStagedBottomLevelAccelerationStructure(Mesh& mesh, std::unique_ptr<BottomLevelAccelerationStructure>& blas);
-	bool BuildStagedBottomLevelAccelerationStructureOnGPU(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount);
+	void CreateBottomLevelAccelerationStructure(Mesh& mesh, std::unique_ptr<BottomLevelAccelerationStructure>& blas);
+	bool BuildBottomLevelAccelerationStructures(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount);
+	void CreateTopLevelAccelerationStructure(std::unique_ptr<TopLevelAccelerationStructure>& tlas, const bool allowUpdate, const uint32_t instanceCount);
+	bool BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccelerationStructure>* pStructures, const size_t structureCount);
 
 	UINT GetRTDescriptorIncrementSize();
 	bool GetVSyncEnabled();
@@ -44,5 +47,6 @@ namespace Renderer
 		void SetDescriptorHeaps();
 		void BeginImGui();
 		void EndImGui();
+		void RebuildTlas(TopLevelAccelerationStructure* tlas);
 	}
 }

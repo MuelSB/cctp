@@ -203,6 +203,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 		ImGui::EndMainMenuBar();
 
+		// Rebuild acceleration structures
+		Renderer::Commands::RebuildTlas(demoScene->GetTlas());
+
 		// Draw scene ImGui
 		demoScene->DrawImGui();
 

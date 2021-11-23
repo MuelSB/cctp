@@ -13,9 +13,10 @@ public:
 	void Draw() final;
 	void DrawImGui() final;
 
-	void OnInputEvent(InputEvent&& event);
+	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }
 
 private:
+	void OnInputEvent(InputEvent&& event);
 	void PollInputs(float deltaTime);
 
 private:
@@ -32,6 +33,7 @@ private:
 
 	std::vector<std::unique_ptr<Renderer::Mesh>> Meshes;
 	std::vector<std::unique_ptr<Renderer::BottomLevelAccelerationStructure>> blAccelStructures;
+	std::unique_ptr<Renderer::TopLevelAccelerationStructure> tlAccelStructure;
 	std::vector<Transform> MeshTransforms;
 	std::vector<glm::vec4> MeshColors;
 };

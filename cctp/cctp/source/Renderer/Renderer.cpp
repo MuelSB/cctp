@@ -649,12 +649,12 @@ bool Renderer::LoadStagedMeshesOntoGPU(std::unique_ptr<Mesh>* pMeshes, const siz
         static_cast<DWORD>(std::chrono::milliseconds::max().count()));
 }
 
-void Renderer::CreateStagedBottomLevelAccelerationStructure(Mesh& mesh, std::unique_ptr<BottomLevelAccelerationStructure>& blas)
+void Renderer::CreateBottomLevelAccelerationStructure(Mesh& mesh, std::unique_ptr<BottomLevelAccelerationStructure>& blas)
 {
     blas = std::make_unique<BottomLevelAccelerationStructure>(Device.Get(), mesh);
 }
 
-bool Renderer::BuildStagedBottomLevelAccelerationStructureOnGPU(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount)
+bool Renderer::BuildBottomLevelAccelerationStructures(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount)
 {
     if (FAILED(GraphicsLoadCommandAllocator->Reset()))
     {
@@ -675,6 +675,55 @@ bool Renderer::BuildStagedBottomLevelAccelerationStructureOnGPU(std::unique_ptr<
         auto& structure = pStructures[i];
         GraphicsLoadCommandList->BuildRaytracingAccelerationStructure(&structure->GetBuildDesc(), 0, nullptr);
         barriers[i] = CD3DX12_RESOURCE_BARRIER::UAV(structure->GetBlas());
+    }
+
+    GraphicsLoadCommandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
+
+    if (FAILED(GraphicsLoadCommandList->Close()))
+    {
+        return false;
+    }
+
+    ID3D12CommandList* commandLists[] = { GraphicsLoadCommandList.Get() };
+    GraphicsLoadCommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+
+    ++GraphicsLoadFenceValue;
+    if (FAILED(GraphicsLoadCommandQueue->Signal(GraphicsLoadFence.Get(), GraphicsLoadFenceValue)))
+    {
+        return false;
+    }
+
+    // Wait on CPU for graphics load queue to finish
+    return WaitForFenceToReachValue(GraphicsLoadFence, GraphicsLoadFenceValue, MainThreadFenceEvent,
+        static_cast<DWORD>(std::chrono::milliseconds::max().count()));
+}
+
+void Renderer::CreateTopLevelAccelerationStructure(std::unique_ptr<TopLevelAccelerationStructure>& tlas, const bool allowUpdate, const uint32_t instanceCount)
+{
+    tlas = std::make_unique<TopLevelAccelerationStructure>(Device.Get(), allowUpdate, instanceCount);
+}
+
+bool Renderer::BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccelerationStructure>* pStructures, const size_t structureCount)
+{
+    if (FAILED(GraphicsLoadCommandAllocator->Reset()))
+    {
+        DEBUG_LOG("Failed to reset copy command allocator.");
+        return false;
+    }
+
+    if (FAILED(GraphicsLoadCommandList->Reset(GraphicsLoadCommandAllocator.Get(), nullptr)))
+    {
+        DEBUG_LOG("Failed to reset copy command list.");
+        return false;
+    }
+
+    std::vector<D3D12_RESOURCE_BARRIER> barriers(structureCount);
+
+    for (size_t i = 0; i < structureCount; ++i)
+    {
+        auto& structure = pStructures[i];
+        GraphicsLoadCommandList->BuildRaytracingAccelerationStructure(&structure->GetBuildDesc(), 0, nullptr);
+        barriers[i] = CD3DX12_RESOURCE_BARRIER::UAV(structure->GetTlas());
     }
 
     GraphicsLoadCommandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
@@ -873,4 +922,33 @@ void Renderer::Commands::EndImGui()
 {
     ImGui::Render();
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectCommandList.Get());
+}
+
+void Renderer::Commands::RebuildTlas(TopLevelAccelerationStructure* tlas)
+{
+    assert(tlas->UpdateAllowed() && "Attempting to rebuild a tlas that does not allow updating.");
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+    inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+    inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+    inputs.NumDescs = tlas->GetInstanceCount();
+    inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
+
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
+    Device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
+
+    auto* pTlas = tlas->GetTlas();
+    auto tlasGPUVirtualAddress = pTlas->GetGPUVirtualAddress();;
+
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
+    buildDesc.Inputs = inputs;
+    buildDesc.Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
+    buildDesc.SourceAccelerationStructureData = tlasGPUVirtualAddress;
+    buildDesc.Inputs.InstanceDescs = tlas->GetInstancesBuffer()->GetGPUVirtualAddress();
+    buildDesc.DestAccelerationStructureData = tlasGPUVirtualAddress;
+    buildDesc.ScratchAccelerationStructureData = tlas->GetScratchBuffer()->GetGPUVirtualAddress();
+
+    DirectCommandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+    auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(pTlas);
+    DirectCommandList->ResourceBarrier(1, &barrier);
 }
