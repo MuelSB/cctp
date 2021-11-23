@@ -18,11 +18,11 @@ Microsoft::WRL::ComPtr<IDXGIFactory4> DXGIFactory;
 bool TearingSupported;
 Microsoft::WRL::ComPtr<IDXGIAdapter4> Adapter;
 DXGI_ADAPTER_DESC1 AdapterDesc;
-Microsoft::WRL::ComPtr<ID3D12Device> Device;
+Microsoft::WRL::ComPtr<ID3D12Device5> Device;
 UINT RTDescriptorIncrementSize;
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> DirectCommandQueue;
 std::array<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, BACK_BUFFER_COUNT> DirectCommandAllocators;
-Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DirectCommandList;
+Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> DirectCommandList;
 std::array<Microsoft::WRL::ComPtr<ID3D12Fence>, BACK_BUFFER_COUNT> FrameFences;
 std::array<UINT64, BACK_BUFFER_COUNT> FrameFenceValues;
 HANDLE MainThreadFenceEvent;
@@ -160,7 +160,7 @@ bool GetAdapter(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::C
     return true;
 }
 
-bool CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter, Microsoft::WRL::ComPtr<ID3D12Device>& device)
+bool CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter4> adapter, Microsoft::WRL::ComPtr<ID3D12Device5>& device)
 {
     auto hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device));
 
@@ -218,6 +218,14 @@ bool CreateCommandAllocator(const D3D12_COMMAND_LIST_TYPE type, Microsoft::WRL::
     return SUCCEEDED(device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
 }
 
+// Create graphics command list 4
+bool CreateCommandList(const D3D12_COMMAND_LIST_TYPE type, Microsoft::WRL::ComPtr<ID3D12Device> device,
+    Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4>& commandList)
+{
+    return SUCCEEDED(device->CreateCommandList(0, type, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
+}
+
+// Create graphics command list
 bool CreateCommandList(const D3D12_COMMAND_LIST_TYPE type, Microsoft::WRL::ComPtr<ID3D12Device> device,
     Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>& commandList)
 {
