@@ -142,6 +142,7 @@
     <ClInclude Include="source\Math\Math.h" />
     <ClInclude Include="source\Math\Transform.h" />
     <ClInclude Include="source\Pch.h" />
+    <ClInclude Include="source\Renderer\Blas.h" />
     <ClInclude Include="source\Renderer\Camera.h" />
     <ClInclude Include="source\Renderer\d3dx12.h" />
     <ClInclude Include="source\Renderer\DescriptorHeap.h" />

@@ -124,9 +124,18 @@ bool CheckTearingSupport(Microsoft::WRL::ComPtr<IDXGIFactory4> factory)
     return allowTearing == TRUE;
 }
 
+bool SupportsRaytracing(Microsoft::WRL::ComPtr<IDXGIAdapter1> adapter)
+{
+    Microsoft::WRL::ComPtr<ID3D12Device> testDevice;
+    D3D12_FEATURE_DATA_D3D12_OPTIONS5 featureSupportData = {};
+    return SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&testDevice)))
+        && SUCCEEDED(testDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &featureSupportData, sizeof(featureSupportData)))
+        && featureSupportData.RaytracingTier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+}
+
 bool GetAdapter(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::ComPtr<IDXGIAdapter4>& adapter, DXGI_ADAPTER_DESC1& adapterDesc)
 {
-    // Select a hardware adapter, supporting D3D12 device creation and favouring the adapter with the largest dedicated video memory
+    // Select a hardware adapter, supporting D3D12 device creation, raytracing and favouring the adapter with the largest dedicated video memory
     Microsoft::WRL::ComPtr<IDXGIAdapter1> intermediateAdapter;
     SIZE_T maxDedicatedVideoMemory = 0;
     for (UINT i = 0; factory->EnumAdapters1(i, &intermediateAdapter) != DXGI_ERROR_NOT_FOUND; ++i)
@@ -136,6 +145,7 @@ bool GetAdapter(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::C
 
         if ((intermediateAdapterDesc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
             (SUCCEEDED(D3D12CreateDevice(intermediateAdapter.Get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
+                SupportsRaytracing(intermediateAdapter) &&
                 intermediateAdapterDesc.DedicatedVideoMemory > maxDedicatedVideoMemory))
         {
             maxDedicatedVideoMemory = intermediateAdapterDesc.DedicatedVideoMemory;
