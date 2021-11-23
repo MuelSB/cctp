@@ -187,8 +187,15 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Draw scene
 		demoScene->Draw();
 
-		// Draw ImGui
-		Renderer::Commands::DrawImgui();
+		// Begin ImGui for the frame
+		Renderer::Commands::BeginImGui();
+
+		// Submit ImGui calls
+		// Draw scene ImGui
+		demoScene->DrawImGui();
+
+		// End ImGui for the frame
+		Renderer::Commands::EndImGui();
 
 		// End the frame for the swap chain
 		Renderer::Commands::EndFrame(pSwapChain);

@@ -11,6 +11,7 @@ public:
 	void Begin() final;
 	void Tick(float deltaTime) final;
 	void Draw() final;
+	void DrawImGui() final;
 
 	void OnInputEvent(InputEvent&& event);
 

@@ -90,6 +90,20 @@ void DemoScene::Draw()
 	}
 }
 
+void DemoScene::DrawImGui()
+{
+	ImGui::BeginMainMenuBar();
+	if (ImGui::BeginMenu("File"))
+	{
+		if (ImGui::MenuItem("Exit"))
+		{
+			Window::Close();
+		}
+		ImGui::EndMenu();
+	}
+	ImGui::EndMainMenuBar();
+}
+
 void DemoScene::OnInputEvent(InputEvent&& event)
 {
 	if (event.Input == InputCodes::Right_Mouse_Button && event.Data == 1.0f)

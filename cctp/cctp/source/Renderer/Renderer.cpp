@@ -803,23 +803,15 @@ void Renderer::Commands::SetDescriptorHeaps()
     DirectCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
 }
 
-void Renderer::Commands::DrawImgui()
+void Renderer::Commands::BeginImGui()
 {
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+}
 
-    ImGui::BeginMainMenuBar();
-    if (ImGui::BeginMenu("File"))
-    {
-        if (ImGui::MenuItem("Exit"))
-        {
-            Window::Close();
-        }
-        ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
-
+void Renderer::Commands::EndImGui()
+{
     ImGui::Render();
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), DirectCommandList.Get());
 }
