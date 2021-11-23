@@ -14,7 +14,7 @@ namespace Window
 	bool GetWindowAreaRect(RECT& rect);
 	bool GetClientAreaRect(RECT& rect);
 	bool SetFullscreen(bool fullscreen);
-	void Show();
+	void Show(int flag);
 	bool SetSize(const glm::vec2& size);
 	bool Close();
 	bool CaptureCursor();

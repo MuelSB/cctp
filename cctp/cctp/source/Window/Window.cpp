@@ -379,9 +379,9 @@ bool Window::SetFullscreen(bool fullscreen)
 	return true;
 }
 
-void Window::Show()
+void Window::Show(int flag)
 {
-	::ShowWindow(Handle, SW_NORMAL);
+	::ShowWindow(Handle, flag);
 }
 
 bool Window::SetSize(const glm::vec2& size)

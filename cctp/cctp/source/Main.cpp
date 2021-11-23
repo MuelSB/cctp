@@ -67,7 +67,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to initialize window.");
 	}
 
-	Window::Show();
+	Window::Show(SW_MAXIMIZE);
 
 	// Subscribe input event handler
 	EventSystem::SubscribeToEvent<InputEvent>([](InputEvent&& event)
