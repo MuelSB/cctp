@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Scene/SceneBase.h"
+#include "Math/Transform.h"
 
 struct InputEvent;
 
@@ -36,4 +37,6 @@ private:
 	std::unique_ptr<Renderer::TopLevelAccelerationStructure> tlAccelStructure;
 	std::vector<Transform> MeshTransforms;
 	std::vector<glm::vec4> MeshColors;
+
+	Transform ProbeTransform = {};
 };

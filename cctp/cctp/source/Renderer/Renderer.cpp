@@ -762,6 +762,11 @@ void Renderer::SetVSyncEnabled(const bool enabled)
     VSyncEnabled = enabled;
 }
 
+ID3D12Device5* Renderer::GetDevice()
+{
+    return Device.Get();
+}
+
 // Commands
 bool Renderer::Commands::StartFrame(SwapChain* pSwapChain)
 {

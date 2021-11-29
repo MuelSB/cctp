@@ -104,6 +104,9 @@ DemoScene::DemoScene()
 
 	// Set main camera fov
 	MainCamera.Settings.PerspectiveFOV = 45.0f;
+
+	ProbeTransform.Position = glm::vec3(0.0f, 2.0f, 0.0f);
+	ProbeTransform.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
 }
 
 void DemoScene::Begin()
@@ -121,11 +124,15 @@ void DemoScene::Draw()
 	{
 		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshColors[i]);
 	}
+
+	Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransform, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f));
 }
 
 void DemoScene::DrawImGui()
 {
-
+	ImGui::Begin("Test");
+	ImGui::DragFloat3("Probe position", &ProbeTransform.Position.x, 0.1f);
+	ImGui::End();
 }
 
 void DemoScene::OnInputEvent(InputEvent&& event)

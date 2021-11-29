@@ -67,10 +67,11 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dxgi.lib;dxguid.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxgi.lib;dxguid.lib;d3d12.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)Shaders/Binary" "$(TargetDir)Shaders/Binary" /E /I /Y</Command>
+      <Command>xcopy "$(ProjectDir)Shaders/Binary" "$(TargetDir)Shaders/Binary" /E /I /Y
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -91,10 +92,11 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dxgi.lib;dxguid.lib;d3d12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxgi.lib;dxguid.lib;d3d12.lib;dxcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)Shaders/Binary" "$(TargetDir)Shaders/Binary" /E /I /Y</Command>
+      <Command>xcopy "$(ProjectDir)Shaders/Binary" "$(TargetDir)Shaders/Binary" /E /I /Y
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -118,6 +120,7 @@
     </ClCompile>
     <ClCompile Include="source\Renderer\BottomLevelAccelerationStructure.cpp" />
     <ClCompile Include="source\Renderer\DescriptorHeap.cpp" />
+    <ClCompile Include="source\Renderer\DXC\DXCHelper.cpp" />
     <ClCompile Include="source\Renderer\Geometry.cpp" />
     <ClCompile Include="source\Renderer\Mesh.cpp" />
     <ClCompile Include="source\Renderer\Pipeline\GraphicsPipeline.cpp" />
@@ -148,6 +151,8 @@
     <ClInclude Include="source\Renderer\Camera.h" />
     <ClInclude Include="source\Renderer\d3dx12.h" />
     <ClInclude Include="source\Renderer\DescriptorHeap.h" />
+    <ClInclude Include="source\Renderer\DXC\DXCBlob.h" />
+    <ClInclude Include="source\Renderer\DXC\DXCHelper.h" />
     <ClInclude Include="source\Renderer\Geometry.h" />
     <ClInclude Include="source\Renderer\Mesh.h" />
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipeline.h" />

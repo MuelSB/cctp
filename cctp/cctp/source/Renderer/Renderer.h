@@ -32,6 +32,9 @@ namespace Renderer
 	bool GetVSyncEnabled();
 	void SetVSyncEnabled(const bool enabled);
 
+	// Temporary
+	ID3D12Device5* GetDevice();
+
 	// Commands
 	namespace Commands
 	{

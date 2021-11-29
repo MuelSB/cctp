@@ -2,6 +2,7 @@
 #include "Window/Window.h"
 #include "Events/EventSystem.h"
 #include "Renderer/Renderer.h"
+#include "Binary/Binary.h"
 
 #include "Scene/Scenes/DemoScene.h"
 
@@ -130,6 +131,76 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create graphics pipeline.");
 	}
+
+	// Create raytracing pipeline
+
+	// Load compiled raytracing shaders
+	BinaryBuffer rayGenBuffer;
+	if (!Binary::ReadBinaryIntoBuffer("Shaders/Binary/RayGen.dxil", rayGenBuffer))
+	{
+		assert(false && "Failed to read compiled ray gen shader.");
+	}
+
+	BinaryBuffer closestHitBuffer;
+	if (!Binary::ReadBinaryIntoBuffer("Shaders/Binary/ClosestHit.dxil", closestHitBuffer))
+	{
+		assert(false && "Failed to read compiled closest hit shader.");
+	}
+
+	BinaryBuffer missBuffer;
+	if (!Binary::ReadBinaryIntoBuffer("Shaders/Binary/Miss.dxil", missBuffer))
+	{
+		assert(false && "Failed to read compiled miss shader.");
+	}
+
+	// Create raytracing pipeline state object
+	CD3DX12_STATE_OBJECT_DESC rtpsoDesc = {};
+	rtpsoDesc.SetStateObjectType(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
+
+	// Add ray gen shader
+	CD3DX12_DXIL_LIBRARY_SUBOBJECT rayGenLibSubobject = {};
+	auto rayGenBytecode = CD3DX12_SHADER_BYTECODE(rayGenBuffer.GetBufferPointer(), rayGenBuffer.GetBufferLength());
+	rayGenLibSubobject.SetDXILLibrary(&rayGenBytecode);
+	rayGenLibSubobject.DefineExport(L"RayGen");
+	rayGenLibSubobject.AddToStateObject(rtpsoDesc);
+
+	// Add miss shader
+	CD3DX12_DXIL_LIBRARY_SUBOBJECT missLibSubobject = {};
+	auto missBytecode = CD3DX12_SHADER_BYTECODE(missBuffer.GetBufferPointer(), missBuffer.GetBufferLength());
+	missLibSubobject.SetDXILLibrary(&missBytecode);
+	missLibSubobject.DefineExport(L"Miss");
+	missLibSubobject.AddToStateObject(rtpsoDesc);
+
+	// Add closest hit shader
+	CD3DX12_DXIL_LIBRARY_SUBOBJECT closestHitLibSubobject = {};
+	auto closestHitBytecode = CD3DX12_SHADER_BYTECODE(closestHitBuffer.GetBufferPointer(), closestHitBuffer.GetBufferLength());
+	closestHitLibSubobject.SetDXILLibrary(&closestHitBytecode);
+	closestHitLibSubobject.DefineExport(L"ClosestHit");
+	closestHitLibSubobject.AddToStateObject(rtpsoDesc);
+
+	// Add hit group shader
+	CD3DX12_HIT_GROUP_SUBOBJECT hitGroupSubobject = {};
+	hitGroupSubobject.SetIntersectionShaderImport(nullptr);
+	hitGroupSubobject.SetAnyHitShaderImport(nullptr);
+	hitGroupSubobject.SetClosestHitShaderImport(L"ClosestHit");
+	hitGroupSubobject.SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
+	hitGroupSubobject.SetHitGroupExport(L"HitGroup");
+	hitGroupSubobject.AddToStateObject(rtpsoDesc);
+
+	// Add shader config subobject
+	UINT payloadSize = sizeof(float) * 3;
+	UINT attributeSize = sizeof(float) * 2;
+	CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT shaderConfigSubobject = {};
+	shaderConfigSubobject.Config(payloadSize, attributeSize);
+	shaderConfigSubobject.AddToStateObject(rtpsoDesc);
+
+	// Create ray gen shader local root signature
+
+
+
+
+	// Create pipeline global root signature
+
 
 	// Create demo scene
 	auto demoScene = std::make_unique<DemoScene>();
