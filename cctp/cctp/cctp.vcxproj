@@ -125,6 +125,7 @@
     <ClCompile Include="source\Renderer\Mesh.cpp" />
     <ClCompile Include="source\Renderer\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="source\Renderer\Renderer.cpp" />
+    <ClCompile Include="source\Renderer\RootSignature.cpp" />
     <ClCompile Include="source\Renderer\SwapChain.cpp" />
     <ClCompile Include="source\Renderer\TopLevelAccelerationStructure.cpp" />
     <ClCompile Include="source\Scene\Scenes\DemoScene.cpp" />
@@ -158,6 +159,8 @@
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipeline.h" />
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipelineBase.h" />
     <ClInclude Include="source\Renderer\Renderer.h" />
+    <ClInclude Include="source\Renderer\RootSignature.h" />
+    <ClInclude Include="source\Renderer\SamplerType.h" />
     <ClInclude Include="source\Renderer\SwapChain.h" />
     <ClInclude Include="source\Renderer\TopLevelAccelerationStructure.h" />
     <ClInclude Include="source\Renderer\Vertices\Vertex1Pos1UV1Norm.h" />

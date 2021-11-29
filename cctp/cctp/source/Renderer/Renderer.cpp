@@ -27,7 +27,7 @@ std::array<Microsoft::WRL::ComPtr<ID3D12Fence>, BACK_BUFFER_COUNT> FrameFences;
 std::array<UINT64, BACK_BUFFER_COUNT> FrameFenceValues;
 HANDLE MainThreadFenceEvent;
 bool VSyncEnabled = true;
-std::unique_ptr<DescriptorHeap> ShaderResourceDescriptorHeap;
+std::unique_ptr<DescriptorHeap> CBVSRVUAVDescriptorHeap;
 
 // Asset loading command objects
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> GraphicsLoadCommandQueue;
@@ -439,8 +439,8 @@ bool Renderer::Init()
     MappedPerObjectConstantBufferLocation = static_cast<uint8_t*>(mappedPerObjectConstantBufferResource);
 
     // Initialize shader visible descriptor heap
-    ShaderResourceDescriptorHeap = std::make_unique<DescriptorHeap>();
-    ShaderResourceDescriptorHeap->Init(Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
+    CBVSRVUAVDescriptorHeap = std::make_unique<DescriptorHeap>();
+    CBVSRVUAVDescriptorHeap->Init(Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
         SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT, true);
 
     // Initialize imgui
@@ -450,9 +450,9 @@ bool Renderer::Init()
     ImGui::StyleColorsDark();
     ImGui_ImplWin32_Init(Window::GetHandle());
     ImGui_ImplDX12_Init(Device.Get(), BACK_BUFFER_COUNT,
-        DXGI_FORMAT_R8G8B8A8_UNORM, ShaderResourceDescriptorHeap->Get(),
-        ShaderResourceDescriptorHeap->GetCPUDescriptorHandle(0),
-        ShaderResourceDescriptorHeap->GetGPUDescriptorHandle(0));
+        DXGI_FORMAT_R8G8B8A8_UNORM, CBVSRVUAVDescriptorHeap->Get(),
+        CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(0),
+        CBVSRVUAVDescriptorHeap->GetGPUDescriptorHandle(0));
 
 	return true;
 }
@@ -912,7 +912,7 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
 
 void Renderer::Commands::SetDescriptorHeaps()
 {
-    ID3D12DescriptorHeap* heaps[] = { ShaderResourceDescriptorHeap->Get() };
+    ID3D12DescriptorHeap* heaps[] = { CBVSRVUAVDescriptorHeap->Get() };
     DirectCommandList->SetDescriptorHeaps(_countof(heaps), heaps);
 }
 
