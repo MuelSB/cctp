@@ -11,7 +11,6 @@ constexpr UINT64 CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES = 256;
 constexpr uint32_t SIZE_64KB = 65536;
 constexpr size_t BACK_BUFFER_COUNT = 3;
 constexpr uint32_t MAX_DRAWS_PER_FRAME = SIZE_64KB / CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
-constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 1;
 
 // Renderer
 Microsoft::WRL::ComPtr<IDXGIFactory4> DXGIFactory;
@@ -251,7 +250,7 @@ bool WaitForFenceToReachValue(Microsoft::WRL::ComPtr<ID3D12Fence> fence, UINT64 
     return true;
 }
 
-bool Renderer::Init()
+bool Renderer::Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount)
 {
     // Enable debug features if in debug configuration
 #ifdef _DEBUG
@@ -441,9 +440,10 @@ bool Renderer::Init()
     // Initialize shader visible descriptor heap
     CBVSRVUAVDescriptorHeap = std::make_unique<DescriptorHeap>();
     CBVSRVUAVDescriptorHeap->Init(Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
-        SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT, true);
+        shaderVisibleCBVSRVUAVDescriptorCount, true);
 
     // Initialize imgui
+    assert(shaderVisibleCBVSRVUAVDescriptorCount > 0 && "At least 1 shader visible CBV SRV UAV descriptor is required for ImGui resources.");
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -723,7 +723,7 @@ bool Renderer::BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccel
     {
         auto& structure = pStructures[i];
         GraphicsLoadCommandList->BuildRaytracingAccelerationStructure(&structure->GetBuildDesc(), 0, nullptr);
-        barriers[i] = CD3DX12_RESOURCE_BARRIER::UAV(structure->GetTlas());
+        barriers[i] = CD3DX12_RESOURCE_BARRIER::UAV(structure->GetTlasResource());
     }
 
     GraphicsLoadCommandList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
@@ -745,6 +745,18 @@ bool Renderer::BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccel
     // Wait on CPU for graphics load queue to finish
     return WaitForFenceToReachValue(GraphicsLoadFence, GraphicsLoadFenceValue, MainThreadFenceEvent,
         static_cast<DWORD>(std::chrono::milliseconds::max().count()));
+}
+
+void Renderer::AddSRVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const uint32_t descriptorIndex)
+{
+    assert(descriptorIndex != 0 && "Descriptor index 0 is occupied by ImGui resources in CBV SRV UAV descriptor heap. Use another index.");
+    Device->CreateShaderResourceView(pResource, &desc, CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(descriptorIndex));
+}
+
+void Renderer::AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, const uint32_t descriptorIndex)
+{
+    assert(descriptorIndex != 0 && "Descriptor index 0 is occupied by ImGui resources in CBV SRV UAV descriptor heap. Use another index.");
+    Device->CreateUnorderedAccessView(pResource, nullptr, &desc, CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(descriptorIndex));
 }
 
 UINT Renderer::GetRTDescriptorIncrementSize()
@@ -942,7 +954,7 @@ void Renderer::Commands::RebuildTlas(TopLevelAccelerationStructure* tlas)
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
     Device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
 
-    auto* pTlas = tlas->GetTlas();
+    auto* pTlas = tlas->GetTlasResource();
     auto tlasGPUVirtualAddress = pTlas->GetGPUVirtualAddress();;
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};

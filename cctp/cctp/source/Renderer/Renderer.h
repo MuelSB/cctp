@@ -13,7 +13,7 @@ struct Transform;
 
 namespace Renderer
 {
-	bool Init();
+	bool Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount);
 	bool Shutdown();
 	bool Flush();
 	bool CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::unique_ptr<SwapChain>& swapChain);
@@ -27,6 +27,10 @@ namespace Renderer
 	bool BuildBottomLevelAccelerationStructures(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount);
 	void CreateTopLevelAccelerationStructure(std::unique_ptr<TopLevelAccelerationStructure>& tlas, const bool allowUpdate, const uint32_t instanceCount);
 	bool BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccelerationStructure>* pStructures, const size_t structureCount);
+	// Descriptor index 0 is occupied by ImGui resources
+	void AddSRVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const uint32_t descriptorIndex);
+	// Descriptor index 0 is occupied by ImGui resources
+	void AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, const uint32_t descriptorIndex);
 
 	UINT GetRTDescriptorIncrementSize();
 	bool GetVSyncEnabled();

@@ -12,7 +12,7 @@ namespace Renderer
 		TopLevelAccelerationStructure(ID3D12Device5* device, bool allowUpdate, uint32_t instanceCount);
 		void SetInstanceBlasAndTransform(const uint32_t instanceID, const BottomLevelAccelerationStructure& blas, const glm::mat4& transformMatrix);
 		const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC& GetBuildDesc() const { return BuildDesc; }
-		ID3D12Resource* GetTlas() const { return Tlas.Get(); }
+		ID3D12Resource* GetTlasResource() const { return Tlas.Get(); }
 		bool UpdateAllowed() const { return AllowUpdate; }
 		uint32_t GetInstanceCount() const { return InstanceCount; }
 		ID3D12Resource* GetInstancesBuffer() const { return InstancesBuffer.Get(); }

@@ -6,6 +6,14 @@
 
 #include "Scene/Scenes/DemoScene.h"
 
+// Temporary
+#include "Renderer/RootSignature.h"
+
+constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 3;
+constexpr uint32_t SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1;
+constexpr uint32_t RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2;
+constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
+
 void CreateConsole(const uint32_t maxLines)
 {
 	CONSOLE_SCREEN_BUFFER_INFO console_info;
@@ -63,7 +71,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 #endif
 
 	// Init window
-	if (!Window::Init(L"Demo window", glm::vec2(1920.0f, 1080.0f), Window::STYLE_WINDOWED))
+	if (!Window::Init(L"Demo window", WINDOW_DIMS, Window::STYLE_NO_RESIZE))
 	{
 		assert(false && "Failed to initialize window.");
 	}
@@ -84,7 +92,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		});
 
 	// Init renderer
-	if (!Renderer::Init())
+	if (!Renderer::Init(SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT))
 	{
 		assert(false && "Failed to initialize renderer.");
 	}
@@ -132,7 +140,36 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create graphics pipeline.");
 	}
 
+	// Create demo scene
+	auto demoScene = std::make_unique<DemoScene>();
+
 	// Create raytracing pipeline
+
+	// Create raytracing resources and add descriptors to resources
+	// Scene bvh 
+	D3D12_SHADER_RESOURCE_VIEW_DESC sceneBVHSRVDesc = {};
+	sceneBVHSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+	sceneBVHSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	sceneBVHSRVDesc.RaytracingAccelerationStructure.Location = demoScene->GetTlas()->GetTlasResource()->GetGPUVirtualAddress();
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(nullptr, sceneBVHSRVDesc, SCENE_BVH_SRV_DESCRIPTOR_INDEX);
+
+	// Raytracing output texture
+	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
+
+	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(WINDOW_DIMS.x), static_cast<UINT64>(WINDOW_DIMS.y));
+	raytraceOutputTextureResourceDesc.MipLevels = 1;
+	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	auto raytraceOutputTextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	Renderer::GetDevice()->CreateCommittedResource(&raytraceOutputTextureHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&raytraceOutputTextureResourceDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&raytraceOutputResource));
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC raytraceOutputUAVDesc = {};
+	raytraceOutputUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), raytraceOutputUAVDesc, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
 
 	// Load compiled raytracing shaders
 	BinaryBuffer rayGenBuffer;
@@ -202,8 +239,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Create pipeline global root signature
 
 
-	// Create demo scene
-	auto demoScene = std::make_unique<DemoScene>();
+
 
 	// Begin demo scene
 	demoScene->Begin();

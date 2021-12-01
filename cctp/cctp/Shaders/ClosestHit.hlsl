@@ -1,4 +1,4 @@
-#include "RayPayload.hlsl"
+#include "Common.hlsl"
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
