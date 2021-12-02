@@ -9,6 +9,8 @@
 // Temporary
 #include "Renderer/RootSignature.h"
 
+#define ALIGN_TO(size, alignment) (size + (alignment - 1) & ~(alignment-1))
+
 constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 3;
 constexpr uint32_t SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1;
 constexpr uint32_t RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2;
@@ -190,7 +192,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to read compiled miss shader.");
 	}
 
-
 	// Create raytracing pipeline state object
 	Microsoft::WRL::ComPtr<ID3D12StateObject> raytracingPipelineStateObject;
 
@@ -289,6 +290,36 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytracing pipeline state object.");
 	}
+
+	// Create raytracing shader table
+
+	// Calculate shader table size
+	constexpr uint32_t shaderRecordCount = 1;
+	// Shader identifier size + another 32 byte block for root arguments to meet alignment requirements
+	constexpr uint32_t shaderRecordSize = ALIGN_TO(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 1, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+
+	constexpr uint32_t shaderTableSize = shaderRecordCount * shaderRecordSize;
+
+	// Create shader table GPU memory
+	Microsoft::WRL::ComPtr<ID3D12Resource> shaderTable;
+	auto shaderTableHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto shaderTableResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(shaderTableSize);
+	Renderer::GetDevice()->CreateCommittedResource(&shaderTableHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&shaderTableResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&shaderTable)
+	);
+
+	// Map shader table memory
+	uint8_t* pShaderTableStart;
+	if (FAILED(shaderTable->Map(0, nullptr, reinterpret_cast<void**>(&pShaderTableStart))))
+	{
+		assert(false && "Failed to map shader table GPU memory.");
+	}
+
+
 
 	// Begin demo scene
 	demoScene->Begin();
