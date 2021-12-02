@@ -319,6 +319,14 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to map shader table GPU memory.");
 	}
 
+	// Get raytracing pipeline state object properties
+	Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> raytracingPipelineStateObjectProperties;
+	if (FAILED(raytracingPipelineStateObject->QueryInterface(IID_PPV_ARGS(&raytracingPipelineStateObjectProperties))))
+	{
+		assert(false && "Failed to query raytracing pipeline state object properties.");
+	}
+
+	// Populate shader table
 
 
 	// Begin demo scene
