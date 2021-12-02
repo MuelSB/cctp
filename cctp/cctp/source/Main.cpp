@@ -190,38 +190,45 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to read compiled miss shader.");
 	}
 
+
 	// Create raytracing pipeline state object
+	Microsoft::WRL::ComPtr<ID3D12StateObject> raytracingPipelineStateObject;
+
 	CD3DX12_STATE_OBJECT_DESC rtpsoDesc = {};
 	rtpsoDesc.SetStateObjectType(D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE);
 
 	// Add ray gen shader
+	constexpr LPCWSTR rayGenExportName = L"RayGen";
 	CD3DX12_DXIL_LIBRARY_SUBOBJECT rayGenLibSubobject = {};
 	auto rayGenBytecode = CD3DX12_SHADER_BYTECODE(rayGenBuffer.GetBufferPointer(), rayGenBuffer.GetBufferLength());
 	rayGenLibSubobject.SetDXILLibrary(&rayGenBytecode);
-	rayGenLibSubobject.DefineExport(L"RayGen");
+	rayGenLibSubobject.DefineExport(rayGenExportName);
 	rayGenLibSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add miss shader
+	constexpr LPCWSTR missExportName = L"Miss";
 	CD3DX12_DXIL_LIBRARY_SUBOBJECT missLibSubobject = {};
 	auto missBytecode = CD3DX12_SHADER_BYTECODE(missBuffer.GetBufferPointer(), missBuffer.GetBufferLength());
 	missLibSubobject.SetDXILLibrary(&missBytecode);
-	missLibSubobject.DefineExport(L"Miss");
+	missLibSubobject.DefineExport(missExportName);
 	missLibSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add closest hit shader
+	constexpr LPCWSTR closestHitExportName = L"ClosestHit";
 	CD3DX12_DXIL_LIBRARY_SUBOBJECT closestHitLibSubobject = {};
 	auto closestHitBytecode = CD3DX12_SHADER_BYTECODE(closestHitBuffer.GetBufferPointer(), closestHitBuffer.GetBufferLength());
 	closestHitLibSubobject.SetDXILLibrary(&closestHitBytecode);
-	closestHitLibSubobject.DefineExport(L"ClosestHit");
+	closestHitLibSubobject.DefineExport(closestHitExportName);
 	closestHitLibSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add hit group shader
+	constexpr LPCWSTR hitGroupName = L"HitGroup";
 	CD3DX12_HIT_GROUP_SUBOBJECT hitGroupSubobject = {};
 	hitGroupSubobject.SetIntersectionShaderImport(nullptr);
 	hitGroupSubobject.SetAnyHitShaderImport(nullptr);
 	hitGroupSubobject.SetClosestHitShaderImport(L"ClosestHit");
 	hitGroupSubobject.SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
-	hitGroupSubobject.SetHitGroupExport(L"HitGroup");
+	hitGroupSubobject.SetHitGroupExport(hitGroupName);
 	hitGroupSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add shader config subobject
@@ -232,14 +239,56 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	shaderConfigSubobject.AddToStateObject(rtpsoDesc);
 
 	// Create ray gen shader local root signature
+	RootSignature rayGenRootSignature;
 
+	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[2];
 
+	rayGenDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	rayGenDescriptorRanges[0].NumDescriptors = 1;
+	rayGenDescriptorRanges[0].BaseShaderRegister = 0;
+	rayGenDescriptorRanges[0].RegisterSpace = 0;
+	rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+	rayGenDescriptorRanges[1].NumDescriptors = 1;
+	rayGenDescriptorRanges[1].BaseShaderRegister = 0;
+	rayGenDescriptorRanges[1].RegisterSpace = 0;
+	rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rayGenRootSignature.AddRootDescriptorTableParameter(rayGenDescriptorRanges, _countof(rayGenDescriptorRanges), D3D12_SHADER_VISIBILITY_ALL);
+	rayGenRootSignature.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+	rayGenRootSignature.Create(Renderer::GetDevice());
+
+	CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT rayGenRootSignatureSubObject = {};
+	rayGenRootSignatureSubObject.SetRootSignature(rayGenRootSignature.GetRootSignature());
+	rayGenRootSignatureSubObject.AddToStateObject(rtpsoDesc);
+
+	// Create association sub object for ray gen shader and ray gen root signature
+	CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT rayGenAssociationSubObject = {};
+	rayGenAssociationSubObject.AddExport(rayGenExportName);
+	rayGenAssociationSubObject.SetSubobjectToAssociate(rayGenRootSignatureSubObject);
+	rayGenAssociationSubObject.AddToStateObject(rtpsoDesc);
 
 	// Create pipeline global root signature
+	RootSignature raytracingGlobalRootSignature;
+	raytracingGlobalRootSignature.Create(Renderer::GetDevice());
 
+	CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT raytracingGlobalRootSignatureSubObject = {};
+	raytracingGlobalRootSignatureSubObject.SetRootSignature(raytracingGlobalRootSignature.GetRootSignature());
+	raytracingGlobalRootSignatureSubObject.AddToStateObject(rtpsoDesc);
 
+	// Create raytracing pipeline config subobject
+	UINT raytraceRecursionDepth = 1;
 
+	CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT raytracingPipelineConfigSubObject = {};
+	raytracingPipelineConfigSubObject.Config(raytraceRecursionDepth);
+	raytracingPipelineConfigSubObject.AddToStateObject(rtpsoDesc);
+
+	// Create raytracing pipeline state object
+	if (FAILED(Renderer::GetDevice()->CreateStateObject(rtpsoDesc, IID_PPV_ARGS(&raytracingPipelineStateObject))))
+	{
+		assert(false && "Failed to create raytracing pipeline state object.");
+	}
 
 	// Begin demo scene
 	demoScene->Begin();
