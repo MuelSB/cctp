@@ -774,6 +774,11 @@ void Renderer::SetVSyncEnabled(const bool enabled)
     VSyncEnabled = enabled;
 }
 
+const DescriptorHeap* Renderer::GetShaderVisibleDescriptorHeap()
+{
+    return CBVSRVUAVDescriptorHeap.get();
+}
+
 ID3D12Device5* Renderer::GetDevice()
 {
     return Device.Get();
@@ -968,4 +973,31 @@ void Renderer::Commands::RebuildTlas(TopLevelAccelerationStructure* tlas)
     DirectCommandList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
     auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(pTlas);
     DirectCommandList->ResourceBarrier(1, &barrier);
+}
+
+void Renderer::Commands::Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource)
+{
+    DirectCommandList->SetPipelineState1(pPipelineStateObject);
+    DirectCommandList->DispatchRays(&dispatchRaysDesc);
+    auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(pRaytraceOutputResource);
+    DirectCommandList->ResourceBarrier(1, &barrier);
+}
+
+void Renderer::Commands::DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, ID3D12Resource* pSrcResource, D3D12_RESOURCE_STATES srcResourceState)
+{
+    auto* pRenderTargetResource = pSwapChain->GetBackBuffers()[FrameIndex].Get();
+
+    CD3DX12_RESOURCE_BARRIER beginBarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargetResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST),
+        CD3DX12_RESOURCE_BARRIER::Transition(pSrcResource, srcResourceState, D3D12_RESOURCE_STATE_COPY_SOURCE)
+    };
+    DirectCommandList->ResourceBarrier(_countof(beginBarriers), beginBarriers);
+
+    DirectCommandList->CopyResource(pRenderTargetResource, pSrcResource);
+
+    CD3DX12_RESOURCE_BARRIER endBarriers[] = {
+    CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargetResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
+    CD3DX12_RESOURCE_BARRIER::Transition(pSrcResource, D3D12_RESOURCE_STATE_COPY_SOURCE, srcResourceState)
+    };
+    DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
 }

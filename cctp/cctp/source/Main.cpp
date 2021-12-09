@@ -108,7 +108,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to get the window client area rect.");
 	}
-	if (!Renderer::CreateSwapChain(Window::GetHandle(), clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, swapChain))
+
+	const auto clientRectWidth = clientRect.right - clientRect.left;
+	const auto clientRectHeight = clientRect.bottom - clientRect.top;
+
+	if (!Renderer::CreateSwapChain(Window::GetHandle(), clientRectWidth, clientRectHeight, swapChain))
 	{
 		assert(false && "Failed to create a swap chain for the window.");
 	}
@@ -158,7 +162,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Raytracing output texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
 
-	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(WINDOW_DIMS.x), static_cast<UINT64>(WINDOW_DIMS.y));
+	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(clientRectWidth), static_cast<UINT64>(clientRectHeight));
 	raytraceOutputTextureResourceDesc.MipLevels = 1;
 	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutputTextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -223,13 +227,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	closestHitLibSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add hit group shader
-	constexpr LPCWSTR hitGroupName = L"HitGroup";
+	constexpr LPCWSTR hitGroupExportName = L"HitGroup";
 	CD3DX12_HIT_GROUP_SUBOBJECT hitGroupSubobject = {};
 	hitGroupSubobject.SetIntersectionShaderImport(nullptr);
 	hitGroupSubobject.SetAnyHitShaderImport(nullptr);
 	hitGroupSubobject.SetClosestHitShaderImport(L"ClosestHit");
 	hitGroupSubobject.SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
-	hitGroupSubobject.SetHitGroupExport(hitGroupName);
+	hitGroupSubobject.SetHitGroupExport(hitGroupExportName);
 	hitGroupSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add shader config subobject
@@ -242,21 +246,24 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Create ray gen shader local root signature
 	RootSignature rayGenRootSignature;
 
-	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[2];
+	//D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[2];
 
-	rayGenDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	rayGenDescriptorRanges[0].NumDescriptors = 1;
-	rayGenDescriptorRanges[0].BaseShaderRegister = 0;
-	rayGenDescriptorRanges[0].RegisterSpace = 0;
-	rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	//rayGenDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	//rayGenDescriptorRanges[0].NumDescriptors = 1;
+	//rayGenDescriptorRanges[0].BaseShaderRegister = 0;
+	//rayGenDescriptorRanges[0].RegisterSpace = 0;
+	//rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	rayGenDescriptorRanges[1].NumDescriptors = 1;
-	rayGenDescriptorRanges[1].BaseShaderRegister = 0;
-	rayGenDescriptorRanges[1].RegisterSpace = 0;
-	rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	//rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+	//rayGenDescriptorRanges[1].NumDescriptors = 1;
+	//rayGenDescriptorRanges[1].BaseShaderRegister = 0;
+	//rayGenDescriptorRanges[1].RegisterSpace = 0;
+	//rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	rayGenRootSignature.AddRootDescriptorTableParameter(rayGenDescriptorRanges, _countof(rayGenDescriptorRanges), D3D12_SHADER_VISIBILITY_ALL);
+	rayGenRootSignature.AddRootDescriptorTableParameter({
+		{D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+		{D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND }
+		}, D3D12_SHADER_VISIBILITY_ALL);
 	rayGenRootSignature.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 	rayGenRootSignature.Create(Renderer::GetDevice());
 
@@ -296,9 +303,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Calculate shader table size
 	constexpr uint32_t shaderRecordCount = 1;
 	// Shader identifier size + another 32 byte block for root arguments to meet alignment requirements
-	constexpr uint32_t shaderRecordSize = ALIGN_TO(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 1, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	constexpr uint32_t rayGenShaderRecordSize = ALIGN_TO(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 1, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	constexpr uint32_t missShaderRecordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+	constexpr uint32_t hitGroupShaderRecordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
 
-	constexpr uint32_t shaderTableSize = shaderRecordCount * shaderRecordSize;
+	constexpr uint32_t shaderTableSize = rayGenShaderRecordSize + ALIGN_TO(missShaderRecordSize, 64) + ALIGN_TO(hitGroupShaderRecordSize, 64);
 
 	// Create shader table GPU memory
 	Microsoft::WRL::ComPtr<ID3D12Resource> shaderTable;
@@ -319,7 +328,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to map shader table GPU memory.");
 	}
 
-	// Get raytracing pipeline state object properties
+	// Get raytracing pipeline state object properties to query shader identifiers
 	Microsoft::WRL::ComPtr<ID3D12StateObjectProperties> raytracingPipelineStateObjectProperties;
 	if (FAILED(raytracingPipelineStateObject->QueryInterface(IID_PPV_ARGS(&raytracingPipelineStateObjectProperties))))
 	{
@@ -328,6 +337,19 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 	// Populate shader table
 
+	// Shader record 0: Ray gen
+	// Shader identifier + descriptor table
+	memcpy(pShaderTableStart, raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
+		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
+
+	// Shader record 1: Miss
+	// Shader identifier
+	memcpy(pShaderTableStart + rayGenShaderRecordSize, raytracingPipelineStateObjectProperties->GetShaderIdentifier(missExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+	// Shader record 2: Hit group
+	// Shader identifier
+	memcpy(pShaderTableStart + rayGenShaderRecordSize + missShaderRecordSize, raytracingPipelineStateObjectProperties->GetShaderIdentifier(hitGroupExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Begin demo scene
 	demoScene->Begin();
@@ -382,10 +404,43 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Draw scene
 		demoScene->Draw();
 
+		// Raytrace
+
+		// Rebuild acceleration structures
+		Renderer::Commands::RebuildTlas(demoScene->GetTlas());
+
+		// Describe dispatch rays
+		D3D12_DISPATCH_RAYS_DESC dispatchRaysDesc = {};
+		dispatchRaysDesc.Width = static_cast<UINT>(WINDOW_DIMS.x);
+		dispatchRaysDesc.Height = static_cast<UINT>(WINDOW_DIMS.y);
+		dispatchRaysDesc.Depth = 1;
+
+		dispatchRaysDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress();
+		dispatchRaysDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderRecordSize;
+
+		dispatchRaysDesc.MissShaderTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize;
+		dispatchRaysDesc.MissShaderTable.StrideInBytes = missShaderRecordSize;
+		dispatchRaysDesc.MissShaderTable.SizeInBytes = missShaderRecordSize;
+
+		dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + ALIGN_TO(rayGenShaderRecordSize + dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
+		dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
+		dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
+
+		// Dispatch rays
+		Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
+
+		// Debug
+
+		Renderer::Commands::DebugCopyResourceToRenderTarget(pSwapChain, raytraceOutputResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+		// End debug
+
+
 		// Begin ImGui for the frame
 		Renderer::Commands::BeginImGui();
 
 		// Submit ImGui calls
+
 		// Main menu bar
 		ImGui::BeginMainMenuBar();
 		if (ImGui::BeginMenu("File"))
@@ -397,9 +452,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
-
-		// Rebuild acceleration structures
-		Renderer::Commands::RebuildTlas(demoScene->GetTlas());
 
 		// Draw scene ImGui
 		demoScene->DrawImGui();
