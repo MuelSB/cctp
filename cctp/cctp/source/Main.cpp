@@ -368,6 +368,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		auto currentTime = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> frameTime = currentTime - lastTime;
 		lastTime = currentTime;
+		auto frameTimeF = frameTime.count();
 
 		// Handle OS messages
 		if (Window::RunOSMessageLoop())
@@ -377,7 +378,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Tick demo scene
-		demoScene->Tick(frameTime.count());
+		demoScene->Tick(frameTimeF);
 
 		// Start a frame for the swap chain, retrieving the current back buffer index to render to
 		auto* pSwapChain = swapChain.get();
@@ -433,10 +434,14 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
 
 		// Dispatch rays
-		Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
+		static bool dispatchRays = false;
+		if (dispatchRays)
+		{
+			Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
+		}
 
 		// Debug
-		static bool showRaytraceOutput = true;
+		static bool showRaytraceOutput = false;
 
 		if (showRaytraceOutput)
 		{
@@ -450,6 +455,24 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::BeginImGui();
 
 		// Submit ImGui calls
+
+		// Performance stats window
+		static bool displayPerformanceStatsWindow = false;
+		if (displayPerformanceStatsWindow)
+		{
+			ImGui::SetNextWindowSize(ImVec2(200.0f, 50.0f));
+			ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f));
+			ImGui::Begin("Perf stats", NULL,
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove |
+				//ImGuiWindowFlags_NoBackground |
+				ImGuiWindowFlags_NoDecoration);
+
+			ImGui::Text(("Frametime (ms): " + std::to_string(frameTimeF)).c_str()); // Use ImGui::TextColored to change the text color and add contrast
+
+			ImGui::End();
+		}
 
 		// Main menu bar
 		ImGui::BeginMainMenuBar();
@@ -465,9 +488,15 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		if (ImGui::BeginMenu("Options"))
 		{
+			ImGui::Checkbox("Enable raytracing", &dispatchRays);
+
 			ImGui::Text("Debug");
 			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
 			ImGui::DragFloat3("Probe position", &demoScene->GetProbePosition().x, 0.1f);
+
+			ImGui::Text("Stats");
+			ImGui::Checkbox("Show performance stats", &displayPerformanceStatsWindow);
+
 			ImGui::EndMenu();
 		}
 

@@ -1,9 +1,13 @@
-#ifndef COMMON
-#define COMMON
+#ifndef COMMON_INCLUDE
+#define COMMON_INCLUDE
+
+#ifndef PI
+#define PI 3.14159274f
+#endif // PI
 
 struct RayPayload
 {
     float3 HitColor;
 };
 
-#endif
+#endif // COMMON_INCLUDE
