@@ -231,7 +231,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	CD3DX12_HIT_GROUP_SUBOBJECT hitGroupSubobject = {};
 	hitGroupSubobject.SetIntersectionShaderImport(nullptr);
 	hitGroupSubobject.SetAnyHitShaderImport(nullptr);
-	hitGroupSubobject.SetClosestHitShaderImport(L"ClosestHit");
+	hitGroupSubobject.SetClosestHitShaderImport(closestHitExportName);
 	hitGroupSubobject.SetHitGroupType(D3D12_HIT_GROUP_TYPE_TRIANGLES);
 	hitGroupSubobject.SetHitGroupExport(hitGroupExportName);
 	hitGroupSubobject.AddToStateObject(rtpsoDesc);
@@ -337,18 +337,24 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 	// Shader record 0: Ray gen
 	// Shader identifier + descriptor table + root descriptor
-	memcpy(pShaderTableStart, raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+	memcpy(pShaderTableStart, 
+		raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName),
+		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
 		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
 
 	// Shader record 1: Miss
 	// Shader identifier
-	memcpy(pShaderTableStart + rayGenShaderRecordSize, raytracingPipelineStateObjectProperties->GetShaderIdentifier(missExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+	memcpy(pShaderTableStart + rayGenShaderRecordSize,
+		raytracingPipelineStateObjectProperties->GetShaderIdentifier(missExportName),
+		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Shader record 2: Hit group
 	// Shader identifier
-	memcpy(pShaderTableStart + rayGenShaderRecordSize + missShaderRecordSize, raytracingPipelineStateObjectProperties->GetShaderIdentifier(hitGroupExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+	memcpy(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32), // Adding 32 bytes of padding to miss shader record for 64 byte table allignment
+		raytracingPipelineStateObjectProperties->GetShaderIdentifier(hitGroupExportName),
+		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Begin demo scene
 	demoScene->Begin();
@@ -422,7 +428,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		dispatchRaysDesc.MissShaderTable.StrideInBytes = missShaderRecordSize;
 		dispatchRaysDesc.MissShaderTable.SizeInBytes = missShaderRecordSize;
 
-		dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + ALIGN_TO(rayGenShaderRecordSize + dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
+		dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize + ALIGN_TO(dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
 		dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
 		dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
 
@@ -430,8 +436,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
 
 		// Debug
+		static bool showRaytraceOutput = true;
 
-		Renderer::Commands::DebugCopyResourceToRenderTarget(pSwapChain, raytraceOutputResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		if (showRaytraceOutput)
+		{
+			Renderer::Commands::DebugCopyResourceToRenderTarget(pSwapChain, raytraceOutputResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		}
 
 		// End debug
 
@@ -443,6 +453,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Main menu bar
 		ImGui::BeginMainMenuBar();
+
 		if (ImGui::BeginMenu("File"))
 		{
 			if (ImGui::MenuItem("Exit"))
@@ -451,6 +462,15 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			}
 			ImGui::EndMenu();
 		}
+
+		if (ImGui::BeginMenu("Options"))
+		{
+			ImGui::Text("Debug");
+			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
+			ImGui::DragFloat3("Probe position", &demoScene->GetProbePosition().x, 0.1f);
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
 
 		// Draw scene ImGui

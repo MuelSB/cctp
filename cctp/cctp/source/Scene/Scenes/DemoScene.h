@@ -16,6 +16,7 @@ public:
 
 	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }
 	const glm::vec3& GetProbePosition() const { return ProbeTransform.Position; }
+	glm::vec3& GetProbePosition() { return ProbeTransform.Position; }
 
 private:
 	void OnInputEvent(InputEvent&& event);
