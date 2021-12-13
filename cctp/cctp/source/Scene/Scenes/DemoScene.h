@@ -15,6 +15,7 @@ public:
 	void DrawImGui() final;
 
 	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }
+	const glm::vec3& GetProbePosition() const { return ProbeTransform.Position; }
 
 private:
 	void OnInputEvent(InputEvent&& event);

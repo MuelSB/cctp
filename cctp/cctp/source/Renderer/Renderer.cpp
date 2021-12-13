@@ -46,6 +46,7 @@ struct PerFrameConstants
 {
     glm::mat4 ViewMatrix = glm::identity<glm::mat4>();
     glm::mat4 ProjectionMatrix = glm::identity<glm::mat4>();
+    glm::vec4 ProbePosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 };
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PerFrameConstantBuffer;
@@ -779,6 +780,11 @@ const DescriptorHeap* Renderer::GetShaderVisibleDescriptorHeap()
     return CBVSRVUAVDescriptorHeap.get();
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetPerFrameConstantBufferGPUVirtualAddress()
+{
+    return PerFrameConstantBuffer->GetGPUVirtualAddress();
+}
+
 ID3D12Device5* Renderer::GetDevice()
 {
     return Device.Get();
@@ -878,7 +884,7 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera)
+void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -903,6 +909,12 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT per
             camera.Settings.OrthographicFarClipPlane);
         break;
     }
+
+    // Update probe position
+    perFrameConstants.ProbePosition.x = probePosition.x;
+    perFrameConstants.ProbePosition.y = probePosition.y;
+    perFrameConstants.ProbePosition.z = probePosition.z;
+    perFrameConstants.ProbePosition.w = 1.0f;
 
     memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
 

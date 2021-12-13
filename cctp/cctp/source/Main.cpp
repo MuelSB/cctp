@@ -246,24 +246,22 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Create ray gen shader local root signature
 	RootSignature rayGenRootSignature;
 
-	//D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[2];
+	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[2];
 
-	//rayGenDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	//rayGenDescriptorRanges[0].NumDescriptors = 1;
-	//rayGenDescriptorRanges[0].BaseShaderRegister = 0;
-	//rayGenDescriptorRanges[0].RegisterSpace = 0;
-	//rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	rayGenDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	rayGenDescriptorRanges[0].NumDescriptors = 1;
+	rayGenDescriptorRanges[0].BaseShaderRegister = 0;
+	rayGenDescriptorRanges[0].RegisterSpace = 0;
+	rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	//rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	//rayGenDescriptorRanges[1].NumDescriptors = 1;
-	//rayGenDescriptorRanges[1].BaseShaderRegister = 0;
-	//rayGenDescriptorRanges[1].RegisterSpace = 0;
-	//rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+	rayGenDescriptorRanges[1].NumDescriptors = 1;
+	rayGenDescriptorRanges[1].BaseShaderRegister = 0;
+	rayGenDescriptorRanges[1].RegisterSpace = 0;
+	rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	rayGenRootSignature.AddRootDescriptorTableParameter({
-		{D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
-		{D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND }
-		}, D3D12_SHADER_VISIBILITY_ALL);
+	rayGenRootSignature.AddRootDescriptorTableParameter(rayGenDescriptorRanges, _countof(rayGenDescriptorRanges), D3D12_SHADER_VISIBILITY_ALL);
+	rayGenRootSignature.AddRootDescriptorParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
 	rayGenRootSignature.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 	rayGenRootSignature.Create(Renderer::GetDevice());
 
@@ -338,10 +336,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Populate shader table
 
 	// Shader record 0: Ray gen
-	// Shader identifier + descriptor table
+	// Shader identifier + descriptor table + root descriptor
 	memcpy(pShaderTableStart, raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
 		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
+	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
 
 	// Shader record 1: Miss
 	// Shader identifier
@@ -398,7 +397,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Update per frame constants
 		static const auto& camera = demoScene->GetMainCamera();
-		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, 1, camera);
+		static const auto& probePosition = demoScene->GetProbePosition();
+		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, 1, camera, probePosition);
 
 		// Submit draw calls
 		// Draw scene

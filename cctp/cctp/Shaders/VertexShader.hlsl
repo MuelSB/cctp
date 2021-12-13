@@ -8,6 +8,7 @@ cbuffer PerFrameConstants : register(b1)
 {
     float4x4 ViewMatrix;
     float4x4 ProjectionMatrix;
+    float4 ProbePosition;
 }
 
 struct VertexIn
