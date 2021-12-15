@@ -14,6 +14,10 @@ struct Transform;
 
 namespace Renderer
 {
+	class Material;
+
+	constexpr size_t MAX_MATERIAL_COUNT = 6;
+
 	bool Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount);
 	bool Shutdown();
 	bool Flush();
@@ -53,7 +57,8 @@ namespace Renderer
 		void SetPrimitiveTopology();
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
-		void UpdatePerFrameAndMaterialConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition, const glm::vec4* pMaterials);
+		void UpdatePerFrameConstants(const glm::vec2& viewportDims, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition);
+		void UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount);
 		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color);
 		void SetDescriptorHeaps();
 		void BeginImGui();

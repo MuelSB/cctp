@@ -2,6 +2,7 @@
 
 #include "Scene/SceneBase.h"
 #include "Math/Transform.h"
+#include "Renderer/Material.h"
 
 struct InputEvent;
 
@@ -17,15 +18,15 @@ public:
 	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }
 	const glm::vec3& GetProbePosition() const { return ProbeTransform.Position; }
 	glm::vec3& GetProbePosition() { return ProbeTransform.Position; }
-	const glm::vec4* GetMaterials() const { return MeshColors.data(); }
+	const Renderer::Material* GetMaterialsPtr() const { return MeshMaterials.data(); }
+	size_t GetMaterialCount() const { return MeshMaterials.size(); }
 
 private:
 	void OnInputEvent(InputEvent&& event);
 	void PollInputs(float deltaTime);
 
 private:
-	static constexpr size_t SceneMeshTransformCount = SceneBase::MaxMaterialCount; // Set to MaxMaterialCount temporarily while a material is a seperate color per mesh
-																				   // This will be a material struct in the future with a seperate count to number of meshes in the scene
+	static constexpr size_t SceneMeshTransformCount = 6;
 	static constexpr float CameraYawSensitivity = 0.075f;
 	static constexpr float CameraPitchSensitivity = 0.075f;
 	static constexpr float CameraPitchMin = -90.0f;
@@ -40,7 +41,7 @@ private:
 	std::vector<std::unique_ptr<Renderer::BottomLevelAccelerationStructure>> blAccelStructures;
 	std::unique_ptr<Renderer::TopLevelAccelerationStructure> tlAccelStructure;
 	std::vector<Transform> MeshTransforms;
-	std::vector<glm::vec4> MeshColors;
+	std::vector<Renderer::Material> MeshMaterials;
 
 	Transform ProbeTransform = {};
 };

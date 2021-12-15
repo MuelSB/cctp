@@ -424,8 +424,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Update per frame constants
 		static const auto& camera = demoScene->GetMainCamera();
 		static const auto& probePosition = demoScene->GetProbePosition();
-		static const auto* pMaterials = demoScene->GetMaterials();
-		Renderer::Commands::UpdatePerFrameAndMaterialConstants(pSwapChain, 1, camera, probePosition, pMaterials);
+		Renderer::Commands::UpdatePerFrameConstants(glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 1, camera, probePosition);
+
+		// Update material constants
+		static const auto* pMaterials = demoScene->GetMaterialsPtr();
+		Renderer::Commands::UpdateMaterialConstants(pMaterials, static_cast<uint32_t>(demoScene->GetMaterialCount()));
 
 		// Submit draw calls
 		// Draw scene

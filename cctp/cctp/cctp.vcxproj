@@ -155,6 +155,7 @@
     <ClInclude Include="source\Renderer\DXC\DXCBlob.h" />
     <ClInclude Include="source\Renderer\DXC\DXCHelper.h" />
     <ClInclude Include="source\Renderer\Geometry.h" />
+    <ClInclude Include="source\Renderer\Material.h" />
     <ClInclude Include="source\Renderer\Mesh.h" />
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipeline.h" />
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipelineBase.h" />
