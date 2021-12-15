@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "Math/Math.h"
 #include "Window/Window.h"
+#include "Scene/SceneBase.h"
 
 #include "Pipeline/GraphicsPipeline.h"
 #include "DescriptorHeap.h"
@@ -49,11 +50,19 @@ struct PerFrameConstants
     glm::vec4 ProbePosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 };
 
+struct MaterialConstants
+{
+    glm::vec4 Colors[SceneBase::MaxMaterialCount];
+};
+
 Microsoft::WRL::ComPtr<ID3D12Resource> PerFrameConstantBuffer;
 uint8_t* MappedPerFrameConstantBufferLocation;
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PerObjectConstantBuffer;
 uint8_t* MappedPerObjectConstantBufferLocation;
+
+Microsoft::WRL::ComPtr<ID3D12Resource> MaterialConstantBuffer;
+uint8_t* MappedMaterialBufferLocation;
 
 // Rendering
 size_t FrameIndex = 0;
@@ -441,6 +450,38 @@ bool Renderer::Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount)
     }
     MappedPerObjectConstantBufferLocation = static_cast<uint8_t*>(mappedPerObjectConstantBufferResource);
 
+    // Create material buffer
+    auto materialHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto materialResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(SIZE_64KB);
+
+    if (FAILED(Device->CreateCommittedResource(&materialHeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &materialResourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&MaterialConstantBuffer))))
+    {
+        DEBUG_LOG("ERROR: Failed to create material constant buffer.");
+        return false;
+    }
+
+    // Set a debug name for the material buffer
+    if (FAILED(MaterialConstantBuffer->SetName(L"MaterialConstantBuffer")))
+    {
+        DEBUG_LOG("ERROR: Failed to name material constant buffer.");
+        return false;
+    }
+
+    // Map the material buffer
+    D3D12_RANGE materialReadRange(0, 0);
+    void* mappedMaterialBufferResource;
+    if FAILED(MaterialConstantBuffer->Map(0, &materialReadRange, &mappedMaterialBufferResource))
+    {
+        DEBUG_LOG("ERROR: Failed to map material constant buffer.");
+        return false;
+    }
+    MappedMaterialBufferLocation = static_cast<uint8_t*>(mappedMaterialBufferResource);
+
     // Initialize shader visible descriptor heap
     CBVSRVUAVDescriptorHeap = std::make_unique<DescriptorHeap>();
     CBVSRVUAVDescriptorHeap->Init(Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 
@@ -788,6 +829,11 @@ D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetPerFrameConstantBufferGPUVirtualAddress()
     return PerFrameConstantBuffer->GetGPUVirtualAddress();
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetMaterialConstantBufferGPUVirtualAddress()
+{
+    return MaterialConstantBuffer->GetGPUVirtualAddress();
+}
+
 ID3D12Device5* Renderer::GetDevice()
 {
     return Device.Get();
@@ -887,7 +933,8 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition)
+void Renderer::Commands::UpdatePerFrameAndMaterialConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, 
+    const Camera& camera, const glm::vec3& probePosition, const glm::vec4* pMaterials)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -922,6 +969,18 @@ void Renderer::Commands::UpdatePerFrameConstants(SwapChain* pSwapChain, UINT per
     memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
 
     DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress());
+
+    // Update material buffer
+    MaterialConstants materialConstants = {};
+
+    for (size_t i = 0; i < SceneBase::MaxMaterialCount; ++i)
+    {
+        materialConstants.Colors[i] = pMaterials[i];
+    }
+
+    memcpy(MappedMaterialBufferLocation, &materialConstants, sizeof(MaterialConstants));
+
+    // Do not set any graphics root constant buffer view here yet as the material buffer is not used by the rasterizer
 }
 
 void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color)
@@ -975,7 +1034,7 @@ void Renderer::Commands::RebuildTlas(TopLevelAccelerationStructure* tlas)
     Device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs, &info);
 
     auto* pTlas = tlas->GetTlasResource();
-    auto tlasGPUVirtualAddress = pTlas->GetGPUVirtualAddress();;
+    auto tlasGPUVirtualAddress = pTlas->GetGPUVirtualAddress();
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
     buildDesc.Inputs = inputs;

@@ -275,6 +275,23 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	rayGenAssociationSubObject.SetSubobjectToAssociate(rayGenRootSignatureSubObject);
 	rayGenAssociationSubObject.AddToStateObject(rtpsoDesc);
 
+	// Create hit group local root signature
+	RootSignature hitGroupRootSignature;
+
+	hitGroupRootSignature.AddRootDescriptorParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
+	hitGroupRootSignature.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
+	hitGroupRootSignature.Create(Renderer::GetDevice());
+
+	CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT hitGroupRootSignatureSubObject = {};
+	hitGroupRootSignatureSubObject.SetRootSignature(hitGroupRootSignature.GetRootSignature());
+	hitGroupRootSignatureSubObject.AddToStateObject(rtpsoDesc);
+
+	// Create association sub object for hit group shader and hit group root signature
+	CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT hitGroupAssociationSubObject = {};
+	hitGroupAssociationSubObject.AddExport(hitGroupExportName);
+	hitGroupAssociationSubObject.SetSubobjectToAssociate(hitGroupRootSignatureSubObject);
+	hitGroupAssociationSubObject.AddToStateObject(rtpsoDesc);
+
 	// Create pipeline global root signature
 	RootSignature raytracingGlobalRootSignature;
 	raytracingGlobalRootSignature.Create(Renderer::GetDevice());
@@ -303,7 +320,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Shader identifier size + another 32 byte block for root arguments to meet alignment requirements
 	constexpr uint32_t rayGenShaderRecordSize = ALIGN_TO(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 1, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
 	constexpr uint32_t missShaderRecordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-	constexpr uint32_t hitGroupShaderRecordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+	constexpr uint32_t hitGroupShaderRecordSize = ALIGN_TO(D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 1, D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
 
 	constexpr uint32_t shaderTableSize = rayGenShaderRecordSize + ALIGN_TO(missShaderRecordSize, 64) + ALIGN_TO(hitGroupShaderRecordSize, 64);
 
@@ -351,10 +368,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Shader record 2: Hit group
-	// Shader identifier
+	// Shader identifier + root descriptor
 	memcpy(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32), // Adding 32 bytes of padding to miss shader record for 64 byte table allignment
 		raytracingPipelineStateObjectProperties->GetShaderIdentifier(hitGroupExportName),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) =
+		Renderer::GetMaterialConstantBufferGPUVirtualAddress();
 
 	// Begin demo scene
 	demoScene->Begin();
@@ -405,7 +424,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Update per frame constants
 		static const auto& camera = demoScene->GetMainCamera();
 		static const auto& probePosition = demoScene->GetProbePosition();
-		Renderer::Commands::UpdatePerFrameConstants(pSwapChain, 1, camera, probePosition);
+		static const auto* pMaterials = demoScene->GetMaterials();
+		Renderer::Commands::UpdatePerFrameAndMaterialConstants(pSwapChain, 1, camera, probePosition, pMaterials);
 
 		// Submit draw calls
 		// Draw scene

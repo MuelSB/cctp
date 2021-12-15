@@ -76,7 +76,8 @@ void Renderer::TopLevelAccelerationStructure::SetInstanceBlasAndTransform(const 
 	MappedInstancesBufferLocation[instanceID].InstanceID = instanceID;
 	MappedInstancesBufferLocation[instanceID].InstanceContributionToHitGroupIndex = 0;
 	MappedInstancesBufferLocation[instanceID].Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-	memcpy(MappedInstancesBufferLocation[instanceID].Transform, &transformMatrix, sizeof(MappedInstancesBufferLocation[instanceID].Transform));
+	auto transformMatrixTransposed = glm::transpose(transformMatrix);
+	memcpy(MappedInstancesBufferLocation[instanceID].Transform, &transformMatrixTransposed, sizeof(MappedInstancesBufferLocation[instanceID].Transform));
 	MappedInstancesBufferLocation[instanceID].AccelerationStructure = blas.GetBlas()->GetGPUVirtualAddress();
 	MappedInstancesBufferLocation[instanceID].InstanceMask = 0xFF;
 }

@@ -55,20 +55,28 @@ void RayGen()
     }
     
     // Shoot rays from each probe. There is only 1 probe currently
-    static const int probeCount = 1;
-    for (int p = 0; p < probeCount; ++p)
-    {
-        for (int r = 0; r < rayCount; ++r)
-        {
-            RayDesc ray;
-            ray.Origin = ProbePosition.xyz;
-            ray.Direction = rayDirections[r];
-            ray.TMin = 0.0f;
-            ray.TMax = 1e+38f;
+    //static const int probeCount = 1;
+    //for (int p = 0; p < probeCount; ++p)
+    //{
+    //    for (int r = 0; r < rayCount; ++r)
+    //    {
+    //        RayDesc ray;
+    //        ray.Origin = ProbePosition.xyz;
+    //        ray.Direction = rayDirections[r];
+    //        ray.TMin = 0.0f;
+    //        ray.TMax = 1e+38f;
 
-            TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
-        }
-    }
+    //        TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
+    //    }
+    //}
+    
+    RayDesc ray;
+    ray.Origin = ProbePosition.xyz;
+    ray.Direction = float3(0.0f, 0.0f, 1.0f);
+    ray.TMin = 0.0f;
+    ray.TMax = 1e+38f;
+
+    TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
     
     uint2 currentPixel = DispatchRaysIndex().xy;
     Output[currentPixel] = float4(payload.HitColor, 1.0f);

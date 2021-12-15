@@ -38,6 +38,7 @@ namespace Renderer
 	void SetVSyncEnabled(const bool enabled);
 	const DescriptorHeap* GetShaderVisibleDescriptorHeap();
 	D3D12_GPU_VIRTUAL_ADDRESS GetPerFrameConstantBufferGPUVirtualAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS GetMaterialConstantBufferGPUVirtualAddress();
 
 	// Temporary
 	ID3D12Device5* GetDevice();
@@ -52,7 +53,7 @@ namespace Renderer
 		void SetPrimitiveTopology();
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
-		void UpdatePerFrameConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition);
+		void UpdatePerFrameAndMaterialConstants(SwapChain* pSwapChain, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition, const glm::vec4* pMaterials);
 		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color);
 		void SetDescriptorHeaps();
 		void BeginImGui();

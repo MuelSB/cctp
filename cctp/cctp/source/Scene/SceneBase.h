@@ -14,6 +14,9 @@ public:
 
 	const Renderer::Camera& GetMainCamera() const { return MainCamera; }
 
+public:
+	static constexpr size_t MaxMaterialCount = 6;
+
 protected:
 	Renderer::Camera MainCamera = {};
 };
