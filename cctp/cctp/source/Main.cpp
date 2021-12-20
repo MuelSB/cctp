@@ -15,6 +15,7 @@ constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 3;
 constexpr uint32_t SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1;
 constexpr uint32_t RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2;
 constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
+constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(512.0f, 512.0f);
 
 void CreateConsole(const uint32_t maxLines)
 {
@@ -162,7 +163,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Raytracing output texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
 
-	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(clientRectWidth), static_cast<UINT64>(clientRectHeight));
+	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
+		static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.y));
 	raytraceOutputTextureResourceDesc.MipLevels = 1;
 	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutputTextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -441,9 +443,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Describe dispatch rays
 		D3D12_DISPATCH_RAYS_DESC dispatchRaysDesc = {};
-		dispatchRaysDesc.Width = static_cast<UINT>(WINDOW_DIMS.x);
-		dispatchRaysDesc.Height = static_cast<UINT>(WINDOW_DIMS.y);
-		dispatchRaysDesc.Depth = 1;
+		dispatchRaysDesc.Width = 1;
+		dispatchRaysDesc.Height = 1;
+		dispatchRaysDesc.Depth = 1;		
 
 		dispatchRaysDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress();
 		dispatchRaysDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderRecordSize;
@@ -462,17 +464,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		{
 			Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
 		}
-
-		// Debug
-		static bool showRaytraceOutput = false;
-
-		if (showRaytraceOutput)
-		{
-			Renderer::Commands::DebugCopyResourceToRenderTarget(pSwapChain, raytraceOutputResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		}
-
-		// End debug
-
 
 		// Begin ImGui for the frame
 		Renderer::Commands::BeginImGui();
@@ -494,6 +485,21 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 			ImGui::Text(("Frametime (ms): " + std::to_string(frameTimeF)).c_str()); // Use ImGui::TextColored to change the text color and add contrast
 
+			ImGui::End();
+		}
+
+		// Raytrace output texture view
+		static bool showRaytraceOutput = false;
+		if (showRaytraceOutput)
+		{
+			constexpr float windowPadding = 35.0f;
+			ImGui::SetNextWindowSize(ImVec2(RAYTRACE_OUTPUT_DIMS.x + windowPadding, RAYTRACE_OUTPUT_DIMS.y + windowPadding));
+			ImGui::Begin("Raytrace output texture", NULL,
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoCollapse
+			);
+			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
+				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(RAYTRACE_OUTPUT_DIMS.x, RAYTRACE_OUTPUT_DIMS.y));
 			ImGui::End();
 		}
 

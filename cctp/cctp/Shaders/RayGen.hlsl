@@ -23,7 +23,7 @@ void RayGen()
     static const int sectors = 4;
     static const int stacks = 4;
     static const int rayCount = 25;
-    static const float radius = 1.0f; // Using radius 1 to remove a normalize at end point generation
+    static const float radius = 1.0f; // Using radius 1 to remove a normalize during direction generation
 
     static const float sectorStep = 2.0f * PI / sectors;
     static const float stackStep = PI / stacks;
@@ -78,6 +78,19 @@ void RayGen()
 
     TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
     
-    uint2 currentPixel = DispatchRaysIndex().xy;
-    Output[currentPixel] = float4(payload.HitColor, 1.0f);
+    //uint2 currentPixel = DispatchRaysIndex().xy;
+
+    Output[uint2(200, 200)] = float4(payload.HitColor, 1.0f);
+
+    //static const int outputWidth = 1920;
+    //static const int outputHeight = 1057;
+    //for (int x = 0; x < outputWidth; ++x)
+    //{
+    //    for (int y = 0; y < outputWidth; ++y)
+    //    {
+    //        uint2 texel = uint2(x, y);
+    //        Output[texel] = float4(payload.HitColor, 1.0f);
+
+    //    }
+    //}
 }
