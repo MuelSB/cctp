@@ -382,13 +382,14 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 	// Enter main loop
 	bool quit = false;
-	auto lastTime = std::chrono::high_resolution_clock::now();
+	auto lastFrameTime = std::chrono::high_resolution_clock::now();
+	auto lastGIGatherTime = std::chrono::high_resolution_clock::now();
 	while (!quit)
 	{
 		// Calculate frame delta time
 		auto currentTime = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<float, std::milli> frameTime = currentTime - lastTime;
-		lastTime = currentTime;
+		std::chrono::duration<float, std::milli> frameTime = currentTime - lastFrameTime;
+		lastFrameTime = currentTime;
 		auto frameTimeF = frameTime.count();
 
 		// Handle OS messages
@@ -436,33 +437,45 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Draw scene
 		demoScene->Draw();
 
-		// Raytrace
-
-		// Rebuild acceleration structures
-		Renderer::Commands::RebuildTlas(demoScene->GetTlas());
-
-		// Describe dispatch rays
-		D3D12_DISPATCH_RAYS_DESC dispatchRaysDesc = {};
-		dispatchRaysDesc.Width = 1;
-		dispatchRaysDesc.Height = 1;
-		dispatchRaysDesc.Depth = 1;		
-
-		dispatchRaysDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress();
-		dispatchRaysDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderRecordSize;
-
-		dispatchRaysDesc.MissShaderTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize;
-		dispatchRaysDesc.MissShaderTable.StrideInBytes = missShaderRecordSize;
-		dispatchRaysDesc.MissShaderTable.SizeInBytes = missShaderRecordSize;
-
-		dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize + ALIGN_TO(dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
-		dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
-		dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
+		// Raytrace global illumination probe field
 
 		// Dispatch rays
+		static float GIGatherRateMS = 100.0f;
 		static bool dispatchRays = false;
 		if (dispatchRays)
 		{
-			Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
+			// Check if enough time has elapsed since last GI gather
+			std::chrono::duration<float, std::milli> GITime = currentTime - lastGIGatherTime;
+			if (GITime.count() >= GIGatherRateMS)
+			{
+				DEBUG_LOG("Gather GI");
+
+				// Store time that this gather is happening on
+				lastGIGatherTime = currentTime;
+
+				// Rebuild acceleration structures
+				Renderer::Commands::RebuildTlas(demoScene->GetTlas());
+
+				// Describe dispatch rays
+				D3D12_DISPATCH_RAYS_DESC dispatchRaysDesc = {};
+				dispatchRaysDesc.Width = 1;
+				dispatchRaysDesc.Height = 1;
+				dispatchRaysDesc.Depth = 1;
+
+				dispatchRaysDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress();
+				dispatchRaysDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderRecordSize;
+
+				dispatchRaysDesc.MissShaderTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize;
+				dispatchRaysDesc.MissShaderTable.StrideInBytes = missShaderRecordSize;
+				dispatchRaysDesc.MissShaderTable.SizeInBytes = missShaderRecordSize;
+
+				dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize + ALIGN_TO(dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
+				dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
+				dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
+
+				// Dispatch
+				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
+			}
 		}
 
 		// Begin ImGui for the frame
@@ -517,6 +530,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		if (ImGui::BeginMenu("Options"))
 		{
+			ImGui::Text("GI");
+			ImGui::DragFloat("GI gather rate (ms)", &GIGatherRateMS, 0.1f);
 			ImGui::Checkbox("Enable raytracing", &dispatchRays);
 
 			ImGui::Text("Debug");
