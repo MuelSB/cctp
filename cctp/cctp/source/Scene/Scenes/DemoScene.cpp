@@ -55,7 +55,8 @@ DemoScene::DemoScene()
 	// Setup scene mesh transforms and colors
 	MeshTransforms.resize(SceneMeshTransformCount);
 	MeshMaterials.resize(SceneMeshTransformCount);
-	assert(MeshMaterials.size() <= Renderer::MAX_MATERIAL_COUNT && "Demo scene is creating an unsupported number of materials. Consider reducing the number of materials used by the scene.");
+	assert(MeshMaterials.size() <= Renderer::MAX_MATERIAL_COUNT && 
+		"Demo scene is creating an unsupported number of materials. Consider reducing the number of materials used by the scene.");
 
 	// Floor
 	MeshTransforms[0].Position = glm::vec3(0.0f, -0.5f, 0.0f);
@@ -106,7 +107,7 @@ DemoScene::DemoScene()
 	// Set main camera fov
 	MainCamera.Settings.PerspectiveFOV = 45.0f;
 
-	ProbeTransform.Position = glm::vec3(0.0f, 2.0f, -5.0f);
+	ProbeTransform.Position = glm::vec3(0.0f, 2.0f, 0.0f);
 	ProbeTransform.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
 }
 

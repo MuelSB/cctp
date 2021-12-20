@@ -20,9 +20,9 @@ void RayGen()
     
     // Generate ray directions
     // 7 sectors and stacks gives a ray count of 64
-    static const int sectors = 4;
-    static const int stacks = 4;
-    static const int rayCount = 25;
+    static const int sectors = 7;
+    static const int stacks = 7;
+    static const int rayCount = 64;
     static const float radius = 1.0f; // Using radius 1 to remove a normalize during direction generation
 
     static const float sectorStep = 2.0f * PI / sectors;
@@ -55,35 +55,38 @@ void RayGen()
     }
     
     // Shoot rays from each probe. There is only 1 probe currently
-    //static const int probeCount = 1;
-    //for (int p = 0; p < probeCount; ++p)
-    //{
-    //    for (int r = 0; r < rayCount; ++r)
-    //    {
-    //        RayDesc ray;
-    //        ray.Origin = ProbePosition.xyz;
-    //        ray.Direction = rayDirections[r];
-    //        ray.TMin = 0.0f;
-    //        ray.TMax = 1e+38f;
+    static const int probeCount = 1;
+    for (int p = 0; p < probeCount; ++p)
+    {
+        for (int r = 0; r < rayCount; ++r)
+        {
+            float3 rayDirection = rayDirections[r];
 
-    //        TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
-    //    }
-    //}
+            RayDesc ray;
+            ray.Origin = ProbePosition.xyz;
+            ray.Direction = rayDirection;
+            ray.TMin = 0.0f;
+            ray.TMax = 1e+38f;
+
+            TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
+            
+            Output[uint2(r, 0)] = float4(payload.HitColor, 1.0f);
+        }
+    }
     
-    RayDesc ray;
-    ray.Origin = ProbePosition.xyz;
-    ray.Direction = float3(0.0f, 0.0f, 1.0f);
-    ray.TMin = 0.0f;
-    ray.TMax = 1e+38f;
+    //RayDesc ray;
+    //ray.Origin = ProbePosition.xyz;
+    //ray.Direction = float3(0.0f, 0.0f, 1.0f);
+    //ray.TMin = 0.0f;
+    //ray.TMax = 1e+38f;
 
-    TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
+    //TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
     
     //uint2 currentPixel = DispatchRaysIndex().xy;
+    //Output[currentPixel] = float4(payload.HitColor, 1.0f);
 
-    Output[uint2(200, 200)] = float4(payload.HitColor, 1.0f);
-
-    //static const int outputWidth = 1920;
-    //static const int outputHeight = 1057;
+    //static const int outputWidth = 512;
+    //static const int outputHeight = 512;
     //for (int x = 0; x < outputWidth; ++x)
     //{
     //    for (int y = 0; y < outputWidth; ++y)

@@ -439,17 +439,15 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Raytrace global illumination probe field
 
-		// Dispatch rays
+		// Check raytracing is enabled
 		static float GIGatherRateMS = 100.0f;
-		static bool dispatchRays = false;
+		static bool dispatchRays = true;
 		if (dispatchRays)
 		{
 			// Check if enough time has elapsed since last GI gather
 			std::chrono::duration<float, std::milli> GITime = currentTime - lastGIGatherTime;
 			if (GITime.count() >= GIGatherRateMS)
 			{
-				DEBUG_LOG("Gather GI");
-
 				// Store time that this gather is happening on
 				lastGIGatherTime = currentTime;
 
@@ -473,7 +471,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 				dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
 				dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
 
-				// Dispatch
+				// Dispatch rays
 				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
 			}
 		}
@@ -488,7 +486,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		if (displayPerformanceStatsWindow)
 		{
 			ImGui::SetNextWindowSize(ImVec2(200.0f, 50.0f));
-			ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f));
+			ImGui::SetNextWindowPos(ImVec2(50.0f, 975.0f));
 			ImGui::Begin("Perf stats", NULL,
 				ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoResize |
@@ -502,7 +500,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Raytrace output texture view
-		static bool showRaytraceOutput = false;
+		static bool showRaytraceOutput = true;
 		if (showRaytraceOutput)
 		{
 			constexpr float windowPadding = 35.0f;
@@ -531,7 +529,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		if (ImGui::BeginMenu("Options"))
 		{
 			ImGui::Text("GI");
-			ImGui::DragFloat("GI gather rate (ms)", &GIGatherRateMS, 0.1f);
+			ImGui::InputFloat("GI gather rate (ms)", &GIGatherRateMS);
 			ImGui::Checkbox("Enable raytracing", &dispatchRays);
 
 			ImGui::Text("Debug");
