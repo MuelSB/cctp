@@ -15,7 +15,7 @@ constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 3;
 constexpr uint32_t SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1;
 constexpr uint32_t RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2;
 constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
-constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(512.0f, 512.0f);
+constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
 
 void CreateConsole(const uint32_t maxLines)
 {
@@ -503,14 +503,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		static bool showRaytraceOutput = true;
 		if (showRaytraceOutput)
 		{
-			constexpr float windowPadding = 35.0f;
-			ImGui::SetNextWindowSize(ImVec2(RAYTRACE_OUTPUT_DIMS.x + windowPadding, RAYTRACE_OUTPUT_DIMS.y + windowPadding));
+			ImGui::SetNextWindowSize(ImVec2(512.0f, 512.0f));
 			ImGui::Begin("Raytrace output texture", NULL,
 				ImGuiWindowFlags_NoResize |
 				ImGuiWindowFlags_NoCollapse
 			);
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(RAYTRACE_OUTPUT_DIMS.x, RAYTRACE_OUTPUT_DIMS.y));
+				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(1024.0f, 1024.0f));
 			ImGui::End();
 		}
 

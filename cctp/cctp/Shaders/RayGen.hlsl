@@ -1,4 +1,10 @@
 #include "Common.hlsl"
+#include "Octahedral.hlsl"
+
+#define SECTORS 7
+#define STACKS 7
+#define PROBE_RAY_COUNT 64
+#define RADIUS 1.0f // Using radius 1 to remove a normalize during direction generation
 
 RaytracingAccelerationStructure SceneBVH : register(t0);
 RWTexture2D<float4> Output : register(u0);
@@ -10,6 +16,36 @@ cbuffer PerFrameConstants : register(b0)
     float4 ProbePosition;
 };
 
+void GenerateRayDirections(out float3 rayDirections[PROBE_RAY_COUNT])
+{
+    static const float sectorStep = 2.0f * PI / SECTORS;
+    static const float stackStep = PI / STACKS;
+    
+    float sectorAngle;
+    float stackAngle;
+    float xy;
+
+    int directionIndex = 0;
+    for (int i = STACKS; i >= 0; i--)
+    {
+        stackAngle = PI / 2 - i * stackStep;
+        xy = RADIUS * cos(stackAngle);
+
+        for (int j = 0; j <= SECTORS; j++)
+        {
+            sectorAngle = j * sectorStep;
+
+            rayDirections[directionIndex] = float3(
+                xy * cos(sectorAngle),
+                xy * sin(sectorAngle),
+                RADIUS * sin(stackAngle)
+            );
+            
+            ++directionIndex;
+        }
+    }
+}
+
 [shader("raygeneration")]
 void RayGen()
 {
@@ -19,81 +55,27 @@ void RayGen()
     };
     
     // Generate ray directions
-    // 7 sectors and stacks gives a ray count of 64
-    static const int sectors = 7;
-    static const int stacks = 7;
-    static const int rayCount = 64;
-    static const float radius = 1.0f; // Using radius 1 to remove a normalize during direction generation
-
-    static const float sectorStep = 2.0f * PI / sectors;
-    static const float stackStep = PI / stacks;
-
-    float sectorAngle;
-    float stackAngle;
-    float xy;
-
-    float3 rayDirections[rayCount];
-    
-    int directionIndex = 0;
-    for (int i = stacks; i >= 0; i--)
-    {
-        stackAngle = PI / 2 - i * stackStep;
-        xy = radius * cos(stackAngle);
-
-        for (int j = 0; j <= sectors; j++)
-        {
-            sectorAngle = j * sectorStep;
-
-            rayDirections[directionIndex] = float3(
-                xy * cos(sectorAngle),
-                xy * sin(sectorAngle),
-                radius * sin(stackAngle)
-            );
-            
-            ++directionIndex;
-        }
-    }
+    float3 rayDirections[PROBE_RAY_COUNT];
+    GenerateRayDirections(rayDirections);
     
     // Shoot rays from each probe. There is only 1 probe currently
     static const int probeCount = 1;
     for (int p = 0; p < probeCount; ++p)
     {
-        for (int r = 0; r < rayCount; ++r)
+        for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
             float3 rayDirection = rayDirections[r];
 
             RayDesc ray;
             ray.Origin = ProbePosition.xyz;
             ray.Direction = rayDirection;
-            ray.TMin = 0.0f;
+            ray.TMin = 0.1f;
             ray.TMax = 1e+38f;
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
-            Output[uint2(r, 0)] = float4(payload.HitColor, 1.0f);
+            float2 normalizedOctCoord = (octEncode(rayDirection) + 1.0f) * 0.5f;
+            Output[normalizedOctCoord * 7.0f] = float4(payload.HitColor, 1.0f); // Multiply coord by 7 to get 8x8 mapping. Coord is in [0, 1] range
         }
     }
-    
-    //RayDesc ray;
-    //ray.Origin = ProbePosition.xyz;
-    //ray.Direction = float3(0.0f, 0.0f, 1.0f);
-    //ray.TMin = 0.0f;
-    //ray.TMax = 1e+38f;
-
-    //TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
-    
-    //uint2 currentPixel = DispatchRaysIndex().xy;
-    //Output[currentPixel] = float4(payload.HitColor, 1.0f);
-
-    //static const int outputWidth = 512;
-    //static const int outputHeight = 512;
-    //for (int x = 0; x < outputWidth; ++x)
-    //{
-    //    for (int y = 0; y < outputWidth; ++y)
-    //    {
-    //        uint2 texel = uint2(x, y);
-    //        Output[texel] = float4(payload.HitColor, 1.0f);
-
-    //    }
-    //}
 }
