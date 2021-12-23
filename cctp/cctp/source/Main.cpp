@@ -509,7 +509,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 				ImGuiWindowFlags_NoCollapse
 			);
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(1024.0f, 1024.0f));
+				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(450.0f, 450.0f));
 			ImGui::End();
 		}
 
