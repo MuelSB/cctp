@@ -31,39 +31,39 @@ float3 octDecode(float2 o)
     return normalize(v);
 }
 
-//float SignNotZero(float f)
-//{
-//    return (f >= 0.0f) ? 1.0f : -1.0f;
-//}
+float SignNotZero(float f)
+{
+    return (f >= 0.0f) ? 1.0f : -1.0f;
+}
 
-//float2 OctEncode(float3 v)
-//{
-//    float2 result = v.xy * (1.0f / (abs(v.x) + abs(v.y) + abs(v.z)));
+float2 OctEncode(float3 v)
+{
+    float2 result = v.xy * (1.0f / (abs(v.x) + abs(v.y) + abs(v.z)));
 
-//    if(v.z <= 0.0f)
-//    {
-//        result.x = (1.0f - abs(result.y)) * SignNotZero(result.x);
-//        result.y = (1.0f - abs(result.x)) * SignNotZero(result.y);
-//    }
+    if (v.z <= 0.0f)
+    {
+        result.x = (1.0f - abs(result.y)) * SignNotZero(result.x);
+        result.y = (1.0f - abs(result.x)) * SignNotZero(result.y);
+    }
     
-//    return result;
-//}
+    return result;
+}
 
-//float3 OctDecode(float2 c)
-//{
-//    float cx = c.x;
-//    float cy = c.y;
-//    float sumXY = (abs(cx) + abs(cy));
-//    float cz = 1.0f - sumXY;
+float3 OctDecode(float2 c)
+{
+    float cx = c.x;
+    float cy = c.y;
+    float sumXY = (abs(cx) + abs(cy));
+    float cz = 1.0f - sumXY;
     
-//    if (sumXY > 1)
-//    {
-//        cx = sign(cx) * (1.0f - abs(cy));
-//        cy = sign(cy) * (1.0f - abs(cx));
-//        cz = -cz;
-//    }
+    if (sumXY > 1)
+    {
+        cx = sign(cx) * (1.0f - abs(cy));
+        cy = sign(cy) * (1.0f - abs(cx));
+        cz = -cz;
+    }
 
-//    return normalize(float3(cx, cy, cz));
-//}
+    return normalize(float3(cx, cy, cz));
+}
 
 #endif

@@ -5,6 +5,8 @@
 #define STACKS 7
 #define PROBE_RAY_COUNT 64
 #define RADIUS 1.0f // Using radius 1 to remove a normalize during direction generation
+#define PROBE_WIDTH 8 // The amount of texels to use to store a probes data in
+#define PADDING 1
 
 RaytracingAccelerationStructure SceneBVH : register(t0);
 RWTexture2D<float4> Output : register(u0);
@@ -40,7 +42,6 @@ void GenerateRayDirections(out float3 rayDirections[PROBE_RAY_COUNT])
                 xy * sin(sectorAngle),
                 RADIUS * sin(stackAngle)
             );
-            
             ++directionIndex;
         }
     }
@@ -70,6 +71,15 @@ void RayGen()
         float3(0.0f, 0.0f, 0.0f)
     };
     
+    for (int i = 0; i < PROBE_WIDTH; ++i)
+    {
+        for (int j = 0; j < PROBE_WIDTH; ++j)
+        {
+            float2 texel = float2(i, j);
+            Output[texel + PADDING] = float4(1.0f, 0.0f, 1.0f, 1.0f);
+        }
+    }
+    
     // Generate ray directions
     float3 rayDirections[PROBE_RAY_COUNT];
     GenerateRayDirections(rayDirections);
@@ -81,7 +91,7 @@ void RayGen()
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
             //float3 rayDirection = rayDirections[r];
-            float3 rayDirection = sphericalFibonacci(r, (float) PROBE_RAY_COUNT);
+            float3 rayDirection = sphericalFibonacci(r, (float)PROBE_RAY_COUNT);
 
             RayDesc ray;
             ray.Origin = ProbePosition.xyz;
@@ -91,8 +101,22 @@ void RayGen()
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
-            float2 normalizedOctCoord = (octEncode(rayDirection) + 1.0f) * 0.5f;
-            Output[normalizedOctCoord * 7.0f] = float4(payload.HitColor, 1.0f);
+            // Have texture coordinate in 0 - 1 range.
+            // Have an output texture that is 8x8 for each probe.
+
+            float2 normalizedOctCoordZeroOne = (octEncode(normalize(rayDirection)) + float2(1.0f, 1.0f)) * 0.5f;
+            float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH);
+
+            float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
+            
+            Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(payload.HitColor, 1.0f);
+            //Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(1.0f, 1.0f, 1.0f, 1.0f);
         }
     }
+    
+    // Display green pixels in the corners of the output texture
+    Output[int2(0, 0)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    Output[int2(0, 31)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    Output[int2(31, 31)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    Output[int2(31, 0)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
 }
