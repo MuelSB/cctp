@@ -1,11 +1,11 @@
 #include "Common.hlsl"
 #include "Octahedral.hlsl"
 
-#define SECTORS 7
-#define STACKS 7
-#define PROBE_RAY_COUNT 64
-#define RADIUS 1.0f // Using radius 1 to remove a normalize during direction generation
-#define PROBE_WIDTH 8 // The amount of texels to use to store a probes data in
+// The number of rays traced from a probe
+#define PROBE_RAY_COUNT 256
+// The amount of texels to use to store a probes data in
+#define PROBE_WIDTH 8 
+// Border size in pixels around each probe's data pack
 #define PADDING 1
 
 RaytracingAccelerationStructure SceneBVH : register(t0);
@@ -17,35 +17,6 @@ cbuffer PerFrameConstants : register(b0)
     float4x4 ProjectionMatrix;
     float4 ProbePosition;
 };
-
-void GenerateRayDirections(out float3 rayDirections[PROBE_RAY_COUNT])
-{
-    static const float sectorStep = 2.0f * PI / SECTORS;
-    static const float stackStep = PI / STACKS;
-    
-    float sectorAngle;
-    float stackAngle;
-    float xy;
-
-    int directionIndex = 0;
-    for (int i = STACKS; i >= 0; i--)
-    {
-        stackAngle = PI / 2 - i * stackStep;
-        xy = RADIUS * cos(stackAngle);
-
-        for (int j = 0; j <= SECTORS; j++)
-        {
-            sectorAngle = j * sectorStep;
-
-            rayDirections[directionIndex] = float3(
-                xy * cos(sectorAngle),
-                xy * sin(sectorAngle),
-                RADIUS * sin(stackAngle)
-            );
-            ++directionIndex;
-        }
-    }
-}
 
 float3 sphericalFibonacci(float i, float n)
 {
@@ -68,21 +39,8 @@ void RayGen()
 {
     RayPayload payload =
     {
-        float3(0.0f, 0.0f, 0.0f)
+        float3(0.0, 0.0, 0.0)
     };
-    
-    for (int i = 0; i < PROBE_WIDTH; ++i)
-    {
-        for (int j = 0; j < PROBE_WIDTH; ++j)
-        {
-            float2 texel = float2(i, j);
-            Output[texel + PADDING] = float4(1.0f, 0.0f, 1.0f, 1.0f);
-        }
-    }
-    
-    // Generate ray directions
-    float3 rayDirections[PROBE_RAY_COUNT];
-    GenerateRayDirections(rayDirections);
     
     // Shoot rays from each probe. There is only 1 probe currently
     static const int probeCount = 1;
@@ -91,32 +49,28 @@ void RayGen()
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
             //float3 rayDirection = rayDirections[r];
-            float3 rayDirection = sphericalFibonacci(r, (float)PROBE_RAY_COUNT);
+            float3 rayDirection = sphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
 
             RayDesc ray;
             ray.Origin = ProbePosition.xyz;
             ray.Direction = rayDirection;
-            ray.TMin = 0.1f;
-            ray.TMax = 1e+38f;
+            ray.TMin = 0.1;
+            ray.TMax = 1e+38;
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
-            // Have texture coordinate in 0 - 1 range.
-            // Have an output texture that is 8x8 for each probe.
-
-            float2 normalizedOctCoordZeroOne = (octEncode(normalize(rayDirection)) + float2(1.0f, 1.0f)) * 0.5f;
+            float2 normalizedOctCoordZeroOne = (octEncode(normalize(rayDirection)) + float2(1.0, 1.0)) * 0.5;
             float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH);
 
             float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
             
-            Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(payload.HitColor, 1.0f);
-            //Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(1.0f, 1.0f, 1.0f, 1.0f);
+            Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(payload.HitColor, 1.0);
         }
     }
     
     // Display green pixels in the corners of the output texture
-    Output[int2(0, 0)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
-    Output[int2(0, 31)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
-    Output[int2(31, 31)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
-    Output[int2(31, 0)] = float4(0.0f, 1.0f, 0.0f, 1.0f);
+    Output[int2(0, 0)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[int2(0, 31)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[int2(31, 31)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[int2(31, 0)] = float4(0.0, 1.0, 0.0, 1.0);
 }
