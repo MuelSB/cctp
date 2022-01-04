@@ -440,13 +440,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Raytrace global illumination probe field
 
 		// Check raytracing is enabled
-		static float GIGatherRateMS = 100.0f;
+		static float GIGatherRateS = 0.1f;
 		static bool dispatchRays = true;
 		if (dispatchRays)
 		{
 			// Check if enough time has elapsed since last GI gather
 			std::chrono::duration<float, std::milli> GITime = currentTime - lastGIGatherTime;
-			if (GITime.count() >= GIGatherRateMS)
+			if (GITime.count() >= (GIGatherRateS * 1000.0f))
 			{
 				// Store time that this gather is happening on
 				lastGIGatherTime = currentTime;
@@ -528,7 +528,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		if (ImGui::BeginMenu("Options"))
 		{
 			ImGui::Text("GI");
-			ImGui::InputFloat("GI gather rate (ms)", &GIGatherRateMS);
+			ImGui::InputFloat("Probe update rate (s)", &GIGatherRateS);
 			ImGui::Checkbox("Enable raytracing", &dispatchRays);
 
 			ImGui::Text("Debug");
