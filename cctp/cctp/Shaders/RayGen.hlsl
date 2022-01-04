@@ -18,19 +18,18 @@ cbuffer PerFrameConstants : register(b0)
     float4 ProbePosition;
 };
 
-float3 sphericalFibonacci(float i, float n)
+// Majercik et al. https://jcgt.org/published/0008/02/01/
+float3 SphericalFibonacci(float i, float n)
 {
     const float PHI = sqrt(5) * 0.5 + 0.5;
 #define madfrac(A, B) ((A)*(B)-floor((A)*(B)))
     float phi = 2.0 * PI * madfrac(i, PHI - 1);
     float cosTheta = 1.0 - (2.0 * i + 1.0) * (1.0 / n);
     float sinTheta = sqrt(saturate(1.0 - cosTheta * cosTheta));
-
     return float3(
         cos(phi) * sinTheta,
         sin(phi) * sinTheta,
         cosTheta);
-
 #undef madfrac
 }
 
@@ -42,28 +41,28 @@ void RayGen()
         float3(0.0, 0.0, 0.0)
     };
     
-    // Shoot rays from each probe. There is only 1 probe currently
+    // Shoot rays from each probe
     static const int probeCount = 1;
     for (int p = 0; p < probeCount; ++p)
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
-            //float3 rayDirection = rayDirections[r];
-            float3 rayDirection = sphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
+            float3 rayDirection = SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
 
             RayDesc ray;
             ray.Origin = ProbePosition.xyz;
             ray.Direction = rayDirection;
-            ray.TMin = 0.1;
+            ray.TMin = 0.0;
             ray.TMax = 1e+38;
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
-            float2 normalizedOctCoordZeroOne = (octEncode(normalize(rayDirection)) + float2(1.0, 1.0)) * 0.5;
+            float2 normalizedOctCoordZeroOne = (OctEncode(normalize(rayDirection)) + float2(1.0, 1.0)) * 0.5;
             float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH);
 
             float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
             
+            // Store irradiance for probe
             Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(payload.HitColor, 1.0);
         }
     }
