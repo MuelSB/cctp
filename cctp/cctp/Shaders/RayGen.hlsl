@@ -1,6 +1,8 @@
 #include "Common.hlsl"
 #include "Octahedral.hlsl"
 
+// The number of probes in the probe field
+#define PROBE_COUNT 1
 // The number of rays traced from a probe
 #define PROBE_RAY_COUNT 256
 // The amount of texels to use to store a probes data in
@@ -42,8 +44,7 @@ void RayGen()
     };
     
     // Shoot rays from each probe
-    static const int probeCount = 1;
-    for (int p = 0; p < probeCount; ++p)
+    for (int p = 0; p < PROBE_COUNT; ++p)
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
