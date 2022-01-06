@@ -1053,12 +1053,13 @@ void Renderer::Commands::RebuildTlas(TopLevelAccelerationStructure* tlas)
     DirectCommandList->ResourceBarrier(1, &barrier);
 }
 
-void Renderer::Commands::Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource)
+void Renderer::Commands::Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource,
+    ID3D12Resource* pRaytraceOutput2Resource)
 {
     DirectCommandList->SetPipelineState1(pPipelineStateObject);
     DirectCommandList->DispatchRays(&dispatchRaysDesc);
-    auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(pRaytraceOutputResource);
-    DirectCommandList->ResourceBarrier(1, &barrier);
+    CD3DX12_RESOURCE_BARRIER barriers[] = { CD3DX12_RESOURCE_BARRIER::UAV(pRaytraceOutputResource), CD3DX12_RESOURCE_BARRIER::UAV(pRaytraceOutput2Resource) };
+    DirectCommandList->ResourceBarrier(_countof(barriers), barriers);
 }
 
 void Renderer::Commands::DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, ID3D12Resource* pSrcResource, D3D12_RESOURCE_STATES srcResourceState)

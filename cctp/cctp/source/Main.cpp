@@ -11,9 +11,10 @@
 
 #define ALIGN_TO(size, alignment) (size + (alignment - 1) & ~(alignment-1))
 
-constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 3;
+constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 4;
 constexpr uint32_t SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1;
 constexpr uint32_t RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2;
+constexpr uint32_t RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX = 3;
 constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
 constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
 
@@ -168,16 +169,41 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	raytraceOutputTextureResourceDesc.MipLevels = 1;
 	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutputTextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	Renderer::GetDevice()->CreateCommittedResource(&raytraceOutputTextureHeapProperties,
+	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&raytraceOutputTextureHeapProperties,
 		D3D12_HEAP_FLAG_NONE,
 		&raytraceOutputTextureResourceDesc,
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
 		nullptr,
-		IID_PPV_ARGS(&raytraceOutputResource));
+		IID_PPV_ARGS(&raytraceOutputResource))))
+	{
+		assert(false && "Failed to create raytrace output texture resource.");
+	}
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC raytraceOutputUAVDesc = {};
 	raytraceOutputUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), raytraceOutputUAVDesc, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
+
+	// Raytracing output 2 texture
+	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
+
+	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
+		static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.y));
+	raytraceOutput2TextureResourceDesc.MipLevels = 1;
+	raytraceOutput2TextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+	auto raytraceOutput2TextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&raytraceOutput2TextureHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&raytraceOutput2TextureResourceDesc,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		nullptr,
+		IID_PPV_ARGS(&raytraceOutput2Resource))))
+	{
+		assert(false && "Failed to create raytrace output 2 texture resource.");
+	}
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC raytraceOutput2UAVDesc = {};
+	raytraceOutput2UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), raytraceOutput2UAVDesc, RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX);
 
 	// Load compiled raytracing shaders
 	BinaryBuffer rayGenBuffer;
@@ -239,7 +265,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	hitGroupSubobject.AddToStateObject(rtpsoDesc);
 
 	// Add shader config subobject
-	UINT payloadSize = sizeof(float) * 3;
+	UINT payloadSize = sizeof(float) * 4;
 	UINT attributeSize = sizeof(float) * 2;
 	CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT shaderConfigSubobject = {};
 	shaderConfigSubobject.Config(payloadSize, attributeSize);
@@ -257,7 +283,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	rayGenDescriptorRanges[1].NumDescriptors = 1;
+	rayGenDescriptorRanges[1].NumDescriptors = 2;
 	rayGenDescriptorRanges[1].BaseShaderRegister = 0;
 	rayGenDescriptorRanges[1].RegisterSpace = 0;
 	rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -361,6 +387,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
 		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
+																															// Pointer to the start of a descriptor range (UAV x 2) in a descriptor table
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
 
 	// Shader record 1: Miss
@@ -472,7 +499,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 				dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
 
 				// Dispatch rays
-				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get());
+				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get(), raytraceOutput2Resource.Get());
 			}
 		}
 
@@ -503,13 +530,19 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		static bool showRaytraceOutput = true;
 		if (showRaytraceOutput)
 		{
-			ImGui::SetNextWindowSize(ImVec2(512.0f, 512.0f));
-			ImGui::Begin("Raytrace output texture", NULL,
+			ImGui::SetNextWindowSize(ImVec2(512.0f, 1024.0f));
+			ImGui::Begin("Raytrace output textures", NULL,
 				ImGuiWindowFlags_NoResize |
 				ImGuiWindowFlags_NoCollapse
 			);
+			// Irradiance texture
+			ImGui::Text("Irradiance");
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
 				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
+			// Visibility texture
+			ImGui::Text("Visibility");
+			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
+				GetGPUDescriptorHandle(RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
 			ImGui::End();
 		}
 

@@ -7,7 +7,8 @@
 
 struct RayPayload
 {
-    float3 HitColor;
+    float3 HitIrradiance;
+    float HitDistance;
 };
 
 #endif // COMMON_INCLUDE

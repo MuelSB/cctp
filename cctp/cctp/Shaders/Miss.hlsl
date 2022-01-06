@@ -3,5 +3,6 @@
 [shader("miss")]
 void Miss(inout RayPayload payload)
 {
-    payload.HitColor = float3(0.0, 1.0, 1.0);
+    payload.HitIrradiance = float3(0.0, 0.0, 0.0);
+    payload.HitDistance = 1.0;
 }

@@ -64,7 +64,7 @@ namespace Renderer
 		void BeginImGui();
 		void EndImGui();
 		void RebuildTlas(TopLevelAccelerationStructure* tlas);
-		void Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource);
+		void Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource, ID3D12Resource* pRaytraceOutput2Resource);
 
 		// Copies the src resource to the current frame's swap chain backbuffer. Swap chain render target resource is returned to render target
 		// state after copy. Src resource is returned to srcResourceState after copy

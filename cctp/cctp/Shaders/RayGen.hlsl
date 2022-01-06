@@ -3,15 +3,17 @@
 
 // The number of probes in the probe field
 #define PROBE_COUNT 1
-// The number of rays traced from a probe
-#define PROBE_RAY_COUNT 256
-// The amount of texels to use to store a probes data in
-#define PROBE_WIDTH 8 
+// The number of rays traced from a probe. McGuire uses up to 256 rays
+#define PROBE_RAY_COUNT 1024
+// The amount of texels in a square side to use to store a probes irradiance data in
+#define PROBE_WIDTH_IRRADIANCE 8 
+// The amount of texels in a square side to use to store a probes visibility data in
+#define PROBE_WIDTH_VISIBILITY 16 
 // Border size in pixels around each probe's data pack
 #define PADDING 1
 
 RaytracingAccelerationStructure SceneBVH : register(t0);
-RWTexture2D<float4> Output : register(u0);
+RWTexture2D<float4> Output[2] : register(u0);
 
 cbuffer PerFrameConstants : register(b0)
 {
@@ -40,7 +42,8 @@ void RayGen()
 {
     RayPayload payload =
     {
-        float3(0.0, 0.0, 0.0)
+        float3(0.0, 0.0, 0.0),
+        0.0
     };
     
     // Shoot rays from each probe
@@ -58,19 +61,32 @@ void RayGen()
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
+            // Encode the direction to oct texture coordinate in [0, 1] range
             float2 normalizedOctCoordZeroOne = (OctEncode(normalize(rayDirection)) + float2(1.0, 1.0)) * 0.5;
-            float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH);
 
+            // Calculate the oct coordinate in the dimensions of the probe output texture
+            float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_IRRADIANCE);
+            float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_VISIBILITY);
+
+            // Calculate the top left texel of this probe's output in the texture
             float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
             
             // Store irradiance for probe
-            Output[probeTopLeftPosition + normalizedOctCoordTextureDimensions] = float4(payload.HitColor, 1.0);
+            Output[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions] = float4(payload.HitIrradiance, 1.0);
+            
+            // Store visibility for probe
+            Output[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions] = float4(payload.HitDistance, payload.HitDistance, payload.HitDistance, 1.0);
         }
     }
     
-    // Display green pixels in the corners of the output texture
-    Output[int2(0, 0)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[int2(0, 31)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[int2(31, 31)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[int2(31, 0)] = float4(0.0, 1.0, 0.0, 1.0);
+    // Display green pixels in the corners of the output textures
+    Output[0][int2(0, 0)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[0][int2(0, 31)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[0][int2(31, 31)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[0][int2(31, 0)] = float4(0.0, 1.0, 0.0, 1.0);
+    
+    Output[1][int2(0, 0)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[1][int2(0, 31)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[1][int2(31, 31)] = float4(0.0, 1.0, 0.0, 1.0);
+    Output[1][int2(31, 0)] = float4(0.0, 1.0, 0.0, 1.0);
 }

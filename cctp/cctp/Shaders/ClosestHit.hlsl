@@ -13,5 +13,6 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     // Sample color of hit object
     uint hitInstanceID = InstanceID();
     
-    payload.HitColor = Colors[hitInstanceID].xyz;
+    payload.HitIrradiance = Colors[hitInstanceID].xyz;
+    payload.HitDistance = RayTCurrent();
 }
