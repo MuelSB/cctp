@@ -1,6 +1,6 @@
 #include "Common.hlsl"
 
-#define MAX_MATERIALS 6
+#define MAX_MATERIALS 7
 
 cbuffer MaterialBuffer : register(b0)
 {

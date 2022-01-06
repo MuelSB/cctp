@@ -89,6 +89,11 @@ DemoScene::DemoScene()
 	MeshTransforms[5].Scale = glm::vec3(1.0f, 2.0f, 1.0f);
 	MeshMaterials[5].SetColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
+	// Ceiling
+	MeshTransforms[6].Position = glm::vec3(0.0f, 4.0f, 0.0f);
+	MeshTransforms[6].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
+	MeshMaterials[6].SetColor(glm::vec4(0.85f, 0.85f, 0.8f, 1.0f));
+
 	// Create top level acceleration structure
 	Renderer::CreateTopLevelAccelerationStructure(tlAccelStructure, true, static_cast<uint32_t>(SceneMeshTransformCount));
 
@@ -107,6 +112,7 @@ DemoScene::DemoScene()
 	// Set main camera fov
 	MainCamera.Settings.PerspectiveFOV = 45.0f;
 
+	// Set probe visualisation properties
 	ProbeTransform.Position = glm::vec3(0.0f, 2.0f, 0.0f);
 	ProbeTransform.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
 }

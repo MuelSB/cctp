@@ -16,7 +16,7 @@ namespace Renderer
 {
 	class Material;
 
-	constexpr size_t MAX_MATERIAL_COUNT = 6;
+	constexpr size_t MAX_MATERIAL_COUNT = 7;
 
 	bool Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount);
 	bool Shutdown();
