@@ -22,16 +22,16 @@ bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice)
     sampDescs[0].RegisterSpace = 0;
     sampDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
-    D3D12_DESCRIPTOR_RANGE range = {};
-    range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    range.BaseShaderRegister = 0;
-    range.RegisterSpace = 0;
-    range.NumDescriptors = 1;
-    range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    D3D12_DESCRIPTOR_RANGE tableRanges[1];
+    tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    tableRanges[0].BaseShaderRegister = 0;
+    tableRanges[0].RegisterSpace = 0;
+    tableRanges[0].NumDescriptors = 2;
+    tableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     D3D12_ROOT_DESCRIPTOR_TABLE dTable = {};
-    dTable.NumDescriptorRanges = 1;
-    dTable.pDescriptorRanges = &range;
+    dTable.NumDescriptorRanges = _countof(tableRanges);
+    dTable.pDescriptorRanges = tableRanges;
 
     D3D12_ROOT_PARAMETER rootParameters[1];
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;

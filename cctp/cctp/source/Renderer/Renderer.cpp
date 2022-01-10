@@ -1123,3 +1123,22 @@ void Renderer::Commands::CopyRenderTargetToResource(SwapChain* pSwapChain, ID3D1
     };
     DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
 }
+
+void Renderer::Commands::CopyDepthTargetToResource(SwapChain* pSwapChain, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState)
+{
+    auto* pDepthTargetResource = pSwapChain->GetDepthStencilBuffer();
+
+    CD3DX12_RESOURCE_BARRIER beginBarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(pDepthTargetResource, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COPY_SOURCE),
+        CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, dstResourceState, D3D12_RESOURCE_STATE_COPY_DEST)
+    };
+    DirectCommandList->ResourceBarrier(_countof(beginBarriers), beginBarriers);
+
+    DirectCommandList->CopyResource(pDstResource, pDepthTargetResource);
+
+    CD3DX12_RESOURCE_BARRIER endBarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(pDepthTargetResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+        CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, D3D12_RESOURCE_STATE_COPY_DEST, dstResourceState)
+    };
+    DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
+}

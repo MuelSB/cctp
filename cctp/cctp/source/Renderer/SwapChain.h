@@ -14,6 +14,7 @@ namespace Renderer
         bool Resize(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT width, UINT height, UINT rtvDescriptorSize);
         UINT GetCurrentBackBufferIndex() const;
         const Microsoft::WRL::ComPtr<ID3D12Resource>* GetBackBuffers() const;
+        ID3D12Resource* GetDepthStencilBuffer() const { return DepthStencilBuffer.Get(); }
         ID3D12DescriptorHeap* GetRTDescriptorHeap() const;
         const D3D12_VIEWPORT& GetViewport() const;
         const D3D12_RECT& GetScissorRect() const;

@@ -19,6 +19,7 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 	RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2,
 	RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX = 3,
 	SCENE_SRV_DESCRIPTOR_INDEX = 4,
+	SCENE_DEPTH_SRV_DESCRIPTOR_INDEX = 5,
 
 	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 };
@@ -242,11 +243,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX);
 
 	// Scene texture
-	auto swapChainFormat = swapChain->GetFormat();
-
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneBufferResource;
 
-	auto sceneBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(swapChainFormat,
+	auto sceneBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(swapChain->GetFormat(),
 		clientRectWidth, clientRectHeight);
 	sceneBufferDesc.MipLevels = 1;
 	auto sceneBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -262,6 +261,26 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	}
 
 	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneBufferResource.Get(), nullptr, SCENE_SRV_DESCRIPTOR_INDEX);
+
+	// Scene depth texture
+	Microsoft::WRL::ComPtr<ID3D12Resource> sceneDepthBufferResource;
+
+	auto sceneDepthBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
+		clientRectWidth, clientRectHeight);
+	sceneDepthBufferDesc.MipLevels = 11;
+	auto sceneDepthBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&sceneDepthBufferHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&sceneDepthBufferDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&sceneDepthBufferResource))))
+	{
+		assert(false && "Failed to create scene depth buffer resource.");
+	}
+
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneDepthBufferResource.Get(), nullptr, SCENE_DEPTH_SRV_DESCRIPTOR_INDEX);
 
 	// Load compiled raytracing shaders
 	BinaryBuffer rayGenBuffer;
@@ -445,7 +464,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
 		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
-																															// Pointer to the start of a descriptor range (UAV x 2) in a descriptor table
+																															// This is a Pointer to the start of a descriptor range (UAV x 2) 
+																															// in a descriptor table
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
 
 	// Shader record 1: Miss
@@ -524,6 +544,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Copy backbuffer to scene shader resource
 		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		// Copy depth buffer to scene depth shader resource
+		Renderer::Commands::CopyDepthTargetToResource(pSwapChain, sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Raytrace global illumination probe field
 
