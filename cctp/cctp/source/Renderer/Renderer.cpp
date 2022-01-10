@@ -1017,6 +1017,13 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
     ++FrameDrawCount;
 }
 
+void Renderer::Commands::SubmitScreenMesh(const Mesh& mesh)
+{
+    DirectCommandList->IASetVertexBuffers(0, 1, &mesh.GetVertexBufferView());
+    DirectCommandList->IASetIndexBuffer(&mesh.GetIndexBufferView());
+    DirectCommandList->DrawIndexedInstanced(mesh.GetIndexCount(), 1, 0, 0, 0);
+}
+
 void Renderer::Commands::SetDescriptorHeaps()
 {
     ID3D12DescriptorHeap* heaps[] = { CBVSRVUAVDescriptorHeap->Get() };

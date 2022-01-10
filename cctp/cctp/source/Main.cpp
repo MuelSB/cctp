@@ -534,6 +534,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			}
 		}
 
+		// Render screen pass
+		Renderer::Commands::SetGraphicsPipeline(screenPassPipeline.get());
+		// Set descriptor table
+		Renderer::Commands::SubmitScreenMesh(*screenMesh.get());
+
 		// Begin ImGui for the frame
 		Renderer::Commands::BeginImGui();
 

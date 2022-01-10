@@ -61,6 +61,7 @@ namespace Renderer
 		void UpdatePerFrameConstants(const glm::vec2& viewportDims, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition);
 		void UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount);
 		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color);
+		void SubmitScreenMesh(const Mesh& mesh);
 		void SetDescriptorHeaps();
 		void BeginImGui();
 		void EndImGui();
