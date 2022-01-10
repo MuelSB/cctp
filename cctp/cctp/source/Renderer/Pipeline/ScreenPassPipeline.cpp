@@ -7,15 +7,46 @@ bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice)
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
-    rootSignatureDesc.Init(0,
-        nullptr,
-        0,
-        nullptr,
+    D3D12_STATIC_SAMPLER_DESC sampDescs[1];
+    sampDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[0].MipLODBias = 0;
+    sampDescs[0].MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
+    sampDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampDescs[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampDescs[0].MinLOD = 0.0f;
+    sampDescs[0].MaxLOD = D3D12_FLOAT32_MAX;
+    sampDescs[0].ShaderRegister = 0;
+    sampDescs[0].RegisterSpace = 0;
+    sampDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    D3D12_DESCRIPTOR_RANGE range = {};
+    range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    range.BaseShaderRegister = 0;
+    range.RegisterSpace = 0;
+    range.NumDescriptors = 1;
+    range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_DESCRIPTOR_TABLE dTable = {};
+    dTable.NumDescriptorRanges = 1;
+    dTable.pDescriptorRanges = &range;
+
+    D3D12_ROOT_PARAMETER rootParameters[1];
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[0].DescriptorTable = dTable;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    rootSignatureDesc.Init(_countof(rootParameters),
+        rootParameters,
+        _countof(sampDescs),
+        sampDescs,
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS);
 
     ID3DBlob* signature;
     if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr)))

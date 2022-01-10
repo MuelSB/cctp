@@ -4,9 +4,10 @@ struct VertexOut
     float2 TextureCoordinate : TEXTURE_COORDINATE;
 };
 
+SamplerState samp : register(s0);
+Texture2D<float4> shaderResources[1] : register(t0);
 
-
-float4 main() : SV_TARGET
+float4 main(VertexOut input) : SV_TARGET
 {
-	return float4(1.0f, 1.0f, 1.0f, 1.0f);
+    return shaderResources[0].Sample(samp, float2(input.TextureCoordinate.x, -input.TextureCoordinate.y));
 }

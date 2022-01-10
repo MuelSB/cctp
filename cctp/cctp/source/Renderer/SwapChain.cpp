@@ -3,13 +3,14 @@
 #include "Renderer/Renderer.h"
 
 bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::ComPtr<ID3D12CommandQueue> directCommandQueue,
-    Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtDescriptorIncrementSize)
+    Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtDescriptorIncrementSize,
+    DXGI_FORMAT format)
 {
     // Describe swap chain
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = width;
     swapChainDesc.Height = height;
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.Format = format;
     swapChainDesc.Stereo = FALSE;
     swapChainDesc.SampleDesc = { 1, 0 };
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -86,6 +87,9 @@ bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Mi
 
     // Store tearing support flag
     TearingSupported = tearingSupported;
+
+    // Store format
+    Format = format;
 
     return true;
 }

@@ -545,12 +545,12 @@ bool Renderer::Flush()
     return true;
 }
 
-bool Renderer::CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::unique_ptr<SwapChain>& swapChain)
+bool Renderer::CreateSwapChain(HWND windowHandle, UINT width, UINT height, DXGI_FORMAT format, std::unique_ptr<SwapChain>& swapChain)
 {
     auto temp = std::make_unique<SwapChain>();
 
     if (!temp->Init(DXGIFactory, DirectCommandQueue, Device, windowHandle, width, height, BACK_BUFFER_COUNT,
-        TearingSupported, RTDescriptorIncrementSize))
+        TearingSupported, RTDescriptorIncrementSize, format))
     {
         return false;
     }
@@ -804,16 +804,16 @@ bool Renderer::BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccel
         static_cast<DWORD>(std::chrono::milliseconds::max().count()));
 }
 
-void Renderer::AddSRVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const uint32_t descriptorIndex)
+void Renderer::AddSRVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, const uint32_t descriptorIndex)
 {
     assert(descriptorIndex != 0 && "Descriptor index 0 is occupied by ImGui resources in CBV SRV UAV descriptor heap. Use another index.");
-    Device->CreateShaderResourceView(pResource, &desc, CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(descriptorIndex));
+    Device->CreateShaderResourceView(pResource, pDesc, CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(descriptorIndex));
 }
 
-void Renderer::AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, const uint32_t descriptorIndex)
+void Renderer::AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc, const uint32_t descriptorIndex)
 {
     assert(descriptorIndex != 0 && "Descriptor index 0 is occupied by ImGui resources in CBV SRV UAV descriptor heap. Use another index.");
-    Device->CreateUnorderedAccessView(pResource, nullptr, &desc, CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(descriptorIndex));
+    Device->CreateUnorderedAccessView(pResource, nullptr, pDesc, CBVSRVUAVDescriptorHeap->GetCPUDescriptorHandle(descriptorIndex));
 }
 
 UINT Renderer::GetRTDescriptorIncrementSize()
@@ -921,7 +921,7 @@ void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain)
     DirectCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 }
 
-void Renderer::Commands::SetRenderTargets(SwapChain* pSwapChain)
+void Renderer::Commands::SetBackBufferRenderTargets(SwapChain* pSwapChain)
 {
     auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
     auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
@@ -1081,6 +1081,11 @@ void Renderer::Commands::Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDe
     DirectCommandList->ResourceBarrier(_countof(barriers), barriers);
 }
 
+void Renderer::Commands::SetGraphicsDescriptorTableRootParam(UINT rootParameterIndex, const uint32_t baseDescriptorIndex)
+{
+    DirectCommandList->SetGraphicsRootDescriptorTable(rootParameterIndex, CBVSRVUAVDescriptorHeap->GetGPUDescriptorHandle(baseDescriptorIndex));
+}
+
 void Renderer::Commands::DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, ID3D12Resource* pSrcResource, D3D12_RESOURCE_STATES srcResourceState)
 {
     auto* pRenderTargetResource = pSwapChain->GetBackBuffers()[FrameIndex].Get();
@@ -1096,6 +1101,25 @@ void Renderer::Commands::DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, 
     CD3DX12_RESOURCE_BARRIER endBarriers[] = {
     CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargetResource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET),
     CD3DX12_RESOURCE_BARRIER::Transition(pSrcResource, D3D12_RESOURCE_STATE_COPY_SOURCE, srcResourceState)
+    };
+    DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
+}
+
+void Renderer::Commands::CopyRenderTargetToResource(SwapChain* pSwapChain, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState)
+{
+    auto* pRenderTargetResource = pSwapChain->GetBackBuffers()[FrameIndex].Get();
+
+    CD3DX12_RESOURCE_BARRIER beginBarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargetResource, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE),
+        CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, dstResourceState, D3D12_RESOURCE_STATE_COPY_DEST)
+    };
+    DirectCommandList->ResourceBarrier(_countof(beginBarriers), beginBarriers);
+
+    DirectCommandList->CopyResource(pDstResource, pRenderTargetResource);
+
+    CD3DX12_RESOURCE_BARRIER endBarriers[] = {
+        CD3DX12_RESOURCE_BARRIER::Transition(pRenderTargetResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+        CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, D3D12_RESOURCE_STATE_COPY_DEST, dstResourceState)
     };
     DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
 }

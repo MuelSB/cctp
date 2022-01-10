@@ -6,7 +6,8 @@ namespace Renderer
     {
     public:
         bool Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Microsoft::WRL::ComPtr<ID3D12CommandQueue> directCommandQueue,
-            Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtDescriptorIncrementSize);
+            Microsoft::WRL::ComPtr<ID3D12Device> device, HWND hWnd, UINT width, UINT height, size_t backBufferCount, bool tearingSupported, UINT rtDescriptorIncrementSize,
+            DXGI_FORMAT format);
         bool Present(const bool vsync);
         float GetViewportWidth() const;
         float GetViewportHeight() const;
@@ -18,6 +19,7 @@ namespace Renderer
         const D3D12_RECT& GetScissorRect() const;
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetRTDescriptorHandleForFrame(size_t frameIndex) const;
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDSDescriptorHandle() const;
+        DXGI_FORMAT GetFormat() const { return Format; }
 
     private:
         bool UpdateBackBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT rtvDescriptorSize);
@@ -32,5 +34,6 @@ namespace Renderer
         D3D12_RECT ScissorRect = {};
         Microsoft::WRL::ComPtr<ID3D12Resource> DepthStencilBuffer;
         Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> DSDescriptorHeap;
+        DXGI_FORMAT Format;
     };
 }

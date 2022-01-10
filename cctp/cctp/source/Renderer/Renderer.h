@@ -22,7 +22,7 @@ namespace Renderer
 	bool Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount);
 	bool Shutdown();
 	bool Flush();
-	bool CreateSwapChain(HWND windowHandle, UINT width, UINT height, std::unique_ptr<SwapChain>& swapChain);
+	bool CreateSwapChain(HWND windowHandle, UINT width, UINT height, DXGI_FORMAT format, std::unique_ptr<SwapChain>& swapChain);
 	bool ResizeSwapChain(SwapChain* pSwapChain, UINT newWidth, UINT newHeight);
 	template<typename T>
 	bool CreateGraphicsPipeline(std::unique_ptr<GraphicsPipelineBase>& pipeline);
@@ -33,10 +33,10 @@ namespace Renderer
 	bool BuildBottomLevelAccelerationStructures(std::unique_ptr<BottomLevelAccelerationStructure>* pStructures, const size_t structureCount);
 	void CreateTopLevelAccelerationStructure(std::unique_ptr<TopLevelAccelerationStructure>& tlas, const bool allowUpdate, const uint32_t instanceCount);
 	bool BuildTopLevelAccelerationStructures(std::unique_ptr<TopLevelAccelerationStructure>* pStructures, const size_t structureCount);
-	// Last descriptor index is occupied by ImGui resources
-	void AddSRVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& desc, const uint32_t descriptorIndex);
-	// Last descriptor index is occupied by ImGui resources
-	void AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& desc, const uint32_t descriptorIndex);
+	// First descriptor index is occupied by ImGui resources
+	void AddSRVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pDesc, const uint32_t descriptorIndex);
+	// First descriptor index is occupied by ImGui resources
+	void AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc, const uint32_t descriptorIndex);
 
 	UINT GetRTDescriptorIncrementSize();
 	bool GetVSyncEnabled();
@@ -54,7 +54,7 @@ namespace Renderer
 		bool StartFrame(SwapChain* pSwapChain);
 		bool EndFrame(SwapChain* pSwapChain);
 		void ClearRenderTargets(SwapChain* pSwapChain);
-		void SetRenderTargets(SwapChain* pSwapChain);
+		void SetBackBufferRenderTargets(SwapChain* pSwapChain);
 		void SetPrimitiveTopology();
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
@@ -67,9 +67,11 @@ namespace Renderer
 		void EndImGui();
 		void RebuildTlas(TopLevelAccelerationStructure* tlas);
 		void Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource, ID3D12Resource* pRaytraceOutput2Resource);
+		void SetGraphicsDescriptorTableRootParam(UINT rootParameterIndex, const uint32_t baseDescriptorIndex);
 
 		// Copies the src resource to the current frame's swap chain backbuffer. Swap chain render target resource is returned to render target
 		// state after copy. Src resource is returned to srcResourceState after copy
 		void DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, ID3D12Resource* pSrcResource, D3D12_RESOURCE_STATES srcResourceState);
+		void CopyRenderTargetToResource(SwapChain* pSwapChain, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState);
 	}
 }

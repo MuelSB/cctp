@@ -11,10 +11,18 @@
 
 #define ALIGN_TO(size, alignment) (size + (alignment - 1) & ~(alignment-1))
 
-constexpr uint32_t SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT = 4;
-constexpr uint32_t SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1;
-constexpr uint32_t RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2;
-constexpr uint32_t RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX = 3;
+enum SHADER_VISIBLE_DESCRIPTOR_INDICES
+{
+	IMGUI_DESCRIPTOR_INDEX = 0,
+
+	SCENE_BVH_SRV_DESCRIPTOR_INDEX = 1,
+	RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX = 2,
+	RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX = 3,
+	SCENE_SRV_DESCRIPTOR_INDEX = 4,
+
+	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
+};
+
 constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
 constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
 
@@ -114,7 +122,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	const auto clientRectWidth = clientRect.right - clientRect.left;
 	const auto clientRectHeight = clientRect.bottom - clientRect.top;
 
-	if (!Renderer::CreateSwapChain(Window::GetHandle(), clientRectWidth, clientRectHeight, swapChain))
+	if (!Renderer::CreateSwapChain(Window::GetHandle(), clientRectWidth, clientRectHeight, DXGI_FORMAT_R8G8B8A8_UNORM, swapChain))
 	{
 		assert(false && "Failed to create a swap chain for the window.");
 	}
@@ -190,9 +198,10 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	sceneBVHSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 	sceneBVHSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	sceneBVHSRVDesc.RaytracingAccelerationStructure.Location = demoScene->GetTlas()->GetTlasResource()->GetGPUVirtualAddress();
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(nullptr, sceneBVHSRVDesc, SCENE_BVH_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(nullptr, &sceneBVHSRVDesc, SCENE_BVH_SRV_DESCRIPTOR_INDEX);
 
-	// Raytracing output texture
+	// Create GBuffer
+	// Raytracing output texture (irradiance)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
 
 	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -210,11 +219,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create raytrace output texture resource.");
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC raytraceOutputUAVDesc = {};
-	raytraceOutputUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), raytraceOutputUAVDesc, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
 
-	// Raytracing output 2 texture
+	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
 
 	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -232,9 +239,29 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create raytrace output 2 texture resource.");
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC raytraceOutput2UAVDesc = {};
-	raytraceOutput2UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), raytraceOutput2UAVDesc, RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX);
+
+	// Scene texture
+	auto swapChainFormat = swapChain->GetFormat();
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> sceneBufferResource;
+
+	auto sceneBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(swapChainFormat,
+		clientRectWidth, clientRectHeight);
+	sceneBufferDesc.MipLevels = 1;
+	auto sceneBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&sceneBufferHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&sceneBufferDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&sceneBufferResource))))
+	{
+		assert(false && "Failed to create scene buffer resource.");
+	}
+
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneBufferResource.Get(), nullptr, SCENE_SRV_DESCRIPTOR_INDEX);
 
 	// Load compiled raytracing shaders
 	BinaryBuffer rayGenBuffer;
@@ -465,7 +492,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::StartFrame(pSwapChain);
 
 		// Set render targets
-		Renderer::Commands::SetRenderTargets(pSwapChain);
+		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain);
 
 		// Clear render targets
 		Renderer::Commands::ClearRenderTargets(pSwapChain);
@@ -494,6 +521,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Submit draw calls
 		// Draw scene
 		demoScene->Draw();
+
+		// Copy backbuffer to scene shader resource
+		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Raytrace global illumination probe field
 
@@ -536,7 +566,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Render screen pass
 		Renderer::Commands::SetGraphicsPipeline(screenPassPipeline.get());
-		// Set descriptor table
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(0, SCENE_SRV_DESCRIPTOR_INDEX);
 		Renderer::Commands::SubmitScreenMesh(*screenMesh.get());
 
 		// Begin ImGui for the frame
