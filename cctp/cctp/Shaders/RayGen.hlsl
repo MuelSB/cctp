@@ -75,7 +75,7 @@ void RayGen()
             Output[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions] = float4(payload.HitIrradiance, 1.0);
             
             // Store visibility for probe
-            Output[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions] = float4(payload.HitDistance, payload.HitDistance, payload.HitDistance, 1.0);
+            Output[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions] = float4(1 - payload.HitDistance, 1 - payload.HitDistance, 1 - payload.HitDistance, 1.0);
         }
     }
     
