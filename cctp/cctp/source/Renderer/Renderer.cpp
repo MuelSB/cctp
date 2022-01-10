@@ -577,6 +577,18 @@ bool Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(std::unique_pt
     return true;
 }
 
+template<>
+bool Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
+{
+    auto temp = std::make_unique<Renderer::ScreenPassPipeline>();
+    if (!temp->Init(Device.Get()))
+    {
+        return false;
+    }
+    pipeline = std::move(temp);
+    return true;
+}
+
 void Renderer::CreateStagedMesh(const std::vector<Vertex1Pos1UV1Norm>& vertices, const std::vector<uint32_t>& indices,
     const std::wstring& name, std::unique_ptr<Mesh>& mesh)
 {

@@ -2,6 +2,7 @@
 
 #include "Renderer/SwapChain.h"
 #include "Renderer/Pipeline/GraphicsPipeline.h"
+#include "Renderer/Pipeline/ScreenPassPipeline.h"
 
 #include "Geometry.h"
 #include "Mesh.h"

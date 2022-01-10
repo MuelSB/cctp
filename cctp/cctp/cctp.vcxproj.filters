@@ -90,6 +90,9 @@
     <ClCompile Include="source\Renderer\RootSignature.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\Renderer\Pipeline\ScreenPassPipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\Pch.h">
@@ -200,9 +203,14 @@
     <ClInclude Include="source\Renderer\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="source\Renderer\Pipeline\ScreenPassPipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\VertexShader.hlsl" />
     <FxCompile Include="Shaders\PixelShader.hlsl" />
+    <FxCompile Include="Shaders\ScreenVertexShader.hlsl" />
+    <FxCompile Include="Shaders\ScreenPixelShader.hlsl" />
   </ItemGroup>
 </Project>

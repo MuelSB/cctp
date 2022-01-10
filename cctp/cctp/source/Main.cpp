@@ -173,6 +173,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to load screen mesh to GPU.");
 	}
 
+	std::unique_ptr<Renderer::GraphicsPipelineBase> screenPassPipeline;
+	if (!Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(screenPassPipeline))
+	{
+		assert(false && "Failed to create screen pass pipeline.");
+	}
+
 	// Create demo scene
 	auto demoScene = std::make_unique<DemoScene>();
 
