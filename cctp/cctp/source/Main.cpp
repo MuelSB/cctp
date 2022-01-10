@@ -148,6 +148,31 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create graphics pipeline.");
 	}
 
+	// Create screen pass graphics pipeline
+	std::vector<Renderer::Vertex1Pos1UV1Norm> screenVertices(4);
+	screenVertices[0].Position = glm::vec3(-1.0f, 1.0f, 0.f);
+	screenVertices[0].UV = glm::vec2(0.0f, 1.0f);
+	screenVertices[0].Normal = glm::vec3(0.0f, 0.0f, -1.0f);
+	screenVertices[1].Position = glm::vec3(1.0f, 1.0f, 0.f);
+	screenVertices[1].UV = glm::vec2(1.0f, 1.0f);
+	screenVertices[1].Normal = glm::vec3(0.0f, 0.0f, -1.0f);
+	screenVertices[2].Position = glm::vec3(-1.0f, -1.0f, 0.f);
+	screenVertices[2].UV = glm::vec2(0.0f, 0.0f);
+	screenVertices[2].Normal = glm::vec3(0.0f, 0.0f, -1.0f);
+	screenVertices[3].Position = glm::vec3(1.0f, -1.0f, 0.f);
+	screenVertices[3].UV = glm::vec2(1.0f, 0.0f);
+	screenVertices[3].Normal = glm::vec3(0.0f, 0.0f, -1.0f);
+
+	std::vector<uint32_t> screenIndices({ 0, 1, 2, 2, 1, 3 });
+
+	std::unique_ptr<Renderer::Mesh> screenMesh;
+	Renderer::CreateStagedMesh(screenVertices, screenIndices, L"ScreenMesh", screenMesh);
+
+	if (!Renderer::LoadStagedMeshesOntoGPU(&screenMesh, 1))
+	{
+		assert(false && "Failed to load screen mesh to GPU.");
+	}
+
 	// Create demo scene
 	auto demoScene = std::make_unique<DemoScene>();
 
