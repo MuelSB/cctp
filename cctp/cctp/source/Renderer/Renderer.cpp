@@ -41,6 +41,7 @@ struct PerObjectConstants
 {
     glm::mat4 WorldMatrix = glm::identity<glm::mat4>();
     glm::vec4 Color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    glm::mat4 NormalMatrix = glm::identity<glm::mat4>();
 };
 
 struct PerFrameConstants
@@ -1072,6 +1073,9 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
     PerObjectConstants perObjectConstants = {};
     perObjectConstants.WorldMatrix = Math::CalculateWorldMatrix(transform);
     perObjectConstants.Color = color;
+
+    glm::mat3 worldMatrix3x3 = perObjectConstants.WorldMatrix;
+    perObjectConstants.NormalMatrix = glm::inverse(glm::transpose(worldMatrix3x3));
 
     auto objectConstantBufferOffset = FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
     memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));

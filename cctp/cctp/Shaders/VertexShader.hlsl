@@ -2,6 +2,7 @@ cbuffer PerObjectConstants : register(b0)
 {
     float4x4 WorldMatrix;
     float4 Color;
+    float4x4 NormalMatrix;
 }
 
 cbuffer PerFrameConstants : register(b1)

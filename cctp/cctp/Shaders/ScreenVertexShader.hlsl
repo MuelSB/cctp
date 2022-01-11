@@ -15,6 +15,6 @@ VertexOut main( VertexIn input )
 {
     VertexOut output;
     output.FinalPosition = float4(input.LocalSpacePosition, 1.0);
-    output.TextureCoordinate = input.UV;
+    output.TextureCoordinate = float2(input.UV.x, -input.UV.y);
     return output;
 }

@@ -22,10 +22,8 @@ void SetupGBuffer(inout GBuffer gbuffer, in float2 textureCoordinate)
 
 float4 main(VertexOut input) : SV_TARGET
 {
-    float2 textureCoordinate = float2(input.TextureCoordinate.x, -input.TextureCoordinate.y);
-
     GBuffer gbuffer;
-    SetupGBuffer(gbuffer, textureCoordinate);
+    SetupGBuffer(gbuffer, input.TextureCoordinate);
     
     return gbuffer.SceneColor;
 
