@@ -130,10 +130,12 @@ void DemoScene::Draw()
 {
 	for (size_t i = 0; i < SceneMeshTransformCount; ++i)
 	{
-		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor());
+		// Cube meshes
+		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor(), true);
 	}
 
-	Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f));
+	// Probe debug sphere
+	Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
 }
 
 void DemoScene::DrawImGui()

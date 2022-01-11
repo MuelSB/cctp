@@ -45,5 +45,5 @@ private:
 	std::vector<Renderer::Material> MeshMaterials;
 
 	Transform ProbeTransformWS = {};
-	glm::vec3 LightDirectionWS = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 LightDirectionWS = glm::vec3(0.6f, -0.5f, 0.1f);
 };

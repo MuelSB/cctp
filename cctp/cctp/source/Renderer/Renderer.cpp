@@ -42,6 +42,7 @@ struct PerObjectConstants
     glm::mat4 WorldMatrix = glm::identity<glm::mat4>();
     glm::vec4 Color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     glm::mat4 NormalMatrix = glm::identity<glm::mat4>();
+    uint32_t Lit = true;
 };
 
 struct PerFrameConstants
@@ -54,6 +55,7 @@ struct PerPassConstants
 {
     glm::mat4 ViewMatrix = glm::identity<glm::mat4>();
     glm::mat4 ProjectionMatrix = glm::identity<glm::mat4>();
+    glm::vec4 CameraPositionWS = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 };
 
 struct MaterialConstants
@@ -1045,6 +1047,9 @@ void Renderer::Commands::UpdatePerPassConstants(const glm::vec2& viewportDims, U
         break;
     }
 
+    // Update camera world space position
+    perPassConstants.CameraPositionWS = glm::vec4(camera.Position.x, camera.Position.y, camera.Position.z, 1.0f);
+
     memcpy(MappedPerPassConstantBufferLocation, &perPassConstants, sizeof(PerPassConstants));
 
     DirectCommandList->SetGraphicsRootConstantBufferView(perPassConstantsParameterIndex, PerPassConstantBuffer->GetGPUVirtualAddress());
@@ -1067,12 +1072,13 @@ void Renderer::Commands::UpdateMaterialConstants(const Renderer::Material* pMate
     // Do not set any graphics root constant buffer view here yet as the material buffer is not used by the rasterizer, only the raytracer
 }
 
-void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color)
+void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit)
 {
     // Update per object constant buffer
     PerObjectConstants perObjectConstants = {};
     perObjectConstants.WorldMatrix = Math::CalculateWorldMatrix(transform);
     perObjectConstants.Color = color;
+    perObjectConstants.Lit = lit;
 
     glm::mat3 worldMatrix3x3 = perObjectConstants.WorldMatrix;
     perObjectConstants.NormalMatrix = glm::inverse(glm::transpose(worldMatrix3x3));
