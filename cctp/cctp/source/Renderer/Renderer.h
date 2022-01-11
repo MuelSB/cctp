@@ -40,6 +40,7 @@ namespace Renderer
 	void AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pDesc, const uint32_t descriptorIndex);
 
 	UINT GetRTDescriptorIncrementSize();
+	UINT GetDSDescriptorIncrementSize();
 	bool GetVSyncEnabled();
 	void SetVSyncEnabled(const bool enabled);
 	const DescriptorHeap* GetShaderVisibleDescriptorHeap();

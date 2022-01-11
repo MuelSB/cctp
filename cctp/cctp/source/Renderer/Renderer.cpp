@@ -20,6 +20,7 @@ Microsoft::WRL::ComPtr<IDXGIAdapter4> Adapter;
 DXGI_ADAPTER_DESC1 AdapterDesc;
 Microsoft::WRL::ComPtr<ID3D12Device5> Device;
 UINT RTDescriptorIncrementSize;
+UINT DSDescriptorIncrementSize;
 Microsoft::WRL::ComPtr<ID3D12CommandQueue> DirectCommandQueue;
 std::array<Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, BACK_BUFFER_COUNT> DirectCommandAllocators;
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList4> DirectCommandList;
@@ -317,6 +318,9 @@ bool Renderer::Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount)
 
     // Get RTV increment size
     RTDescriptorIncrementSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    // Get DSV increment size
+    DSDescriptorIncrementSize = Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     // Create a direct command queue
     if (!CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, Device, DirectCommandQueue))
@@ -874,6 +878,11 @@ void Renderer::AddUAVDescriptorToShaderVisibleHeap(ID3D12Resource* pResource, co
 UINT Renderer::GetRTDescriptorIncrementSize()
 {
     return RTDescriptorIncrementSize;
+}
+
+UINT Renderer::GetDSDescriptorIncrementSize()
+{
+    return DSDescriptorIncrementSize;
 }
 
 bool Renderer::GetVSyncEnabled()

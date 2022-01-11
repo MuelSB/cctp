@@ -20,6 +20,7 @@ namespace Renderer
         const D3D12_RECT& GetScissorRect() const;
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetRTDescriptorHandleForFrame(size_t frameIndex) const;
         CD3DX12_CPU_DESCRIPTOR_HANDLE GetDSDescriptorHandle() const;
+        CD3DX12_CPU_DESCRIPTOR_HANDLE GetShadowMapDSDescriptorHandle() const;
         DXGI_FORMAT GetFormat() const { return Format; }
 
     private:

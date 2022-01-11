@@ -61,7 +61,7 @@ bool Renderer::SwapChain::Init(Microsoft::WRL::ComPtr<IDXGIFactory4> factory, Mi
 
     // Create descriptor heap for depth stencil buffer descriptors
     D3D12_DESCRIPTOR_HEAP_DESC dsDescriptorHeapDesc = {};
-    dsDescriptorHeapDesc.NumDescriptors = 1;
+    dsDescriptorHeapDesc.NumDescriptors = 2;
     dsDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
     dsDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     if (FAILED(device->CreateDescriptorHeap(&dsDescriptorHeapDesc, IID_PPV_ARGS(&DSDescriptorHeap))))
@@ -201,6 +201,12 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Renderer::SwapChain::GetRTDescriptorHandleForFrame
 CD3DX12_CPU_DESCRIPTOR_HANDLE Renderer::SwapChain::GetDSDescriptorHandle() const
 {
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(DSDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Renderer::SwapChain::GetShadowMapDSDescriptorHandle() const
+{
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(DSDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+        1, Renderer::GetDSDescriptorIncrementSize());
 }
 
 bool Renderer::SwapChain::UpdateBackBuffers(Microsoft::WRL::ComPtr<ID3D12Device> device, UINT rtvDescriptorSize)
