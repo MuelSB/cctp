@@ -632,6 +632,18 @@ bool Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(SwapChain* p
     return true;
 }
 
+template<>
+bool Renderer::CreateGraphicsPipeline<Renderer::ShadowMapPassPipeline>(SwapChain* pSwapChain, std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
+{
+    auto temp = std::make_unique<Renderer::ShadowMapPassPipeline>();
+    if (!temp->Init(Device.Get(), pSwapChain->GetFormat()))
+    {
+        return false;
+    }
+    pipeline = std::move(temp);
+    return true;
+}
+
 void Renderer::CreateStagedMesh(const std::vector<Vertex1Pos1UV1Norm>& vertices, const std::vector<uint32_t>& indices,
     const std::wstring& name, std::unique_ptr<Mesh>& mesh)
 {

@@ -189,6 +189,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create screen pass pipeline.");
 	}
 
+	// Create shadow map pass pipeline
+	std::unique_ptr<Renderer::GraphicsPipelineBase> shadowMapPassPipeline;
+	if (!Renderer::CreateGraphicsPipeline<Renderer::ShadowMapPassPipeline>(swapChain.get(), shadowMapPassPipeline))
+	{
+		assert(false && "Failed to create shadow map pass pipeline.");
+	}
+
 	// Create demo scene
 	auto demoScene = std::make_unique<DemoScene>();
 
@@ -529,6 +536,10 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		auto* pSwapChain = swapChain.get();
 		Renderer::Commands::StartFrame(pSwapChain);
 
+		// Render shadow map pass
+
+
+		// Render scene color and depth pass
 		// Set render targets
 		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
 
@@ -564,7 +575,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Draw scene
 		demoScene->Draw();
 
-		// Copy backbuffer to scene shader resource
+		// Copy backbuffer to scene color shader resource
 		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		// Copy depth buffer to scene depth shader resource
 		Renderer::Commands::CopyDepthTargetToResource(pSwapChain, sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
