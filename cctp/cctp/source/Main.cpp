@@ -26,6 +26,7 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 
 constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
 constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
+constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
 void CreateConsole(const uint32_t maxLines)
 {
@@ -280,10 +281,24 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create scene depth buffer resource.");
 	}
 
-	// Shadow map texture
-
-
 	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneDepthBufferResource.Get(), nullptr, SCENE_DEPTH_SRV_DESCRIPTOR_INDEX);
+
+	// Shadow map texture
+	Microsoft::WRL::ComPtr<ID3D12Resource> shadowMapBufferResource;
+
+	auto shadowMapBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
+		static_cast<UINT>(SHADOW_MAP_DIMS.x), static_cast<UINT>(SHADOW_MAP_DIMS.y));
+	auto shadowMapBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&shadowMapBufferHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&shadowMapBufferDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&shadowMapBufferResource))))
+	{
+		assert(false && "Failed to create shadow map buffer resource.");
+	}
 
 	// Load compiled raytracing shaders
 	BinaryBuffer rayGenBuffer;
