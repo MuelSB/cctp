@@ -7,8 +7,17 @@ bool Renderer::ShadowMapPassPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT re
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
-    rootSignatureDesc.Init(0,
-        nullptr,
+    D3D12_ROOT_DESCRIPTOR perPassConstantBufferDescriptorDesc = {};
+    perPassConstantBufferDescriptorDesc.ShaderRegister = 0;
+    perPassConstantBufferDescriptorDesc.RegisterSpace = 0;
+
+    D3D12_ROOT_PARAMETER rootParameters[1];
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[0].Descriptor = perPassConstantBufferDescriptorDesc;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+    rootSignatureDesc.Init(_countof(rootParameters),
+        rootParameters,
         0,
         nullptr,
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |

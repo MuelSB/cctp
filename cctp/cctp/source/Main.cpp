@@ -20,6 +20,7 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 	RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX = 3,
 	SCENE_SRV_DESCRIPTOR_INDEX = 4,
 	SCENE_DEPTH_SRV_DESCRIPTOR_INDEX = 5,
+	SHADOW_MAP_SRV_DESCRIPTOR_INDEX = 6,
 
 	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 };
@@ -227,7 +228,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytrace output texture resource.");
 	}
-
 	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
 
 	// Raytracing output 2 texture (visibility)
@@ -247,7 +247,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytrace output 2 texture resource.");
 	}
-
 	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX);
 
 	// Scene texture
@@ -267,7 +266,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create scene buffer resource.");
 	}
-
 	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneBufferResource.Get(), nullptr, SCENE_SRV_DESCRIPTOR_INDEX);
 
 	// Scene depth texture
@@ -287,7 +285,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create scene depth buffer resource.");
 	}
-
 	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneDepthBufferResource.Get(), nullptr, SCENE_DEPTH_SRV_DESCRIPTOR_INDEX);
 
 	// Shadow map texture
@@ -306,6 +303,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create shadow map buffer resource.");
 	}
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(shadowMapBufferResource.Get(), nullptr, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 
 	// Create shadow map depth stencil target
 	Microsoft::WRL::ComPtr<ID3D12Resource> shadowMapDepthStencilBuffer;
@@ -578,6 +576,26 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set pipeline
 		Renderer::Commands::SetGraphicsPipeline(shadowMapPassPipeline.get());
 
+		// Update per pass constants
+		Renderer::Camera shadowMapCamera = {};
+		shadowMapCamera.Settings.ProjectionMode = Renderer::Camera::CameraSettings::ProjectionMode::ORTHOGRAPHIC;
+		shadowMapCamera.Settings.OrthographicWidth = 10.0f;
+		shadowMapCamera.Settings.OrthographicHeight = 10.0f;
+		Renderer::Commands::UpdatePerPassConstants(0, SHADOW_MAP_DIMS, 0, shadowMapCamera);
+
+		// Set only depth target
+		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, true, pSwapChain->GetShadowMapDSDescriptorHandle());
+
+		// Clear only depth target
+		Renderer::Commands::ClearRenderTargets(pSwapChain, true, pSwapChain->GetShadowMapDSDescriptorHandle());
+
+		// Submit draw calls
+		// Draw scene into shadow map
+		demoScene->Draw(true);
+
+		// Copy shadow map depth buffer to shadow map buffer resource
+		Renderer::Commands::CopyDepthTargetToResource(shadowMapDepthStencilBuffer.Get(), shadowMapBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
 		// Render scene color and depth pass
 		// Set graphics pipeline
 		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
@@ -590,7 +608,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Update per pass constants
 		static const auto& camera = demoScene->GetMainCamera();
-		Renderer::Commands::UpdatePerPassConstants(glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 2, camera);
+		Renderer::Commands::UpdatePerPassConstants(1, glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 2, camera);
 
 		// Update per frame constants
 		static const auto& probePosition = demoScene->GetProbePositionWS();
@@ -603,12 +621,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Submit draw calls
 		// Draw scene
-		demoScene->Draw();
+		demoScene->Draw(false);
 
 		// Copy backbuffer to scene color shader resource
 		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		// Copy depth buffer to scene depth shader resource
-		Renderer::Commands::CopyDepthTargetToResource(pSwapChain, sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		Renderer::Commands::CopyDepthTargetToResource(pSwapChain->GetDepthStencilBuffer(), sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Raytrace global illumination probe field
 

@@ -61,9 +61,9 @@ namespace Renderer
 		void SetViewport(SwapChain* pSwapChain);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
 		void UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS);
-		void UpdatePerPassConstants(const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera);
+		void UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera);
 		void UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount);
-		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit);
+		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit, const bool forShadowMap);
 		void SubmitScreenMesh(const Mesh& mesh);
 		void SetDescriptorHeaps();
 		void BeginImGui();
@@ -76,6 +76,6 @@ namespace Renderer
 		// state after copy. Src resource is returned to srcResourceState after copy
 		void DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, ID3D12Resource* pSrcResource, D3D12_RESOURCE_STATES srcResourceState);
 		void CopyRenderTargetToResource(SwapChain* pSwapChain, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState);
-		void CopyDepthTargetToResource(SwapChain* pSwapChain, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState);
+		void CopyDepthTargetToResource(ID3D12Resource* pDepthTarget, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState);
 	}
 }

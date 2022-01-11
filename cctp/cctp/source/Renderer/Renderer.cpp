@@ -1042,7 +1042,7 @@ void Renderer::Commands::UpdatePerFrameConstants(UINT perFrameConstantsParameter
     DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress());
 }
 
-void Renderer::Commands::UpdatePerPassConstants(const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera)
+void Renderer::Commands::UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera)
 {
     PerPassConstants perPassConstants = {};
 
@@ -1071,9 +1071,11 @@ void Renderer::Commands::UpdatePerPassConstants(const glm::vec2& viewportDims, U
     // Update camera world space position
     perPassConstants.CameraPositionWS = glm::vec4(camera.Position.x, camera.Position.y, camera.Position.z, 1.0f);
 
-    memcpy(MappedPerPassConstantBufferLocation, &perPassConstants, sizeof(PerPassConstants));
+    assert(passIndex < 256 && "Unsupported pass index is being used in an UpdatePerPassConstants call.");
+    auto bufferOffset = passIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
+    memcpy(MappedPerPassConstantBufferLocation + bufferOffset, &perPassConstants, sizeof(PerPassConstants));
 
-    DirectCommandList->SetGraphicsRootConstantBufferView(perPassConstantsParameterIndex, PerPassConstantBuffer->GetGPUVirtualAddress());
+    DirectCommandList->SetGraphicsRootConstantBufferView(perPassConstantsParameterIndex, PerPassConstantBuffer->GetGPUVirtualAddress() + bufferOffset);
 }
 
 void Renderer::Commands::UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount)
@@ -1093,7 +1095,7 @@ void Renderer::Commands::UpdateMaterialConstants(const Renderer::Material* pMate
     // Do not set any graphics root constant buffer view here yet as the material buffer is not used by the rasterizer, only the raytracer
 }
 
-void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit)
+void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit, const bool forShadowMap)
 {
     // Update per object constant buffer
     PerObjectConstants perObjectConstants = {};
@@ -1107,7 +1109,11 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
     auto objectConstantBufferOffset = FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
     memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));
 
-    DirectCommandList->SetGraphicsRootConstantBufferView(perObjectConstantsParameterIndex, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
+    if (!forShadowMap)
+    {
+        DirectCommandList->SetGraphicsRootConstantBufferView(perObjectConstantsParameterIndex, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
+    }
+
     DirectCommandList->IASetVertexBuffers(0, 1, &mesh.GetVertexBufferView());
     DirectCommandList->IASetIndexBuffer(&mesh.GetIndexBufferView());
     DirectCommandList->DrawIndexedInstanced(mesh.GetIndexCount(), 1, 0, 0, 0);
@@ -1222,20 +1228,18 @@ void Renderer::Commands::CopyRenderTargetToResource(SwapChain* pSwapChain, ID3D1
     DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
 }
 
-void Renderer::Commands::CopyDepthTargetToResource(SwapChain* pSwapChain, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState)
+void Renderer::Commands::CopyDepthTargetToResource(ID3D12Resource* pDepthTarget, ID3D12Resource* pDstResource, D3D12_RESOURCE_STATES dstResourceState)
 {
-    auto* pDepthTargetResource = pSwapChain->GetDepthStencilBuffer();
-
     CD3DX12_RESOURCE_BARRIER beginBarriers[] = {
-        CD3DX12_RESOURCE_BARRIER::Transition(pDepthTargetResource, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COPY_SOURCE),
+        CD3DX12_RESOURCE_BARRIER::Transition(pDepthTarget, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_COPY_SOURCE),
         CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, dstResourceState, D3D12_RESOURCE_STATE_COPY_DEST)
     };
     DirectCommandList->ResourceBarrier(_countof(beginBarriers), beginBarriers);
 
-    DirectCommandList->CopyResource(pDstResource, pDepthTargetResource);
+    DirectCommandList->CopyResource(pDstResource, pDepthTarget);
 
     CD3DX12_RESOURCE_BARRIER endBarriers[] = {
-        CD3DX12_RESOURCE_BARRIER::Transition(pDepthTargetResource, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+        CD3DX12_RESOURCE_BARRIER::Transition(pDepthTarget, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
         CD3DX12_RESOURCE_BARRIER::Transition(pDstResource, D3D12_RESOURCE_STATE_COPY_DEST, dstResourceState)
     };
     DirectCommandList->ResourceBarrier(_countof(endBarriers), endBarriers);
