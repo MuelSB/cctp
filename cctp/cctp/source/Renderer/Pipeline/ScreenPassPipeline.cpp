@@ -2,12 +2,12 @@
 #include "ScreenPassPipeline.h"
 #include "Binary/Binary.h"
 
-bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice)
+bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderTargetFormat)
 {
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
-    D3D12_STATIC_SAMPLER_DESC sampDescs[1];
+    D3D12_STATIC_SAMPLER_DESC sampDescs[2];
     sampDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
     sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
     sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -21,6 +21,20 @@ bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice)
     sampDescs[0].ShaderRegister = 0;
     sampDescs[0].RegisterSpace = 0;
     sampDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    sampDescs[1].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+    sampDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[1].MipLODBias = 0;
+    sampDescs[1].MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
+    sampDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampDescs[1].MinLOD = 0.0f;
+    sampDescs[1].MaxLOD = D3D12_FLOAT32_MAX;
+    sampDescs[1].ShaderRegister = 0;
+    sampDescs[1].RegisterSpace = 1;
+    sampDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     D3D12_DESCRIPTOR_RANGE tableRanges[1];
     tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
@@ -96,7 +110,7 @@ bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice)
     psoDesc.VS = vertexShaderBytecode;
     psoDesc.PS = pixelShaderBytecode;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.RTVFormats[0] = renderTargetFormat;
     psoDesc.SampleDesc = { 1, 0 };
     psoDesc.SampleMask = 0xffffffff;
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);

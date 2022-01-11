@@ -147,12 +147,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			Renderer::Flush();
 
 			// Resize the swap chain
-			Renderer::ResizeSwapChain(swapChain.get(), static_cast<UINT>(newWidth), static_cast<UINT>(newHeight));
+			Renderer::ResizeSwapChain(swapChain.get(), static_cast<UINT>(512), static_cast<UINT>(512));
 		});
 
 	// Create graphics pipeline
 	std::unique_ptr<Renderer::GraphicsPipelineBase> graphicsPipeline;
-	if (!Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(graphicsPipeline))
+	if (!Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(swapChain.get(), graphicsPipeline))
 	{
 		assert(false && "Failed to create graphics pipeline.");
 	}
@@ -183,7 +183,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	}
 
 	std::unique_ptr<Renderer::GraphicsPipelineBase> screenPassPipeline;
-	if (!Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(screenPassPipeline))
+	if (!Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(swapChain.get(), screenPassPipeline))
 	{
 		assert(false && "Failed to create screen pass pipeline.");
 	}
@@ -246,7 +246,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneBufferResource;
 
 	auto sceneBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(swapChain->GetFormat(),
-		clientRectWidth, clientRectHeight);
+		static_cast<UINT>(swapChain->GetViewportWidth()), static_cast<UINT>(swapChain->GetViewportHeight()));
 	sceneBufferDesc.MipLevels = 1;
 	auto sceneBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
@@ -266,7 +266,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneDepthBufferResource;
 
 	auto sceneDepthBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
-		clientRectWidth, clientRectHeight);
+		static_cast<UINT>(swapChain->GetViewportWidth()), static_cast<UINT>(swapChain->GetViewportHeight()));
 	sceneDepthBufferDesc.MipLevels = 11;
 	auto sceneDepthBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 

@@ -2,7 +2,7 @@
 #include "GraphicsPipeline.h"
 #include "Binary/Binary.h"
 
-bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice)
+bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderTargetFormat)
 {
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
@@ -82,7 +82,7 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice)
     psoDesc.VS = vertexShaderBytecode;
     psoDesc.PS = pixelShaderBytecode;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.RTVFormats[0] = renderTargetFormat;
     psoDesc.SampleDesc = { 1, 0 };
     psoDesc.SampleMask = 0xffffffff;
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);

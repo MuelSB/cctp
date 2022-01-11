@@ -566,10 +566,10 @@ bool Renderer::ResizeSwapChain(SwapChain* pSwapChain, UINT newWidth, UINT newHei
 }
 
 template<>
-bool Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
+bool Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(SwapChain* pSwapChain, std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
 {
     auto temp = std::make_unique<Renderer::GraphicsPipeline>();
-    if (!temp->Init(Device.Get()))
+    if (!temp->Init(Device.Get(), pSwapChain->GetFormat()))
     {
         return false;
     }
@@ -578,10 +578,10 @@ bool Renderer::CreateGraphicsPipeline<Renderer::GraphicsPipeline>(std::unique_pt
 }
 
 template<>
-bool Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
+bool Renderer::CreateGraphicsPipeline<Renderer::ScreenPassPipeline>(SwapChain* pSwapChain, std::unique_ptr<Renderer::GraphicsPipelineBase>& pipeline)
 {
     auto temp = std::make_unique<Renderer::ScreenPassPipeline>();
-    if (!temp->Init(Device.Get()))
+    if (!temp->Init(Device.Get(), pSwapChain->GetFormat()))
     {
         return false;
     }
