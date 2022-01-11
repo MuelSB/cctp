@@ -45,7 +45,8 @@ struct PerObjectConstants
 
 struct PerFrameConstants
 {
-    glm::vec4 ProbePosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec4 ProbePositionWS = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec4 LightDirectionWS = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 };
 
 struct PerPassConstants
@@ -952,19 +953,31 @@ bool Renderer::Commands::EndFrame(SwapChain* pSwapChain)
     return SUCCEEDED(DirectCommandQueue->Signal(FrameFences[FrameIndex].Get(), FrameFenceValues[FrameIndex]));
 }
 
-void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain)
+void Renderer::Commands::ClearRenderTargets(SwapChain* pSwapChain, bool depthOnly, const CD3DX12_CPU_DESCRIPTOR_HANDLE& depthTargetDescriptorHandle)
 {
-    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
-    auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
-    DirectCommandList->ClearRenderTargetView(rtvHandle, CLEAR_COLOR, 0, nullptr);
-    DirectCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    if (depthOnly)
+    {
+        DirectCommandList->ClearDepthStencilView(depthTargetDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    }
+    else
+    {
+        auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
+        DirectCommandList->ClearRenderTargetView(rtvHandle, CLEAR_COLOR, 0, nullptr);
+        DirectCommandList->ClearDepthStencilView(depthTargetDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    }
 }
 
-void Renderer::Commands::SetBackBufferRenderTargets(SwapChain* pSwapChain)
+void Renderer::Commands::SetBackBufferRenderTargets(SwapChain* pSwapChain, bool depthOnly, const CD3DX12_CPU_DESCRIPTOR_HANDLE& depthTargetDescriptorHandle)
 {
-    auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
-    auto dsvHandle = pSwapChain->GetDSDescriptorHandle();
-    DirectCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+    if (depthOnly)
+    {
+        DirectCommandList->OMSetRenderTargets(0, nullptr, FALSE, &depthTargetDescriptorHandle);
+    }
+    else
+    {
+        auto rtvHandle = pSwapChain->GetRTDescriptorHandleForFrame(FrameIndex);
+        DirectCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &depthTargetDescriptorHandle);
+    }
 }
 
 void Renderer::Commands::SetPrimitiveTopology()
@@ -984,15 +997,21 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePosition)
+void Renderer::Commands::UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS)
 {
     PerFrameConstants perFrameConstants = {};
 
     // Update probe position
-    perFrameConstants.ProbePosition.x = probePosition.x;
-    perFrameConstants.ProbePosition.y = probePosition.y;
-    perFrameConstants.ProbePosition.z = probePosition.z;
-    perFrameConstants.ProbePosition.w = 1.0f;
+    perFrameConstants.ProbePositionWS.x = probePositionWS.x;
+    perFrameConstants.ProbePositionWS.y = probePositionWS.y;
+    perFrameConstants.ProbePositionWS.z = probePositionWS.z;
+    perFrameConstants.ProbePositionWS.w = 1.0f;
+
+    // Update light direction
+    perFrameConstants.LightDirectionWS.x = lightDirectionWS.x;
+    perFrameConstants.LightDirectionWS.y = lightDirectionWS.y;
+    perFrameConstants.LightDirectionWS.z = lightDirectionWS.z;
+    perFrameConstants.LightDirectionWS.w = 1.0f;
 
     memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
 

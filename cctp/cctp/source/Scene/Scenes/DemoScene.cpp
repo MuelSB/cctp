@@ -113,8 +113,8 @@ DemoScene::DemoScene()
 	MainCamera.Settings.PerspectiveFOV = 45.0f;
 
 	// Set probe visualisation properties
-	ProbeTransform.Position = glm::vec3(0.0f, 2.0f, 0.0f);
-	ProbeTransform.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
+	ProbeTransformWS.Position = glm::vec3(0.0f, 2.0f, 0.0f);
+	ProbeTransformWS.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
 }
 
 void DemoScene::Begin()
@@ -133,7 +133,7 @@ void DemoScene::Draw()
 		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor());
 	}
 
-	Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransform, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f));
+	Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f));
 }
 
 void DemoScene::DrawImGui()

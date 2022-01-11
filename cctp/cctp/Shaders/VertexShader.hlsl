@@ -6,7 +6,8 @@ cbuffer PerObjectConstants : register(b0)
 
 cbuffer PerFrameConstants : register(b1)
 {
-    float4 ProbePosition;
+    float4 ProbePositionWS;
+    float4 LightDirectionWS;
 }
 
 cbuffer PerPassConstants : register(b2)

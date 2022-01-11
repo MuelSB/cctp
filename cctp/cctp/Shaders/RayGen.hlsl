@@ -17,9 +17,8 @@ RWTexture2D<float4> Output[2] : register(u0);
 
 cbuffer PerFrameConstants : register(b0)
 {
-    float4x4 ViewMatrix;
-    float4x4 ProjectionMatrix;
-    float4 ProbePosition;
+    float4 ProbePositionWS;
+    float4 LightDirectionWS;
 };
 
 // Majercik et al. https://jcgt.org/published/0008/02/01/
@@ -54,7 +53,7 @@ void RayGen()
             float3 rayDirection = SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
 
             RayDesc ray;
-            ray.Origin = ProbePosition.xyz;
+            ray.Origin = ProbePositionWS.xyz;
             ray.Direction = rayDirection;
             ray.TMin = 0.0;
             ray.TMax = 1e+38;

@@ -16,8 +16,9 @@ public:
 	void DrawImGui() final;
 
 	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }
-	const glm::vec3& GetProbePosition() const { return ProbeTransform.Position; }
-	glm::vec3& GetProbePosition() { return ProbeTransform.Position; }
+	const glm::vec3& GetProbePositionWS() const { return ProbeTransformWS.Position; }
+	glm::vec3& GetProbePositionWS() { return ProbeTransformWS.Position; }
+	glm::vec3& GetLightDirectionWS() { return LightDirectionWS; }
 	const Renderer::Material* GetMaterialsPtr() const { return MeshMaterials.data(); }
 	size_t GetMaterialCount() const { return MeshMaterials.size(); }
 
@@ -43,5 +44,6 @@ private:
 	std::vector<Transform> MeshTransforms;
 	std::vector<Renderer::Material> MeshMaterials;
 
-	Transform ProbeTransform = {};
+	Transform ProbeTransformWS = {};
+	glm::vec3 LightDirectionWS = glm::vec3(0.0f, 0.0f, 0.0f);
 };

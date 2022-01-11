@@ -280,6 +280,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create scene depth buffer resource.");
 	}
 
+	// Shadow map texture
+
+
 	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneDepthBufferResource.Get(), nullptr, SCENE_DEPTH_SRV_DESCRIPTOR_INDEX);
 
 	// Load compiled raytracing shaders
@@ -512,10 +515,10 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::StartFrame(pSwapChain);
 
 		// Set render targets
-		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain);
+		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
 
 		// Clear render targets
-		Renderer::Commands::ClearRenderTargets(pSwapChain);
+		Renderer::Commands::ClearRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
 
 		// Set primitive topology
 		Renderer::Commands::SetPrimitiveTopology();
@@ -534,8 +537,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::UpdatePerPassConstants(glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 2, camera);
 
 		// Update per frame constants
-		static const auto& probePosition = demoScene->GetProbePosition();
-		Renderer::Commands::UpdatePerFrameConstants(1, probePosition);
+		static const auto& probePosition = demoScene->GetProbePositionWS();
+		static const auto& lightDirection = demoScene->GetLightDirectionWS();
+		Renderer::Commands::UpdatePerFrameConstants(1, probePosition, lightDirection);
 
 		// Update material constants
 		static const auto* pMaterials = demoScene->GetMaterialsPtr();
@@ -618,7 +622,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Raytrace output texture view
-		static bool showRaytraceOutput = true;
+		static bool showRaytraceOutput = false;
 		if (showRaytraceOutput)
 		{
 			ImGui::SetNextWindowSize(ImVec2(512.0f, 1024.0f));
@@ -651,16 +655,27 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		if (ImGui::BeginMenu("Options"))
 		{
-			ImGui::Text("GI");
+			ImGui::Text("Global illumination");
+			ImGui::Separator();
 			ImGui::InputFloat("Probe update rate (s)", &GIGatherRateS);
 			ImGui::Checkbox("Enable raytracing", &dispatchRays);
+			ImGui::Separator();
+
+			ImGui::Text("Light");
+			ImGui::Separator();
+			ImGui::DragFloat3("Light direction", &demoScene->GetLightDirectionWS().x, 0.1f);
+			ImGui::Separator();
 
 			ImGui::Text("Debug");
+			ImGui::Separator();
 			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
-			ImGui::DragFloat3("Probe position", &demoScene->GetProbePosition().x, 0.1f);
+			ImGui::DragFloat3("Probe position", &demoScene->GetProbePositionWS().x, 0.1f);
+			ImGui::Separator();
 
 			ImGui::Text("Stats");
+			ImGui::Separator();
 			ImGui::Checkbox("Show performance stats", &displayPerformanceStatsWindow);
+			ImGui::Separator();
 
 			ImGui::EndMenu();
 		}
