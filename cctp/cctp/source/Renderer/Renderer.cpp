@@ -45,9 +45,13 @@ struct PerObjectConstants
 
 struct PerFrameConstants
 {
+    glm::vec4 ProbePosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+};
+
+struct PerPassConstants
+{
     glm::mat4 ViewMatrix = glm::identity<glm::mat4>();
     glm::mat4 ProjectionMatrix = glm::identity<glm::mat4>();
-    glm::vec4 ProbePosition = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 };
 
 struct MaterialConstants
@@ -60,6 +64,9 @@ uint8_t* MappedPerFrameConstantBufferLocation;
 
 Microsoft::WRL::ComPtr<ID3D12Resource> PerObjectConstantBuffer;
 uint8_t* MappedPerObjectConstantBufferLocation;
+
+Microsoft::WRL::ComPtr<ID3D12Resource> PerPassConstantBuffer;
+uint8_t* MappedPerPassConstantBufferLocation;
 
 Microsoft::WRL::ComPtr<ID3D12Resource> MaterialConstantBuffer;
 uint8_t* MappedMaterialConstantBufferLocation;
@@ -481,6 +488,38 @@ bool Renderer::Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount)
         return false;
     }
     MappedMaterialConstantBufferLocation = static_cast<uint8_t*>(mappedMaterialBufferResource);
+
+    // Create per pass buffer
+    auto perPassHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    auto perPassResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(SIZE_64KB);
+
+    if (FAILED(Device->CreateCommittedResource(&perPassHeapProperties,
+        D3D12_HEAP_FLAG_NONE,
+        &perPassResourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&PerPassConstantBuffer))))
+    {
+        DEBUG_LOG("ERROR: Failed to create per pass constant buffer.");
+        return false;
+    }
+
+    // Set a debug name for the per pass buffer
+    if (FAILED(PerPassConstantBuffer->SetName(L"PerPassConstantBuffer")))
+    {
+        DEBUG_LOG("ERROR: Failed to name per pass constant buffer.");
+        return false;
+    }
+
+    // Map the per pass buffer
+    D3D12_RANGE perPassReadRange(0, 0);
+    void* mappedPerPassBufferResource;
+    if FAILED(PerPassConstantBuffer->Map(0, &perPassReadRange, &mappedPerPassBufferResource))
+    {
+        DEBUG_LOG("ERROR: Failed to map material constant buffer.");
+        return false;
+    }
+    MappedPerPassConstantBufferLocation = static_cast<uint8_t*>(mappedPerPassBufferResource);
 
     // Initialize shader visible descriptor heap
     CBVSRVUAVDescriptorHeap = std::make_unique<DescriptorHeap>();
@@ -945,31 +984,9 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(const glm::vec2& viewportDims, UINT perFrameConstantsParameterIndex, const Camera& camera, const glm::vec3& probePosition)
+void Renderer::Commands::UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePosition)
 {
     PerFrameConstants perFrameConstants = {};
-
-    // Calculate frame view matrix
-    perFrameConstants.ViewMatrix = Math::CalculateViewMatrix(camera.Position, camera.Rotation);
-
-    // Calculate frame projection matrix
-    switch (camera.Settings.ProjectionMode)
-    {
-    case Camera::CameraSettings::ProjectionMode::PERSPECTIVE:
-        perFrameConstants.ProjectionMatrix = Math::CalculatePerspectiveProjectionMatrix(camera.Settings.PerspectiveFOV,
-            viewportDims.x,
-            viewportDims.y,
-            camera.Settings.PerspectiveNearClipPlane,
-            camera.Settings.PerspectiveFarClipPlane);
-        break;
-
-    case Camera::CameraSettings::ProjectionMode::ORTHOGRAPHIC:
-        perFrameConstants.ProjectionMatrix = Math::CalculateOrthographicProjectionMatrix(camera.Settings.OrthographicWidth,
-            camera.Settings.OrthographicHeight,
-            camera.Settings.OrthographicNearClipPlane,
-            camera.Settings.OrthographicFarClipPlane);
-        break;
-    }
 
     // Update probe position
     perFrameConstants.ProbePosition.x = probePosition.x;
@@ -980,6 +997,37 @@ void Renderer::Commands::UpdatePerFrameConstants(const glm::vec2& viewportDims, 
     memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
 
     DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress());
+}
+
+void Renderer::Commands::UpdatePerPassConstants(const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera)
+{
+    PerPassConstants perPassConstants = {};
+
+    // Calculate pass view matrix
+    perPassConstants.ViewMatrix = Math::CalculateViewMatrix(camera.Position, camera.Rotation);
+
+    // Calculate pass projection matrix
+    switch (camera.Settings.ProjectionMode)
+    {
+    case Camera::CameraSettings::ProjectionMode::PERSPECTIVE:
+        perPassConstants.ProjectionMatrix = Math::CalculatePerspectiveProjectionMatrix(camera.Settings.PerspectiveFOV,
+            viewportDims.x,
+            viewportDims.y,
+            camera.Settings.PerspectiveNearClipPlane,
+            camera.Settings.PerspectiveFarClipPlane);
+        break;
+
+    case Camera::CameraSettings::ProjectionMode::ORTHOGRAPHIC:
+        perPassConstants.ProjectionMatrix = Math::CalculateOrthographicProjectionMatrix(camera.Settings.OrthographicWidth,
+            camera.Settings.OrthographicHeight,
+            camera.Settings.OrthographicNearClipPlane,
+            camera.Settings.OrthographicFarClipPlane);
+        break;
+    }
+
+    memcpy(MappedPerPassConstantBufferLocation, &perPassConstants, sizeof(PerPassConstants));
+
+    DirectCommandList->SetGraphicsRootConstantBufferView(perPassConstantsParameterIndex, PerPassConstantBuffer->GetGPUVirtualAddress());
 }
 
 void Renderer::Commands::UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount)

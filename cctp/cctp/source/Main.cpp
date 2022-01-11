@@ -529,10 +529,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set descriptor heaps
 		Renderer::Commands::SetDescriptorHeaps();
 
-		// Update per frame constants
+		// Update per pass constants
 		static const auto& camera = demoScene->GetMainCamera();
+		Renderer::Commands::UpdatePerPassConstants(glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 2, camera);
+
+		// Update per frame constants
 		static const auto& probePosition = demoScene->GetProbePosition();
-		Renderer::Commands::UpdatePerFrameConstants(glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 1, camera, probePosition);
+		Renderer::Commands::UpdatePerFrameConstants(1, probePosition);
 
 		// Update material constants
 		static const auto* pMaterials = demoScene->GetMaterialsPtr();

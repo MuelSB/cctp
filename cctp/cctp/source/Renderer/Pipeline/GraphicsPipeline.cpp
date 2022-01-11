@@ -15,7 +15,11 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     perFrameConstantBufferDescriptorDesc.ShaderRegister = 1;
     perFrameConstantBufferDescriptorDesc.RegisterSpace = 0;
 
-    D3D12_ROOT_PARAMETER rootParameters[2];
+    D3D12_ROOT_DESCRIPTOR perPassConstantBufferDescriptorDesc = {};
+    perPassConstantBufferDescriptorDesc.ShaderRegister = 2;
+    perPassConstantBufferDescriptorDesc.RegisterSpace = 0;
+
+    D3D12_ROOT_PARAMETER rootParameters[3];
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[0].Descriptor = perObjectConstantBufferDescriptorDesc;
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
@@ -23,6 +27,10 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[1].Descriptor = perFrameConstantBufferDescriptorDesc;
     rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+    rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[2].Descriptor = perPassConstantBufferDescriptorDesc;
+    rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
     rootSignatureDesc.Init(_countof(rootParameters),
         rootParameters,
