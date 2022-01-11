@@ -40,7 +40,7 @@ bool Renderer::ScreenPassPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT rende
     tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     tableRanges[0].BaseShaderRegister = 0;
     tableRanges[0].RegisterSpace = 0;
-    tableRanges[0].NumDescriptors = 2;
+    tableRanges[0].NumDescriptors = 3;
     tableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     D3D12_ROOT_DESCRIPTOR_TABLE dTable = {};

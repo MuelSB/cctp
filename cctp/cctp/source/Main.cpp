@@ -131,26 +131,26 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	}
 
 	// Subscribe window resized event handler
-	EventSystem::SubscribeToEvent<WindowResizedEvent>([&swapChain](WindowResizedEvent&& event)
-		{
-			// Get the resized client area width and height
-			RECT clientRect;
-			Window::GetClientAreaRect(clientRect);
-			auto newWidth = clientRect.right - clientRect.left;
-			auto newHeight = clientRect.bottom - clientRect.top;
+	//EventSystem::SubscribeToEvent<WindowResizedEvent>([&swapChain](WindowResizedEvent&& event)
+	//	{
+	//		// Get the resized client area width and height
+	//		RECT clientRect;
+	//		Window::GetClientAreaRect(clientRect);
+	//		auto newWidth = clientRect.right - clientRect.left;
+	//		auto newHeight = clientRect.bottom - clientRect.top;
 
-			// Check the new width and height are greater than 0
-			if ((newWidth <= 0) && (newHeight <= 0))
-			{
-				return;
-			}
+	//		// Check the new width and height are greater than 0
+	//		if ((newWidth <= 0) && (newHeight <= 0))
+	//		{
+	//			return;
+	//		}
 
-			// Wait for GPU queues to idle
-			Renderer::Flush();
+	//		// Wait for GPU queues to idle
+	//		Renderer::Flush();
 
-			// Resize the swap chain
-			Renderer::ResizeSwapChain(swapChain.get(), static_cast<UINT>(512), static_cast<UINT>(512));
-		});
+	//		// Resize the swap chain
+	//		Renderer::ResizeSwapChain(swapChain.get(), static_cast<UINT>(512), static_cast<UINT>(512));
+	//	});
 
 	// Create graphics pipeline
 	std::unique_ptr<Renderer::GraphicsPipelineBase> graphicsPipeline;
@@ -566,9 +566,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set primitive topology
 		Renderer::Commands::SetPrimitiveTopology();
 
-		// Set viewport
-		Renderer::Commands::SetViewport(pSwapChain);
-
 		// Set descriptor heaps
 		Renderer::Commands::SetDescriptorHeaps();
 
@@ -576,8 +573,26 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set pipeline
 		Renderer::Commands::SetGraphicsPipeline(shadowMapPassPipeline.get());
 
+		// Set viewport
+		D3D12_VIEWPORT shadowMapViewport = {};
+		shadowMapViewport.Width = SHADOW_MAP_DIMS.x;
+		shadowMapViewport.Height = SHADOW_MAP_DIMS.y;
+		shadowMapViewport.TopLeftX = 0.0f;
+		shadowMapViewport.TopLeftY = 0.0f;
+		shadowMapViewport.MinDepth = 0.0f;
+		shadowMapViewport.MaxDepth = 1.0f;
+
+		D3D12_RECT shadowMapScissor = {};
+		shadowMapScissor.top = 0;
+		shadowMapScissor.left = 0;
+		shadowMapScissor.right = static_cast<LONG>(SHADOW_MAP_DIMS.x);
+		shadowMapScissor.bottom = static_cast<LONG>(SHADOW_MAP_DIMS.y);
+
+		Renderer::Commands::SetViewport(shadowMapViewport, shadowMapScissor);
+
 		// Update per pass constants
 		Renderer::Camera shadowMapCamera = {};
+		shadowMapCamera.Position = glm::vec3(0.0f, 0.0f, 0.0f);
 		shadowMapCamera.Settings.ProjectionMode = Renderer::Camera::CameraSettings::ProjectionMode::ORTHOGRAPHIC;
 		shadowMapCamera.Settings.OrthographicWidth = 10.0f;
 		shadowMapCamera.Settings.OrthographicHeight = 10.0f;
@@ -599,6 +614,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Render scene color and depth pass
 		// Set graphics pipeline
 		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
+
+		// Set viewport
+		Renderer::Commands::SetViewport(pSwapChain);
 
 		// Set render targets
 		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
@@ -737,7 +755,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 			ImGui::Text("Light");
 			ImGui::Separator();
-			ImGui::DragFloat3("Light direction", &demoScene->GetLightDirectionWS().x, 0.1f);
+			ImGui::DragFloat3("Light direction", &demoScene->GetLightDirectionWS().x, 0.01f, -1.0f, 1.0f);
 			ImGui::Separator();
 
 			ImGui::Text("Debug");

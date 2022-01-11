@@ -1015,6 +1015,12 @@ void Renderer::Commands::SetViewport(SwapChain* pSwapChain)
     DirectCommandList->RSSetScissorRects(1, &pSwapChain->GetScissorRect());
 }
 
+void Renderer::Commands::SetViewport(const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissorRect)
+{
+    DirectCommandList->RSSetViewports(1, &viewport);
+    DirectCommandList->RSSetScissorRects(1, &scissorRect);
+}
+
 void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
 {
     DirectCommandList->SetPipelineState(pPipeline->GetPipelineState());

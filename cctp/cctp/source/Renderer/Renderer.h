@@ -59,6 +59,7 @@ namespace Renderer
 		void SetBackBufferRenderTargets(SwapChain* pSwapChain, bool depthOnly, const CD3DX12_CPU_DESCRIPTOR_HANDLE& depthTargetDescriptorHandle);
 		void SetPrimitiveTopology();
 		void SetViewport(SwapChain* pSwapChain);
+		void SetViewport(const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissorRect);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
 		void UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS);
 		void UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera);

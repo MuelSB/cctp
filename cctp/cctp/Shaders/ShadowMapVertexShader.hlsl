@@ -14,5 +14,8 @@ cbuffer PerPassConstants : register(b0)
 
 float4 main(VertexIn input) : SV_POSITION
 {
+    float4x4 lightMatrix = mul(ProjectionMatrix, ViewMatrix);
+    
+    
     return float4(0.0f, 0.0f, 0.0f, 1.0f);
 }
