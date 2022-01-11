@@ -536,27 +536,28 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		auto* pSwapChain = swapChain.get();
 		Renderer::Commands::StartFrame(pSwapChain);
 
-		// Render shadow map pass
-
-
-		// Render scene color and depth pass
-		// Set render targets
-		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
-
-		// Clear render targets
-		Renderer::Commands::ClearRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
-
 		// Set primitive topology
 		Renderer::Commands::SetPrimitiveTopology();
-
-		// Set graphics pipeline
-		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
 
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
 
 		// Set descriptor heaps
 		Renderer::Commands::SetDescriptorHeaps();
+
+		// Render shadow map pass
+		// Set pipeline
+		Renderer::Commands::SetGraphicsPipeline(shadowMapPassPipeline.get());
+
+		// Render scene color and depth pass
+		// Set graphics pipeline
+		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
+
+		// Set render targets
+		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
+
+		// Clear render targets
+		Renderer::Commands::ClearRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
 
 		// Update per pass constants
 		static const auto& camera = demoScene->GetMainCamera();
