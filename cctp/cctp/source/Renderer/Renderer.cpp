@@ -1061,10 +1061,11 @@ void Renderer::Commands::UpdatePerFrameConstants(const glm::vec3& probePositionW
 
     // Update light matrix
     auto lightPosition = glm::normalize(lightDirectionWS);
-    lightPosition.x = -lightPosition.x; // X needs to be flipped for FindLookAtRotation
-    auto shadowMapOrthoWidth = 20.0f;
-    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(shadowMapOrthoWidth, shadowMapOrthoWidth, -100.0f, 100.0f) *
-            //glm::lookAt(lightPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    lightPosition.x = -lightPosition.x;
+    lightPosition.y = -lightPosition.y;
+    auto shadowMapOrthoWidth = 5.0f;
+    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(shadowMapOrthoWidth, shadowMapOrthoWidth, -10.0f, 10.0f) *
+        //glm::lookAt(lightPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         Math::CalculateViewMatrix(
             lightPosition,
             Math::FindLookAtRotation(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));

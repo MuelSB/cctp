@@ -33,7 +33,7 @@ private:
 	void PollInputs(float deltaTime);
 
 private:
-	static constexpr size_t SceneMeshTransformCount = 6;
+	static constexpr size_t SceneMeshTransformCount = 3;
 	static constexpr float CameraYawSensitivity = 0.075f;
 	static constexpr float CameraPitchSensitivity = 0.075f;
 	static constexpr float CameraPitchMin = -90.0f;

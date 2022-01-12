@@ -26,7 +26,7 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 };
 
-constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
+constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1024.0f, 1024.0f);
 constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
 constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
@@ -92,7 +92,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to initialize window.");
 	}
 
-	Window::Show(SW_MAXIMIZE);
+	Window::Show(SW_SHOW);
 
 	// Subscribe input event handler
 	EventSystem::SubscribeToEvent<InputEvent>([](InputEvent&& event)
@@ -274,7 +274,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 	auto sceneDepthBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
 		static_cast<UINT>(swapChain->GetViewportWidth()), static_cast<UINT>(swapChain->GetViewportHeight()));
-	sceneDepthBufferDesc.MipLevels = 11;
+	sceneDepthBufferDesc.MipLevels = 10;
 	auto sceneDepthBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&sceneDepthBufferHeapProperties,
@@ -575,6 +575,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		static const auto& lightDirection = demoScene->GetLightDirectionWS();
 		Renderer::Commands::UpdatePerFrameConstants(probePosition, lightDirection);
 
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Render shadow map pass
 		uint32_t passIndex = 0;
 
@@ -617,6 +618,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Copy shadow map depth buffer to shadow map buffer resource
 		Renderer::Commands::CopyDepthTargetToResource(shadowMapDepthStencilBuffer.Get(), shadowMapBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Render scene color and depth pass
 		++passIndex;
 
@@ -631,7 +633,10 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(1, Renderer::GetPerFrameConstantBufferGPUVirtualAddress());
 
 		// Set per pass constant buffer view for pipeline
-		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(2, Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * 1));
+		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(2, Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * passIndex));
+
+		// Set descriptor table pointer for pipeline
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
@@ -649,7 +654,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Submit draw calls
 		// Draw scene
-		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 		demoScene->SetDrawProbes(true);
 		demoScene->Draw();
 
@@ -658,6 +662,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Copy depth buffer to scene depth shader resource
 		Renderer::Commands::CopyDepthTargetToResource(pSwapChain->GetDepthStencilBuffer(), sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		// Raytrace global illumination probe field
 		// Check raytracing is enabled
 		static float GIGatherRateS = 0.1f;
@@ -695,13 +700,26 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get(), raytraceOutput2Resource.Get());
 			}
 		}
+		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Render screen pass
 		++passIndex;
+
+		// Does not set per pass constant buffer view as this data is not used by the screen pass
+		// Does not set per frame constant buffer view as this data is not used by the screen pass
+
+		// Set graphics pipeline
 		Renderer::Commands::SetGraphicsPipeline(screenPassPipeline.get());
+
+		// Set descriptor table pointer for pipeline
 		Renderer::Commands::SetGraphicsDescriptorTableRootParam(0, SCENE_SRV_DESCRIPTOR_INDEX);
+
+		// Draw screen quad mesh
 		Renderer::Commands::SubmitScreenMesh(*screenMesh.get());
 
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Begin immediate mode GUI for the frame
 		Renderer::Commands::BeginImGui();
 
