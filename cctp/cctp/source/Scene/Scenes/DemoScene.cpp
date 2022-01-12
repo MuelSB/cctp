@@ -90,9 +90,9 @@ DemoScene::DemoScene()
 	MeshMaterials[5].SetColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	// Ceiling
-	MeshTransforms[6].Position = glm::vec3(0.0f, 4.0f, 0.0f);
-	MeshTransforms[6].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
-	MeshMaterials[6].SetColor(glm::vec4(0.85f, 0.85f, 0.8f, 1.0f));
+	//MeshTransforms[6].Position = glm::vec3(0.0f, 4.0f, 0.0f);
+	//MeshTransforms[6].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
+	//MeshMaterials[6].SetColor(glm::vec4(0.85f, 0.85f, 0.8f, 1.0f));
 
 	// Create top level acceleration structure
 	Renderer::CreateTopLevelAccelerationStructure(tlAccelStructure, true, static_cast<uint32_t>(SceneMeshTransformCount));
@@ -126,16 +126,19 @@ void DemoScene::Tick(float deltaTime)
 	PollInputs(deltaTime);
 }
 
-void DemoScene::Draw(const bool forShadowMap)
+void DemoScene::Draw()
 {
 	for (size_t i = 0; i < SceneMeshTransformCount; ++i)
 	{
 		// Cube meshes
-		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor(), true, forShadowMap);
+		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor(), true);
 	}
 
 	// Probe debug sphere
-	Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false, forShadowMap);
+	if (DrawProbes)
+	{
+		Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
+	}
 }
 
 void DemoScene::DrawImGui()

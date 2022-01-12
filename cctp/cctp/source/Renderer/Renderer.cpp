@@ -50,6 +50,7 @@ struct PerFrameConstants
 {
     glm::vec4 ProbePositionWS = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     glm::vec4 LightDirectionWS = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    glm::mat4 LightMatrix = glm::identity<glm::mat4>();
 };
 
 struct PerPassConstants
@@ -905,9 +906,24 @@ D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetPerFrameConstantBufferGPUVirtualAddress()
     return PerFrameConstantBuffer->GetGPUVirtualAddress();
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetPerObjectConstantBufferGPUVirtualAddress()
+{
+    return PerObjectConstantBuffer->GetGPUVirtualAddress();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetPerPassConstantBufferGPUVirtualAddress()
+{
+    return PerPassConstantBuffer->GetGPUVirtualAddress();
+}
+
 D3D12_GPU_VIRTUAL_ADDRESS Renderer::GetMaterialConstantBufferGPUVirtualAddress()
 {
     return MaterialConstantBuffer->GetGPUVirtualAddress();
+}
+
+UINT64 Renderer::GetConstantBufferAllignmentSize()
+{
+    return CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
 }
 
 ID3D12Device5* Renderer::GetDevice()
@@ -1027,7 +1043,7 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS)
+void Renderer::Commands::UpdatePerFrameConstants(const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -1043,12 +1059,17 @@ void Renderer::Commands::UpdatePerFrameConstants(UINT perFrameConstantsParameter
     perFrameConstants.LightDirectionWS.z = lightDirectionWS.z;
     perFrameConstants.LightDirectionWS.w = 1.0f;
 
-    memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
+    // Update light matrix
+    auto lightPosition = (glm::normalize(lightDirectionWS)) * 5.0f;
+    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(10.0f, 10.0f, 0.0f, 10000.0f) *
+        Math::CalculateViewMatrix(
+            lightPosition,
+            Math::FindLookAtRotation(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 
-    DirectCommandList->SetGraphicsRootConstantBufferView(perFrameConstantsParameterIndex, PerFrameConstantBuffer->GetGPUVirtualAddress());
+    memcpy(MappedPerFrameConstantBufferLocation, &perFrameConstants, sizeof(PerFrameConstants));
 }
 
-void Renderer::Commands::UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera)
+void Renderer::Commands::UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, const Camera& camera)
 {
     PerPassConstants perPassConstants = {};
 
@@ -1080,8 +1101,6 @@ void Renderer::Commands::UpdatePerPassConstants(const uint32_t passIndex, const 
     assert(passIndex < 256 && "Unsupported pass index is being used in an UpdatePerPassConstants call.");
     auto bufferOffset = passIndex * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
     memcpy(MappedPerPassConstantBufferLocation + bufferOffset, &perPassConstants, sizeof(PerPassConstants));
-
-    DirectCommandList->SetGraphicsRootConstantBufferView(perPassConstantsParameterIndex, PerPassConstantBuffer->GetGPUVirtualAddress() + bufferOffset);
 }
 
 void Renderer::Commands::UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount)
@@ -1097,11 +1116,9 @@ void Renderer::Commands::UpdateMaterialConstants(const Renderer::Material* pMate
     }
 
     memcpy(MappedMaterialConstantBufferLocation, &materialConstants, sizeof(MaterialConstants));
-
-    // Do not set any graphics root constant buffer view here yet as the material buffer is not used by the rasterizer, only the raytracer
 }
 
-void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit, const bool forShadowMap)
+void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit)
 {
     // Update per object constant buffer
     PerObjectConstants perObjectConstants = {};
@@ -1115,11 +1132,7 @@ void Renderer::Commands::SubmitMesh(UINT perObjectConstantsParameterIndex, const
     auto objectConstantBufferOffset = FrameDrawCount * CONSTANT_BUFFER_ALIGNMENT_SIZE_BYTES;
     memcpy(MappedPerObjectConstantBufferLocation + objectConstantBufferOffset, &perObjectConstants, sizeof(PerObjectConstants));
 
-    if (!forShadowMap)
-    {
-        DirectCommandList->SetGraphicsRootConstantBufferView(perObjectConstantsParameterIndex, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
-    }
-
+    DirectCommandList->SetGraphicsRootConstantBufferView(perObjectConstantsParameterIndex, PerObjectConstantBuffer->GetGPUVirtualAddress() + objectConstantBufferOffset);
     DirectCommandList->IASetVertexBuffers(0, 1, &mesh.GetVertexBufferView());
     DirectCommandList->IASetIndexBuffer(&mesh.GetIndexBufferView());
     DirectCommandList->DrawIndexedInstanced(mesh.GetIndexCount(), 1, 0, 0, 0);
@@ -1194,6 +1207,11 @@ void Renderer::Commands::Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDe
 void Renderer::Commands::SetGraphicsDescriptorTableRootParam(UINT rootParameterIndex, const uint32_t baseDescriptorIndex)
 {
     DirectCommandList->SetGraphicsRootDescriptorTable(rootParameterIndex, CBVSRVUAVDescriptorHeap->GetGPUDescriptorHandle(baseDescriptorIndex));
+}
+
+void Renderer::Commands::SetGraphicsConstantBufferViewRootParam(UINT rootParameterIndex, const D3D12_GPU_VIRTUAL_ADDRESS bufferAddress)
+{
+    DirectCommandList->SetGraphicsRootConstantBufferView(rootParameterIndex, bufferAddress);
 }
 
 void Renderer::Commands::DebugCopyResourceToRenderTarget(SwapChain* pSwapChain, ID3D12Resource* pSrcResource, D3D12_RESOURCE_STATES srcResourceState)

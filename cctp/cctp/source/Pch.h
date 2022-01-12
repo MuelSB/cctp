@@ -29,6 +29,7 @@
 #include "Math/glm/ext/matrix_transform.hpp"
 #include "Math/glm/ext/matrix_clip_space.hpp"
 #include "Math/glm/gtc/quaternion.hpp"
+#include "Math/glm/gtx/euler_angles.hpp"
 
 // Standard
 #include <iostream>

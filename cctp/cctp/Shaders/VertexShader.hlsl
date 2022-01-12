@@ -10,6 +10,7 @@ cbuffer PerFrameConstants : register(b1)
 {
     float4 ProbePositionWS;
     float4 LightDirectionWS;
+    float4x4 LightMatrix;
 }
 
 cbuffer PerPassConstants : register(b2)
@@ -35,6 +36,7 @@ struct VertexOut
     float3 VertexNormalWS : NORMAL_WS;
     float3 LightVectorWS : LIGHT_VECTOR_WS;
     uint Lit : Lit;
+    float4 LightSpacePosition : POSITION_LS;
 };
 
 VertexOut main(VertexIn input)
@@ -50,5 +52,6 @@ VertexOut main(VertexIn input)
     output.CameraVectorWS = normalize(CameraPositionWS.xyz - worldSpacePosition.xyz);
     output.BaseColor = Color;
     output.Lit = Lit;
+    output.LightSpacePosition = mul(LightMatrix, float4(input.LocalSpacePosition, 1.0f));
     return output;
 }

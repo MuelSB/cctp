@@ -50,3 +50,13 @@ glm::vec3 Math::RotateVector(const glm::vec3& rotation, const glm::vec3& vector)
 	return rotationMatrix * vector;
 }
 
+glm::vec3 Math::FindLookAtRotation(const glm::vec3& currentPosition, const glm::vec3& targetPosition, const glm::vec3& up)
+{
+	glm::vec3 eulerRotation;
+	glm::extractEulerAngleXYZ(glm::lookAt(currentPosition, targetPosition, up), eulerRotation.x, eulerRotation.y, eulerRotation.z);
+	eulerRotation.x = glm::degrees(eulerRotation.x);
+	eulerRotation.y = glm::degrees(eulerRotation.y);
+	eulerRotation.z = glm::degrees(eulerRotation.z);
+	return eulerRotation;
+}
+

@@ -3,6 +3,7 @@
 #include "Events/EventSystem.h"
 #include "Renderer/Renderer.h"
 #include "Binary/Binary.h"
+#include "Math/Math.h"
 
 #include "Scene/Scenes/DemoScene.h"
 
@@ -569,9 +570,21 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set descriptor heaps
 		Renderer::Commands::SetDescriptorHeaps();
 
+		// Update per frame constants
+		static const auto& probePosition = demoScene->GetProbePositionWS();
+		static const auto& lightDirection = demoScene->GetLightDirectionWS();
+		Renderer::Commands::UpdatePerFrameConstants(probePosition, lightDirection);
+
 		// Render shadow map pass
+		uint32_t passIndex = 0;
+
 		// Set pipeline
 		Renderer::Commands::SetGraphicsPipeline(shadowMapPassPipeline.get());
+
+		// Set per frame constant buffer view for pipeline
+		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(1, Renderer::GetPerFrameConstantBufferGPUVirtualAddress());
+
+		// Does not set per pass constant buffer view as this data is not used by the shadow map pass
 
 		// Set viewport
 		D3D12_VIEWPORT shadowMapViewport = {};
@@ -590,14 +603,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		Renderer::Commands::SetViewport(shadowMapViewport, shadowMapScissor);
 
-		// Update per pass constants
-		Renderer::Camera shadowMapCamera = {};
-		shadowMapCamera.Position = glm::vec3(0.0f, 0.0f, 0.0f);
-		shadowMapCamera.Settings.ProjectionMode = Renderer::Camera::CameraSettings::ProjectionMode::ORTHOGRAPHIC;
-		shadowMapCamera.Settings.OrthographicWidth = 10.0f;
-		shadowMapCamera.Settings.OrthographicHeight = 10.0f;
-		Renderer::Commands::UpdatePerPassConstants(0, SHADOW_MAP_DIMS, 0, shadowMapCamera);
-
 		// Set only depth target
 		Renderer::Commands::SetBackBufferRenderTargets(pSwapChain, true, pSwapChain->GetShadowMapDSDescriptorHandle());
 
@@ -606,14 +611,27 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Submit draw calls
 		// Draw scene into shadow map
-		demoScene->Draw(true);
+		demoScene->SetDrawProbes(false);
+		demoScene->Draw();
 
 		// Copy shadow map depth buffer to shadow map buffer resource
 		Renderer::Commands::CopyDepthTargetToResource(shadowMapDepthStencilBuffer.Get(), shadowMapBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Render scene color and depth pass
+		++passIndex;
+
+		// Update per pass constants
+		static const auto& camera = demoScene->GetMainCamera();
+		Renderer::Commands::UpdatePerPassConstants(passIndex, glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), camera);
+
 		// Set graphics pipeline
 		Renderer::Commands::SetGraphicsPipeline(graphicsPipeline.get());
+
+		// Set per frame constant buffer view for pipeline
+		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(1, Renderer::GetPerFrameConstantBufferGPUVirtualAddress());
+
+		// Set per pass constant buffer view for pipeline
+		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(2, Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * 1));
 
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
@@ -624,22 +642,16 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Clear render targets
 		Renderer::Commands::ClearRenderTargets(pSwapChain, false, pSwapChain->GetDSDescriptorHandle());
 
-		// Update per pass constants
-		static const auto& camera = demoScene->GetMainCamera();
-		Renderer::Commands::UpdatePerPassConstants(1, glm::vec2(pSwapChain->GetViewportWidth(), pSwapChain->GetViewportHeight()), 2, camera);
-
-		// Update per frame constants
-		static const auto& probePosition = demoScene->GetProbePositionWS();
-		static const auto& lightDirection = demoScene->GetLightDirectionWS();
-		Renderer::Commands::UpdatePerFrameConstants(1, probePosition, lightDirection);
-
 		// Update material constants
 		static const auto* pMaterials = demoScene->GetMaterialsPtr();
 		Renderer::Commands::UpdateMaterialConstants(pMaterials, static_cast<uint32_t>(demoScene->GetMaterialCount()));
+		// Do not set any graphics root constant buffer view here yet as the material buffer is not used by the rasterizer, only the raytracer
 
 		// Submit draw calls
 		// Draw scene
-		demoScene->Draw(false);
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
+		demoScene->SetDrawProbes(true);
+		demoScene->Draw();
 
 		// Copy backbuffer to scene color shader resource
 		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -647,7 +659,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::CopyDepthTargetToResource(pSwapChain->GetDepthStencilBuffer(), sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		// Raytrace global illumination probe field
-
 		// Check raytracing is enabled
 		static float GIGatherRateS = 0.1f;
 		static bool dispatchRays = true;
@@ -686,15 +697,15 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Render screen pass
+		++passIndex;
 		Renderer::Commands::SetGraphicsPipeline(screenPassPipeline.get());
 		Renderer::Commands::SetGraphicsDescriptorTableRootParam(0, SCENE_SRV_DESCRIPTOR_INDEX);
 		Renderer::Commands::SubmitScreenMesh(*screenMesh.get());
 
-		// Begin ImGui for the frame
+		// Begin immediate mode GUI for the frame
 		Renderer::Commands::BeginImGui();
 
 		// Submit ImGui calls
-
 		// Performance stats window
 		static bool displayPerformanceStatsWindow = false;
 		if (displayPerformanceStatsWindow)

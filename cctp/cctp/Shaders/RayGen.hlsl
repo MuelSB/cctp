@@ -56,7 +56,7 @@ void RayGen()
             ray.Origin = ProbePositionWS.xyz;
             ray.Direction = rayDirection;
             ray.TMin = 0.0;
-            ray.TMax = 1e+38;
+            ray.TMax = 100.0;
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             

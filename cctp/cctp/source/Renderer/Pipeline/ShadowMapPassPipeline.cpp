@@ -7,14 +7,22 @@ bool Renderer::ShadowMapPassPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT re
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
-    D3D12_ROOT_DESCRIPTOR perPassConstantBufferDescriptorDesc = {};
-    perPassConstantBufferDescriptorDesc.ShaderRegister = 0;
-    perPassConstantBufferDescriptorDesc.RegisterSpace = 0;
+    D3D12_ROOT_DESCRIPTOR perObjectConstantBufferDescriptorDesc = {};
+    perObjectConstantBufferDescriptorDesc.ShaderRegister = 0;
+    perObjectConstantBufferDescriptorDesc.RegisterSpace = 0;
 
-    D3D12_ROOT_PARAMETER rootParameters[1];
+    D3D12_ROOT_DESCRIPTOR perFrameConstantBufferDescriptorDesc = {};
+    perFrameConstantBufferDescriptorDesc.ShaderRegister = 1;
+    perFrameConstantBufferDescriptorDesc.RegisterSpace = 0;
+
+    D3D12_ROOT_PARAMETER rootParameters[2];
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-    rootParameters[0].Descriptor = perPassConstantBufferDescriptorDesc;
+    rootParameters[0].Descriptor = perObjectConstantBufferDescriptorDesc;
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[1].Descriptor = perFrameConstantBufferDescriptorDesc;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
     rootSignatureDesc.Init(_countof(rootParameters),
         rootParameters,
@@ -24,7 +32,6 @@ bool Renderer::ShadowMapPassPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT re
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
 
     ID3DBlob* signature;

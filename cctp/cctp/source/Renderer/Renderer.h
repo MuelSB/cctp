@@ -45,7 +45,10 @@ namespace Renderer
 	void SetVSyncEnabled(const bool enabled);
 	const DescriptorHeap* GetShaderVisibleDescriptorHeap();
 	D3D12_GPU_VIRTUAL_ADDRESS GetPerFrameConstantBufferGPUVirtualAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS GetPerObjectConstantBufferGPUVirtualAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS GetPerPassConstantBufferGPUVirtualAddress();
 	D3D12_GPU_VIRTUAL_ADDRESS GetMaterialConstantBufferGPUVirtualAddress();
+	UINT64 GetConstantBufferAllignmentSize();
 
 	// Temporary
 	ID3D12Device5* GetDevice();
@@ -61,10 +64,10 @@ namespace Renderer
 		void SetViewport(SwapChain* pSwapChain);
 		void SetViewport(const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissorRect);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
-		void UpdatePerFrameConstants(UINT perFrameConstantsParameterIndex, const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS);
-		void UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, UINT perPassConstantsParameterIndex, const Camera& camera);
+		void UpdatePerFrameConstants(const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS);
+		void UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, const Camera& camera);
 		void UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount);
-		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit, const bool forShadowMap);
+		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit);
 		void SubmitScreenMesh(const Mesh& mesh);
 		void SetDescriptorHeaps();
 		void BeginImGui();
@@ -72,6 +75,7 @@ namespace Renderer
 		void RebuildTlas(TopLevelAccelerationStructure* tlas);
 		void Raytrace(const D3D12_DISPATCH_RAYS_DESC& dispatchRaysDesc, ID3D12StateObject* pPipelineStateObject, ID3D12Resource* pRaytraceOutputResource, ID3D12Resource* pRaytraceOutput2Resource);
 		void SetGraphicsDescriptorTableRootParam(UINT rootParameterIndex, const uint32_t baseDescriptorIndex);
+		void SetGraphicsConstantBufferViewRootParam(UINT rootParameterIndex, const D3D12_GPU_VIRTUAL_ADDRESS bufferAddress);
 
 		// Copies the src resource to the current frame's swap chain backbuffer. Swap chain render target resource is returned to render target
 		// state after copy. Src resource is returned to srcResourceState after copy

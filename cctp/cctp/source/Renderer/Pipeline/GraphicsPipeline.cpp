@@ -7,6 +7,21 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
+    D3D12_STATIC_SAMPLER_DESC sampDescs[1];
+    sampDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+    sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[0].MipLODBias = 0;
+    sampDescs[0].MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
+    sampDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampDescs[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampDescs[0].MinLOD = 0.0f;
+    sampDescs[0].MaxLOD = D3D12_FLOAT32_MAX;
+    sampDescs[0].ShaderRegister = 0;
+    sampDescs[0].RegisterSpace = 0;
+    sampDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
     D3D12_ROOT_DESCRIPTOR perObjectConstantBufferDescriptorDesc = {};
     perObjectConstantBufferDescriptorDesc.ShaderRegister = 0;
     perObjectConstantBufferDescriptorDesc.RegisterSpace = 0;
@@ -19,7 +34,18 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     perPassConstantBufferDescriptorDesc.ShaderRegister = 2;
     perPassConstantBufferDescriptorDesc.RegisterSpace = 0;
 
-    D3D12_ROOT_PARAMETER rootParameters[3];
+    D3D12_DESCRIPTOR_RANGE tableRanges[1];
+    tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    tableRanges[0].BaseShaderRegister = 0;
+    tableRanges[0].RegisterSpace = 0;
+    tableRanges[0].NumDescriptors = 1;
+    tableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    D3D12_ROOT_DESCRIPTOR_TABLE dTable = {};
+    dTable.NumDescriptorRanges = _countof(tableRanges);
+    dTable.pDescriptorRanges = tableRanges;
+
+    D3D12_ROOT_PARAMETER rootParameters[4];
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[0].Descriptor = perObjectConstantBufferDescriptorDesc;
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
@@ -32,15 +58,18 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     rootParameters[2].Descriptor = perPassConstantBufferDescriptorDesc;
     rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
+    rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[3].DescriptorTable = dTable;
+    rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
     rootSignatureDesc.Init(_countof(rootParameters),
         rootParameters,
-        0,
-        nullptr,
+        _countof(sampDescs),
+        sampDescs,
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
 
     ID3DBlob* signature;
     if (FAILED(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr)))

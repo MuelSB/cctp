@@ -5,17 +5,23 @@ struct VertexIn
     float3 VertexNormal : VERTEX_NORMAL;
 };
 
-cbuffer PerPassConstants : register(b0)
+cbuffer PerObjectConstants : register(b0)
 {
-    float4x4 ViewMatrix;
-    float4x4 ProjectionMatrix;
-    float4 CameraPositionWS;
+    float4x4 WorldMatrix;
+    float4 Color;
+    float4x4 NormalMatrix;
+    uint Lit;
+}
+
+cbuffer PerFrameConstants : register(b1)
+{
+    float4 ProbePositionWS;
+    float4 LightDirectionWS;
+    float4x4 LightMatrix;
 }
 
 float4 main(VertexIn input) : SV_POSITION
 {
-    float4x4 lightMatrix = mul(ProjectionMatrix, ViewMatrix);
-    
-    
-    return float4(0.0f, 0.0f, 0.0f, 1.0f);
+    float4 worldSpacePosition = mul(WorldMatrix, float4(input.LocalSpacePosition, 1.0f));
+    return mul(LightMatrix, worldSpacePosition);
 }
