@@ -42,17 +42,14 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
 
 float4 main(VertexOut input) : SV_TARGET
 {
-    //float shadows = shadowMap.Sample(pointSampler, input.TextureCoordinate).r;
-    //const float4 baseColor = float4(shadows, shadows, shadows, 1.0);
     const float4 baseColor = input.BaseColor;
-    //return baseColor;
 
     float4 finalColor = float4(0.0, 0.0, 0.0, 1.0);
 
     if(input.Lit)
     {
-        float shadow = CalculateShadow(input.LightSpacePosition.xyz);
-        finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, input.LightVectorWS, input.CameraVectorWS, shadow), baseColor.a);
+        finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, input.LightVectorWS, input.CameraVectorWS, CalculateShadow(input.LightSpacePosition.xyz)), 
+                            baseColor.a);
     }
     else
     {

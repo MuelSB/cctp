@@ -52,6 +52,6 @@ VertexOut main(VertexIn input)
     output.CameraVectorWS = normalize(CameraPositionWS.xyz - worldSpacePosition.xyz);
     output.BaseColor = Color;
     output.Lit = Lit;
-    output.LightSpacePosition = mul(LightMatrix, float4(input.LocalSpacePosition, 1.0f));
+    output.LightSpacePosition = mul(LightMatrix, worldSpacePosition);
     return output;
 }
