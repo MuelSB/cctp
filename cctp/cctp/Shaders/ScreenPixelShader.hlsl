@@ -29,5 +29,5 @@ float4 main(VertexOut input) : SV_TARGET
     
     return gbuffer.SceneColor;
     //return float4(gbuffer.SceneDepth, gbuffer.SceneDepth, gbuffer.SceneDepth, 1.0);
-    return float4(gbuffer.ShadowMap, gbuffer.ShadowMap, gbuffer.ShadowMap, 1.0);
+    //return float4(gbuffer.ShadowMap, gbuffer.ShadowMap, gbuffer.ShadowMap, 1.0);
 }

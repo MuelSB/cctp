@@ -13,25 +13,39 @@ struct VertexOut
 SamplerState pointClampSampler : register(s0);
 Texture2D<float4> shadowMap : register(t0);
 
-float CalculateShadow(float4 lightSpacePosition, float bias, float LdotN)
+float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
 {
+    // Cascaded shadow maps can be implemented to reduce swimming at the edges of the map
+    // Alternatively, the shadow map can be raytraced with DXR for an accurate shadow map 
+    
     float2 projectedCoord;
-    float denom = 
     projectedCoord.x = lightSpacePosition.x / lightSpacePosition.w / 2.0 + 0.5;
     projectedCoord.y = -lightSpacePosition.y / lightSpacePosition.w / 2.0 + 0.5;
+
+    float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
     
-    if (lightSpacePosition.z > 1.0)
+    if (currentDepth > 1.0)
         return 1.0;
     
     if ((saturate(projectedCoord.x) == projectedCoord.x) && (saturate(projectedCoord.y) == projectedCoord.y))
     {
-        float depth = shadowMap.Sample(pointClampSampler, projectedCoord).r;
-        
-        bias = max(bias * (1.0 - LdotN), 0.001);
-        float lightDepth = lightSpacePosition.z / lightSpacePosition.w;
-        lightDepth = lightDepth - bias;
-        
-        return lightDepth < depth ? 1.0 : 0.0;
+        // Percentage closer filtering for soft shadows
+        const float minShadowBias = 0.001;
+        float shadow = 0.0;
+        float2 shadowMapDims;
+        shadowMap.GetDimensions(shadowMapDims.x, shadowMapDims.y);
+        float2 texelSize = 1.0 / shadowMapDims;
+        float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
+        bias = max(bias * (1.0 - LoN), minShadowBias);
+        for (int x = -1; x <= 1; ++x)
+        {
+            for (int y = -1; y <= 1; ++y)
+            {
+                float pcfDepth = shadowMap.Sample(pointClampSampler, projectedCoord + float2(x, y) * texelSize).r;
+                shadow += currentDepth - bias < pcfDepth ? 1.0 : 0.0;
+            }
+        }
+        return shadow /= 9;
     }
     
     return 1.0;
@@ -40,7 +54,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LdotN)
 float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow)
 {
     // Ambient
-    const float3 ambient = float3(0.1, 0.1, 0.1);
+    const float3 ambient = float3(0.0, 0.0, 0.0);
     
     // Diffuse
     const float3 lightColor = float3(1.0, 1.0, 1.0);
@@ -58,7 +72,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
 
 float4 main(VertexOut input) : SV_TARGET
 {
-    const float shadowBias = 0.0075;
+    const float shadowBias = 0.05;
     const float4 baseColor = input.BaseColor;
     
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);

@@ -33,7 +33,7 @@ private:
 	void PollInputs(float deltaTime);
 
 private:
-	static constexpr size_t SceneMeshTransformCount = 3;
+	static constexpr size_t SceneMeshTransformCount = 7;
 	static constexpr float CameraYawSensitivity = 0.075f;
 	static constexpr float CameraPitchSensitivity = 0.075f;
 	static constexpr float CameraPitchMin = -90.0f;
@@ -48,7 +48,7 @@ private:
 	std::vector<Renderer::Material> MeshMaterials;
 
 	Transform ProbeTransformWS = {};
-	glm::vec3 LightDirectionWS = glm::vec3(0.6f, -0.5f, 0.1f);
+	glm::vec3 LightDirectionWS = glm::vec3(-0.1f, -0.3f, 1.0f);
 
 	bool DrawProbes = true;
 };

@@ -26,7 +26,7 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 };
 
-constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1024.0f, 1024.0f);
+constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
 constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
 constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
@@ -92,7 +92,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to initialize window.");
 	}
 
-	Window::Show(SW_SHOW);
+	Window::Show(SW_MAXIMIZE);
 
 	// Subscribe input event handler
 	EventSystem::SubscribeToEvent<InputEvent>([](InputEvent&& event)
@@ -274,7 +274,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 	auto sceneDepthBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
 		static_cast<UINT>(swapChain->GetViewportWidth()), static_cast<UINT>(swapChain->GetViewportHeight()));
-	sceneDepthBufferDesc.MipLevels = 10;
+	sceneDepthBufferDesc.MipLevels = 11;
 	auto sceneDepthBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&sceneDepthBufferHeapProperties,
@@ -576,7 +576,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::UpdatePerFrameConstants(probePosition, lightDirection);
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// Render shadow map pass
+		//// Render shadow map pass
 		uint32_t passIndex = 0;
 
 		// Set pipeline
@@ -702,7 +702,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			}
 		}
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Render screen pass
