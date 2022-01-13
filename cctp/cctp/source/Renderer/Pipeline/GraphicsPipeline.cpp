@@ -9,13 +9,13 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
 
     D3D12_STATIC_SAMPLER_DESC sampDescs[1];
     sampDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-    sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-    sampDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
     sampDescs[0].MipLODBias = 0;
     sampDescs[0].MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
     sampDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
-    sampDescs[0].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+    sampDescs[0].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
     sampDescs[0].MinLOD = 0.0f;
     sampDescs[0].MaxLOD = D3D12_FLOAT32_MAX;
     sampDescs[0].ShaderRegister = 0;

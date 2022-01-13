@@ -16,13 +16,18 @@ Texture2D<float4> shadowMap : register(t0);
 float CalculateShadow(float4 lightSpacePosition, float bias, float LdotN)
 {
     float2 projectedCoord;
+    float denom = 
     projectedCoord.x = lightSpacePosition.x / lightSpacePosition.w / 2.0 + 0.5;
     projectedCoord.y = -lightSpacePosition.y / lightSpacePosition.w / 2.0 + 0.5;
+    
+    if (lightSpacePosition.z > 1.0)
+        return 1.0;
     
     if ((saturate(projectedCoord.x) == projectedCoord.x) && (saturate(projectedCoord.y) == projectedCoord.y))
     {
         float depth = shadowMap.Sample(pointClampSampler, projectedCoord).r;
         
+        bias = max(bias * (1.0 - LdotN), 0.001);
         float lightDepth = lightSpacePosition.z / lightSpacePosition.w;
         lightDepth = lightDepth - bias;
         
@@ -53,6 +58,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
 
 float4 main(VertexOut input) : SV_TARGET
 {
+    const float shadowBias = 0.0075;
     const float4 baseColor = input.BaseColor;
     
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
@@ -62,7 +68,7 @@ float4 main(VertexOut input) : SV_TARGET
         finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, 
                                                 input.LightVectorWS, 
                                                 input.CameraVectorWS, 
-                                                CalculateShadow(input.LightSpacePosition, 0.001, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
+                                                CalculateShadow(input.LightSpacePosition, shadowBias, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
                             baseColor.a);
     }
     else

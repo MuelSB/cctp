@@ -60,7 +60,7 @@ DemoScene::DemoScene()
 
 	// Floor
 	MeshTransforms[0].Position = glm::vec3(0.0f, -0.5f, 0.0f);
-	MeshTransforms[0].Scale = glm::vec3(15.0f, 0.5f, 15.0f);
+	MeshTransforms[0].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
 	MeshMaterials[0].SetColor(glm::vec4(0.85f, 0.85f, 0.8f, 1.0f));
 
 	// Identity cube
