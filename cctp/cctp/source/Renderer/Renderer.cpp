@@ -1063,8 +1063,7 @@ void Renderer::Commands::UpdatePerFrameConstants(const glm::vec3& probePositionW
     auto lightPosition = glm::normalize(lightDirectionWS);
     lightPosition.x = -lightPosition.x;
     lightPosition.y = -lightPosition.y;
-    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(9.0f, 9.0f, -7.0f, 5.0f) *
-        //glm::lookAt(lightPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(7.5f, 7.5f, -7.0f, 5.0f) *
         Math::CalculateViewMatrix(
             lightPosition,
             Math::FindLookAtRotation(lightPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));

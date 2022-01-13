@@ -633,7 +633,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(1, Renderer::GetPerFrameConstantBufferGPUVirtualAddress());
 
 		// Set per pass constant buffer view for pipeline
-		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(2, Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * passIndex));
+		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(2,
+			Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * passIndex));
 
 		// Set descriptor table pointer for pipeline
 		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);

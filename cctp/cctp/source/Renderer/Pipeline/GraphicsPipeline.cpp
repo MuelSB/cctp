@@ -9,9 +9,9 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
 
     D3D12_STATIC_SAMPLER_DESC sampDescs[1];
     sampDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-    sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-    sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-    sampDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+    sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    sampDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     sampDescs[0].MipLODBias = 0;
     sampDescs[0].MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
     sampDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
@@ -123,6 +123,7 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     psoDesc.SampleDesc = { 1, 0 };
     psoDesc.SampleMask = 0xffffffff;
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;

@@ -10,20 +10,26 @@ struct VertexOut
     float4 LightSpacePosition : POSITION_LS;
 };
 
-SamplerState pointBorderSampler : register(s0);
+SamplerState pointClampSampler : register(s0);
 Texture2D<float4> shadowMap : register(t0);
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LdotN)
 {
-    // Transform from [-1, 1] range to [0, 1]
-    float3 position = mul(lightSpacePosition.xyz, 0.5f) + 0.5f;
+    float2 projectedCoord;
+    projectedCoord.x = lightSpacePosition.x / lightSpacePosition.w / 2.0 + 0.5;
+    projectedCoord.y = -lightSpacePosition.y / lightSpacePosition.w / 2.0 + 0.5;
     
-    if (position.z > 1.0)
-        position.z = 1.0;
+    if ((saturate(projectedCoord.x) == projectedCoord.x) && (saturate(projectedCoord.y) == projectedCoord.y))
+    {
+        float depth = shadowMap.Sample(pointClampSampler, projectedCoord).r;
+        
+        float lightDepth = lightSpacePosition.z / lightSpacePosition.w;
+        lightDepth = lightDepth - bias;
+        
+        return lightDepth < depth ? 1.0 : 0.0;
+    }
     
-    float depth = shadowMap.Sample(pointBorderSampler, position.xy).r;
-    bias = max(bias * (1.0 - LdotN), 0.005);
-    return (depth + bias) < position.z ? 0.0f : 1.0f;
+    return 1.0;
 }
 
 float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow)
@@ -56,7 +62,7 @@ float4 main(VertexOut input) : SV_TARGET
         finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, 
                                                 input.LightVectorWS, 
                                                 input.CameraVectorWS, 
-                                                CalculateShadow(input.LightSpacePosition, 0.05, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
+                                                CalculateShadow(input.LightSpacePosition, 0.001, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
                             baseColor.a);
     }
     else
