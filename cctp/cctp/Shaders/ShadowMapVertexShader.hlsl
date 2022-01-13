@@ -15,9 +15,9 @@ cbuffer PerObjectConstants : register(b0)
 
 cbuffer PerFrameConstants : register(b1)
 {
+    float4x4 LightMatrix;
     float4 ProbePositionWS;
     float4 LightDirectionWS;
-    float4x4 LightMatrix;
 }
 
 float4 main(VertexIn input) : SV_POSITION

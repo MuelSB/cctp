@@ -10,19 +10,20 @@ struct VertexOut
     float4 LightSpacePosition : POSITION_LS;
 };
 
-SamplerState pointSampler : register(s0);
+SamplerState pointBorderSampler : register(s0);
 Texture2D<float4> shadowMap : register(t0);
 
-float CalculateShadow(float4 lightSpacePosition)
+float CalculateShadow(float4 lightSpacePosition, float bias, float LdotN)
 {
-    // Perspective division (Unnecessary with an orthographic projection)
-    float3 coord = lightSpacePosition.xyz / lightSpacePosition.w;
-    
     // Transform from [-1, 1] range to [0, 1]
-    coord = mul(coord, 0.5) + 0.5;
+    float3 position = mul(lightSpacePosition.xyz, 0.5f) + 0.5f;
     
-    float depth = shadowMap.Sample(pointSampler, coord.xy).r;
-    return coord.z > depth ? 1.0 : 0.0;
+    if (position.z > 1.0)
+        position.z = 1.0;
+    
+    float depth = shadowMap.Sample(pointBorderSampler, position.xy).r;
+    bias = max(bias * (1.0 - LdotN), 0.005);
+    return (depth + bias) < position.z ? 0.0f : 1.0f;
 }
 
 float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow)
@@ -41,18 +42,21 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return (ambient + (1.0 - shadow) * (diffuse + specular));
+    return shadow * (diffuse + specular) + ambient;
 }
 
 float4 main(VertexOut input) : SV_TARGET
 {
     const float4 baseColor = input.BaseColor;
+    
+    float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
 
-    float4 finalColor = float4(0.0, 0.0, 0.0, 1.0);
-
-    if(input.Lit)
+    if (input.Lit)
     {
-        finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, input.LightVectorWS, input.CameraVectorWS, CalculateShadow(input.LightSpacePosition)), 
+        finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, 
+                                                input.LightVectorWS, 
+                                                input.CameraVectorWS, 
+                                                CalculateShadow(input.LightSpacePosition, 0.05, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
                             baseColor.a);
     }
     else

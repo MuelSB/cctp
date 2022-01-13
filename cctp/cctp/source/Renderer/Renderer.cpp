@@ -48,9 +48,9 @@ struct PerObjectConstants
 
 struct PerFrameConstants
 {
+    glm::mat4 LightMatrix = glm::identity<glm::mat4>();
     glm::vec4 ProbePositionWS = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     glm::vec4 LightDirectionWS = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    glm::mat4 LightMatrix = glm::identity<glm::mat4>();
 };
 
 struct PerPassConstants
@@ -1063,8 +1063,7 @@ void Renderer::Commands::UpdatePerFrameConstants(const glm::vec3& probePositionW
     auto lightPosition = glm::normalize(lightDirectionWS);
     lightPosition.x = -lightPosition.x;
     lightPosition.y = -lightPosition.y;
-    auto shadowMapOrthoWidth = 5.0f;
-    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(shadowMapOrthoWidth, shadowMapOrthoWidth, -10.0f, 10.0f) *
+    perFrameConstants.LightMatrix = Math::CalculateOrthographicProjectionMatrix(9.0f, 9.0f, -7.0f, 5.0f) *
         //glm::lookAt(lightPosition, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         Math::CalculateViewMatrix(
             lightPosition,
