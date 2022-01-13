@@ -12,7 +12,7 @@ public:
 	DemoScene();
 	void Begin() final;
 	void Tick(float deltaTime) final;
-	void Draw() final;
+	void Draw(UINT perObjectConstantsRootParamIndex) final;
 	void DrawImGui() final;
 
 	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }

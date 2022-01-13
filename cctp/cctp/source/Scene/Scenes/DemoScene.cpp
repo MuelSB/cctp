@@ -126,18 +126,18 @@ void DemoScene::Tick(float deltaTime)
 	PollInputs(deltaTime);
 }
 
-void DemoScene::Draw()
+void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)
 {
 	for (size_t i = 0; i < SceneMeshTransformCount; ++i)
 	{
 		// Cube meshes
-		Renderer::Commands::SubmitMesh(0, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor(), true);
+		Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor(), true);
 	}
 
 	// Probe debug sphere
 	if (DrawProbes)
 	{
-		Renderer::Commands::SubmitMesh(0, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
+		Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
 	}
 }
 

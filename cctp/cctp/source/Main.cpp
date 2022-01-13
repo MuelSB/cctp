@@ -613,7 +613,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Submit draw calls
 		// Draw scene into shadow map
 		demoScene->SetDrawProbes(false);
-		demoScene->Draw();
+		demoScene->Draw(0);
 
 		// Copy shadow map depth buffer to shadow map buffer resource
 		Renderer::Commands::CopyDepthTargetToResource(shadowMapDepthStencilBuffer.Get(), shadowMapBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -655,7 +655,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Submit draw calls
 		// Draw scene
 		demoScene->SetDrawProbes(true);
-		demoScene->Draw();
+		demoScene->Draw(0);
 
 		// Copy backbuffer to scene color shader resource
 		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);

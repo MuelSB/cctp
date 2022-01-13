@@ -9,7 +9,7 @@ public:
 
 	virtual void Begin() = 0;
 	virtual void Tick(float deltaTime) = 0;
-	virtual void Draw() = 0;
+	virtual void Draw(UINT perObjectConstantsRootParamIndex) = 0;
 	virtual void DrawImGui() = 0;
 
 	const Renderer::Camera& GetMainCamera() const { return MainCamera; }
