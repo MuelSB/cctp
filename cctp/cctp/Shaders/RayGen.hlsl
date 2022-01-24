@@ -51,7 +51,7 @@ void RayGen()
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
-            float3 rayDirection = SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
+            float3 rayDirection = -SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
 
             RayDesc ray;
             ray.Origin = ProbePositionWS.xyz;
