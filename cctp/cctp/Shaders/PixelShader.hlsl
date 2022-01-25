@@ -1,3 +1,6 @@
+#include "Octahedral.hlsl"
+#include "Common.hlsl"
+
 struct VertexOut
 {
     float4 ProjectionSpacePosition : SV_POSITION;
@@ -8,12 +11,13 @@ struct VertexOut
     float3 LightVectorWS : LIGHT_VECTOR_WS;
     uint Lit : Lit;
     float4 LightSpacePosition : POSITION_LS;
+    float3 ProbePositionWS : PROBE_POSITION_WS;
+    float3 WorldPosition : POSITION_WS;
 };
 
 SamplerState pointBorderSampler : register(s0, space0);
-SamplerState linearWrapSampler : register(s0, space1);
 Texture2D<float4> shadowMap : register(t0);
-RWTexture2D<float4> raytraceResults[2] : register(u0);
+RWTexture2D<float4> probeData[2] : register(u0);
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
 {
@@ -47,7 +51,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
                 shadow += currentDepth - bias < pcfDepth ? 1.0 : 0.0;
             }
         }
-        return shadow /= 9;
+        return shadow /= 9.0;
     }
     
     return 1.0;
@@ -74,6 +78,21 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
 
 float4 main(VertexOut input) : SV_TARGET
 {
+    // Calculate the direction from the shaded point to the probe
+    float3 probeDirection = normalize(input.ProbePositionWS - input.WorldPosition);
+    // Encode the direction to oct texture coordinate in [0, 1] range
+    float2 normalizedOctCoordZeroOne = (OctEncode(probeDirection) + 1.0) * 0.5;
+    // Calculate the oct coordinate in the dimensions of the probe texture
+    float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_IRRADIANCE);
+    float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_VISIBILITY);
+    // Calculate the top left texel of this probe's data in the texture
+    float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
+    // Read irradiance
+    //return probeData[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions];
+    // Read visibility
+    //probeData[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions]
+
+
     const float shadowBias = 0.05;
     const float4 baseColor = input.BaseColor;
     

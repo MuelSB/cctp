@@ -1,17 +1,6 @@
 #include "Common.hlsl"
 #include "Octahedral.hlsl"
 
-// The number of probes in the probe field
-#define PROBE_COUNT 1
-// The number of rays traced from a probe. McGuire uses up to 256 rays
-#define PROBE_RAY_COUNT 1024
-// The amount of texels in a square side to use to store a probes irradiance data in
-#define PROBE_WIDTH_IRRADIANCE 8 
-// The amount of texels in a square side to use to store a probes visibility data in
-#define PROBE_WIDTH_VISIBILITY 16 
-// Border size in pixels around each probe's data pack
-#define PADDING 1
-
 RaytracingAccelerationStructure SceneBVH : register(t0);
 RWTexture2D<float4> Output[2] : register(u0);
 
@@ -51,7 +40,7 @@ void RayGen()
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
-            float3 rayDirection = -SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT);
+            float3 rayDirection = -normalize(SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT));
 
             RayDesc ray;
             ray.Origin = ProbePositionWS.xyz;
@@ -63,7 +52,7 @@ void RayGen()
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
             // Encode the direction to oct texture coordinate in [0, 1] range
-            float2 normalizedOctCoordZeroOne = (OctEncode(normalize(rayDirection)) + float2(1.0, 1.0)) * 0.5;
+            float2 normalizedOctCoordZeroOne = (OctEncode(rayDirection) + 1.0) * 0.5;
 
             // Calculate the oct coordinate in the dimensions of the probe output texture
             float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_IRRADIANCE);
