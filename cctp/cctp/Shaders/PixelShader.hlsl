@@ -10,8 +10,9 @@ struct VertexOut
     float4 LightSpacePosition : POSITION_LS;
 };
 
-SamplerState pointClampSampler : register(s0);
-Texture2D<float4> shadowMap : register(t0);
+SamplerState pointBorderSampler : register(s0, space0);
+SamplerState linearWrapSampler : register(s0, space1);
+Texture2D<float4> textures : register(t0);
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
 {
@@ -33,7 +34,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
         const float minShadowBias = 0.001;
         float shadow = 0.0;
         float2 shadowMapDims;
-        shadowMap.GetDimensions(shadowMapDims.x, shadowMapDims.y);
+        textures.GetDimensions(shadowMapDims.x, shadowMapDims.y);
         float2 texelSize = 1.0 / shadowMapDims;
         float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
         bias = max(bias * (1.0 - LoN), minShadowBias);
@@ -41,7 +42,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
         {
             for (int y = -1; y <= 1; ++y)
             {
-                float pcfDepth = shadowMap.Sample(pointClampSampler, projectedCoord + float2(x, y) * texelSize).r;
+                float pcfDepth = textures.Sample(pointBorderSampler, projectedCoord + float2(x, y) * texelSize).r;
                 shadow += currentDepth - bias < pcfDepth ? 1.0 : 0.0;
             }
         }

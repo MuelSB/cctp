@@ -7,7 +7,7 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     // Create root signature
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
-    D3D12_STATIC_SAMPLER_DESC sampDescs[1];
+    D3D12_STATIC_SAMPLER_DESC sampDescs[2];
     sampDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
     sampDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
     sampDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -21,6 +21,20 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     sampDescs[0].ShaderRegister = 0;
     sampDescs[0].RegisterSpace = 0;
     sampDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    sampDescs[1].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+    sampDescs[1].MipLODBias = 0;
+    sampDescs[1].MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
+    sampDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    sampDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+    sampDescs[1].MinLOD = 0.0f;
+    sampDescs[1].MaxLOD = D3D12_FLOAT32_MAX;
+    sampDescs[1].ShaderRegister = 0;
+    sampDescs[1].RegisterSpace = 1;
+    sampDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     D3D12_ROOT_DESCRIPTOR perObjectConstantBufferDescriptorDesc = {};
     perObjectConstantBufferDescriptorDesc.ShaderRegister = 0;
