@@ -57,7 +57,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
     return 1.0;
 }
 
-float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow)
+float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow, float3 giIrradiance, float giVisibility)
 {
     // Ambient
     const float3 ambient = float3(0.0, 0.0, 0.0);
@@ -73,7 +73,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return shadow * (diffuse + specular) + ambient;
+    return (shadow * (diffuse + specular) + ambient) + (giIrradiance * giVisibility);
 }
 
 float4 main(VertexOut input) : SV_TARGET
@@ -88,28 +88,30 @@ float4 main(VertexOut input) : SV_TARGET
     // Calculate the top left texel of this probe's data in the texture
     float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
     // Read irradiance
-    //return probeData[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions];
+    float3 giIrradiance = probeData[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
     // Read visibility
-    //probeData[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions]
-
+    float giVisibility = probeData[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
 
     const float shadowBias = 0.05;
+    const float giPower = 0.25;
     const float4 baseColor = input.BaseColor;
     
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
 
     if (input.Lit)
     {
-        finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS, 
-                                                input.LightVectorWS, 
-                                                input.CameraVectorWS, 
-                                                CalculateShadow(input.LightSpacePosition, shadowBias, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
+        finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS,
+                                                input.LightVectorWS,
+                                                input.CameraVectorWS,
+                                                CalculateShadow(input.LightSpacePosition, shadowBias, saturate(dot(input.LightVectorWS, input.VertexNormalWS))),
+                                                giIrradiance * giPower,
+                                                giVisibility),
                             baseColor.a);
     }
     else
     {
         finalColor = baseColor;
     }
-    
+
     return finalColor;
 }
