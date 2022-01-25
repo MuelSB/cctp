@@ -57,7 +57,8 @@ void RayGen()
             ray.Origin = ProbePositionWS.xyz;
             ray.Direction = rayDirection;
             ray.TMin = 0.0;
-            ray.TMax = 100.0;
+            // 1 unit is 1 metre. TODO: Decide scene units and adjust geometry and max ray distance here
+            ray.TMax = 1.0;
 
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
