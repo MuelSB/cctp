@@ -617,9 +617,50 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Copy shadow map depth buffer to shadow map buffer resource
 		Renderer::Commands::CopyDepthTargetToResource(shadowMapDepthStencilBuffer.Get(), shadowMapBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		// Raytrace global illumination probe field
+		// Check raytracing is enabled
+		static float GIGatherRateS = 0.1f;
+		static bool dispatchRays = true;
+		if (dispatchRays)
+		{
+			// Check if enough time has elapsed since last GI gather
+			std::chrono::duration<float, std::milli> GITime = currentTime - lastGIGatherTime;
+			if (GITime.count() >= (GIGatherRateS * 1000.0f))
+			{
+				// Store time that this gather is happening on
+				lastGIGatherTime = currentTime;
+
+				// Rebuild acceleration structures
+				Renderer::Commands::RebuildTlas(demoScene->GetTlas());
+
+				// Describe dispatch rays
+				D3D12_DISPATCH_RAYS_DESC dispatchRaysDesc = {};
+				dispatchRaysDesc.Width = 1;
+				dispatchRaysDesc.Height = 1;
+				dispatchRaysDesc.Depth = 1;
+
+				dispatchRaysDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress();
+				dispatchRaysDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderRecordSize;
+
+				dispatchRaysDesc.MissShaderTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize;
+				dispatchRaysDesc.MissShaderTable.StrideInBytes = missShaderRecordSize;
+				dispatchRaysDesc.MissShaderTable.SizeInBytes = missShaderRecordSize;
+
+				dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize + ALIGN_TO(dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
+				dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
+				dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
+
+				// Dispatch rays
+				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get(), raytraceOutput2Resource.Get());
+			}
+		}
+		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// Render scene color and depth pass
+		// Render scene color and depth pass applying lighting and shadow
 		++passIndex;
 
 		// Update per pass constants
@@ -662,46 +703,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::CopyRenderTargetToResource(pSwapChain, sceneBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		// Copy depth buffer to scene depth shader resource
 		Renderer::Commands::CopyDepthTargetToResource(pSwapChain->GetDepthStencilBuffer(), sceneDepthBufferResource.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-
-		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		// Raytrace global illumination probe field
-		// Check raytracing is enabled
-		static float GIGatherRateS = 0.1f;
-		static bool dispatchRays = true;
-		if (dispatchRays)
-		{
-			// Check if enough time has elapsed since last GI gather
-			std::chrono::duration<float, std::milli> GITime = currentTime - lastGIGatherTime;
-			if (GITime.count() >= (GIGatherRateS * 1000.0f))
-			{
-				// Store time that this gather is happening on
-				lastGIGatherTime = currentTime;
-
-				// Rebuild acceleration structures
-				Renderer::Commands::RebuildTlas(demoScene->GetTlas());
-
-				// Describe dispatch rays
-				D3D12_DISPATCH_RAYS_DESC dispatchRaysDesc = {};
-				dispatchRaysDesc.Width = 1;
-				dispatchRaysDesc.Height = 1;
-				dispatchRaysDesc.Depth = 1;
-
-				dispatchRaysDesc.RayGenerationShaderRecord.StartAddress = shaderTable->GetGPUVirtualAddress();
-				dispatchRaysDesc.RayGenerationShaderRecord.SizeInBytes = rayGenShaderRecordSize;
-
-				dispatchRaysDesc.MissShaderTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize;
-				dispatchRaysDesc.MissShaderTable.StrideInBytes = missShaderRecordSize;
-				dispatchRaysDesc.MissShaderTable.SizeInBytes = missShaderRecordSize;
-
-				dispatchRaysDesc.HitGroupTable.StartAddress = shaderTable->GetGPUVirtualAddress() + rayGenShaderRecordSize + ALIGN_TO(dispatchRaysDesc.MissShaderTable.SizeInBytes, 64);
-				dispatchRaysDesc.HitGroupTable.StrideInBytes = hitGroupShaderRecordSize;
-				dispatchRaysDesc.HitGroupTable.SizeInBytes = hitGroupShaderRecordSize;
-
-				// Dispatch rays
-				Renderer::Commands::Raytrace(dispatchRaysDesc, raytracingPipelineStateObject.Get(), raytraceOutputResource.Get(), raytraceOutput2Resource.Get());
-			}
-		}
-		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// Render screen pass
