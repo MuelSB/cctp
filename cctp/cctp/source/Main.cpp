@@ -200,7 +200,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
 
 	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
-		static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.y));
+		static_cast<UINT64>(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.y));
 	raytraceOutputTextureResourceDesc.MipLevels = 1;
 	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutputTextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -220,7 +220,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
 
 	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
-		static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.y));
+		static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y));
 	raytraceOutput2TextureResourceDesc.MipLevels = 1;
 	raytraceOutput2TextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutput2TextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -683,8 +683,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Submit draw calls
 		// Draw scene
-		static bool visualizeProbeField = true;
-		demoScene->SetDrawProbes(visualizeProbeField);
+		static bool visualizeProbeVolume = true;
+		demoScene->SetDrawProbes(visualizeProbeVolume);
 		demoScene->Draw(0);
 
 		// Copy backbuffer to scene color shader resource
@@ -732,22 +732,21 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Raytrace output texture view
-		static bool showRaytraceOutput = false;
-		if (showRaytraceOutput)
+		static bool showIrradianceRaytraceOutput = false;
+		if (showIrradianceRaytraceOutput)
 		{
-			ImGui::SetNextWindowSize(ImVec2(512.0f, 1024.0f));
-			ImGui::Begin("Raytrace output textures", NULL,
-				ImGuiWindowFlags_NoResize |
-				ImGuiWindowFlags_NoCollapse
-			);
-			// Irradiance texture
-			ImGui::Text("Irradiance");
+			ImGui::Begin("Irradiance probe texture", &showIrradianceRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
-			// Visibility texture
-			ImGui::Text("Visibility");
+				GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX).ptr, ImVec2(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.x, Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.y));
+			ImGui::End();
+		}
+
+		static bool showVisibilityRaytraceOutput = false;
+		if (showVisibilityRaytraceOutput)
+		{
+			ImGui::Begin("Visibility probe texture", &showVisibilityRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(Renderer::RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
+				GetGPUDescriptorHandle(Renderer::RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX).ptr, ImVec2(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x, Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y));
 			ImGui::End();
 		}
 
@@ -778,8 +777,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 			ImGui::Text("Debug");
 			ImGui::Separator();
-			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
-			ImGui::Checkbox("Visualize probe field", &visualizeProbeField);
+			ImGui::Checkbox("Show irradiance probe texture", &showIrradianceRaytraceOutput);
+			ImGui::Checkbox("Show visibility probe texture", &showVisibilityRaytraceOutput);
+			ImGui::Checkbox("Visualize probe volume", &visualizeProbeVolume);
 			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
 			static auto& probeVolume = demoScene->GetProbeVolume();
 			probeVolume.Update();

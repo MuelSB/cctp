@@ -68,15 +68,4 @@ void RayGen()
             Output[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions] = float4(1.0 - payload.HitDistance, 1.0 - payload.HitDistance, 1.0 - payload.HitDistance, 1.0);
         }
     }
-    
-    // Display green pixels in the corners of the output textures
-    Output[0][int2(0, 0)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[0][int2(0, 31)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[0][int2(31, 31)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[0][int2(31, 0)] = float4(0.0, 1.0, 0.0, 1.0);
-    
-    Output[1][int2(0, 0)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[1][int2(0, 31)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[1][int2(31, 31)] = float4(0.0, 1.0, 0.0, 1.0);
-    Output[1][int2(31, 0)] = float4(0.0, 1.0, 0.0, 1.0);
 }

@@ -32,7 +32,8 @@ namespace Renderer
 		SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 	};
 
-	constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
+	constexpr glm::vec2 RAYTRACE_IRRADIANCE_OUTPUT_DIMS = glm::vec2(1300.0f, 20.0f);
+	constexpr glm::vec2 RAYTRACE_VISIBILITY_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
 	constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
 	class Material;
