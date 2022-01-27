@@ -96,6 +96,9 @@
     <ClCompile Include="source\Renderer\Pipeline\ShadowMapPassPipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\Renderer\ProbeVolume.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\Pch.h">
@@ -210,6 +213,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\Renderer\Pipeline\ShadowMapPassPipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Renderer\ProbeVolume.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

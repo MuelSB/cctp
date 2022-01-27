@@ -3,6 +3,7 @@
 #include "Scene/SceneBase.h"
 #include "Math/Transform.h"
 #include "Renderer/Material.h"
+#include "Renderer/ProbeVolume.h"
 
 struct InputEvent;
 
@@ -18,6 +19,7 @@ public:
 	Renderer::TopLevelAccelerationStructure* GetTlas() const { return tlAccelStructure.get(); }
 	const glm::vec3& GetProbePositionWS() const { return ProbeTransformWS.Position; }
 	glm::vec3& GetProbePositionWS() { return ProbeTransformWS.Position; }
+	glm::vec3& GetProbeVolumePositionWS() { return ProbeVolume.GetVolumePosition(); }
 	glm::vec3& GetLightDirectionWS() { return LightDirectionWS; }
 	const Renderer::Material* GetMaterialsPtr() const { return MeshMaterials.data(); }
 	size_t GetMaterialCount() const { return MeshMaterials.size(); }
@@ -40,6 +42,8 @@ private:
 	static constexpr float CameraPitchMax = 90.0f;
 	static constexpr float CameraFlySpeed = 0.0075f;
 	static constexpr glm::vec3 CameraStartPosition = glm::vec3(0.0f, 2.0f, -10.0f);
+
+	Renderer::ProbeVolume ProbeVolume;
 
 	std::vector<std::unique_ptr<Renderer::Mesh>> Meshes;
 	std::vector<std::unique_ptr<Renderer::BottomLevelAccelerationStructure>> blAccelStructures;

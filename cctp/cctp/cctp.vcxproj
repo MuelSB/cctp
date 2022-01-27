@@ -126,6 +126,7 @@
     <ClCompile Include="source\Renderer\Pipeline\GraphicsPipeline.cpp" />
     <ClCompile Include="source\Renderer\Pipeline\ScreenPassPipeline.cpp" />
     <ClCompile Include="source\Renderer\Pipeline\ShadowMapPassPipeline.cpp" />
+    <ClCompile Include="source\Renderer\ProbeVolume.cpp" />
     <ClCompile Include="source\Renderer\Renderer.cpp" />
     <ClCompile Include="source\Renderer\RootSignature.cpp" />
     <ClCompile Include="source\Renderer\SwapChain.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="source\Renderer\Pipeline\GraphicsPipelineBase.h" />
     <ClInclude Include="source\Renderer\Pipeline\ScreenPassPipeline.h" />
     <ClInclude Include="source\Renderer\Pipeline\ShadowMapPassPipeline.h" />
+    <ClInclude Include="source\Renderer\ProbeVolume.h" />
     <ClInclude Include="source\Renderer\Renderer.h" />
     <ClInclude Include="source\Renderer\RootSignature.h" />
     <ClInclude Include="source\Renderer\SamplerType.h" />

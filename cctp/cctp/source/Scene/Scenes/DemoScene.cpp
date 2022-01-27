@@ -12,8 +12,9 @@ bool IsInputPressed(InputCode input)
 }
 
 DemoScene::DemoScene()
+	: ProbeVolume(glm::vec3(0.5f, 2.25f, 0.0f), glm::vec3(5.0f, 5.0f, 5.0f), 1.0f, 0.1f)
 {
-	// Subscrive input event function
+	// Subscribe input event function
 	EventSystem::SubscribeToEvent<InputEvent>([this](InputEvent&& event)
 		{
 			this->OnInputEvent(std::move(event));
@@ -124,6 +125,7 @@ void DemoScene::Begin()
 void DemoScene::Tick(float deltaTime)
 {
 	PollInputs(deltaTime);
+	ProbeVolume.Update();
 }
 
 void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)
@@ -134,10 +136,14 @@ void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)
 		Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[0].get(), MeshTransforms[i], MeshMaterials[i].GetColor(), true);
 	}
 
-	// Probe debug sphere
+	// Probe debug spheres
 	if (DrawProbes)
 	{
-		Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[1].get(), ProbeTransformWS, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
+		const auto& probeTransforms = ProbeVolume.GetProbeTransforms();
+		for (const auto& transform : probeTransforms)
+		{
+			Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[1].get(), transform, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
+		}
 	}
 }
 

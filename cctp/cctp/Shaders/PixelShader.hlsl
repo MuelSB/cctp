@@ -73,7 +73,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return (shadow * (diffuse + specular) + ambient) + (giIrradiance * giVisibility);
+    return (shadow * (diffuse + specular) + ambient) /*+ (giIrradiance * giVisibility)*/;
 }
 
 float4 main(VertexOut input) : SV_TARGET
@@ -93,7 +93,6 @@ float4 main(VertexOut input) : SV_TARGET
     float giVisibility = probeData[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
 
     const float shadowBias = 0.05;
-    const float giPower = 0.25;
     const float4 baseColor = input.BaseColor;
     
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
@@ -104,7 +103,7 @@ float4 main(VertexOut input) : SV_TARGET
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
                                                 CalculateShadow(input.LightSpacePosition, shadowBias, saturate(dot(input.LightVectorWS, input.VertexNormalWS))),
-                                                giIrradiance * giPower,
+                                                giIrradiance,
                                                 giVisibility),
                             baseColor.a);
     }

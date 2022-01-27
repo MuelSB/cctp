@@ -696,7 +696,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Submit draw calls
 		// Draw scene
-		demoScene->SetDrawProbes(true);
+		static bool visualizeProbeField = true;
+		demoScene->SetDrawProbes(visualizeProbeField);
 		demoScene->Draw(0);
 
 		// Copy backbuffer to scene color shader resource
@@ -791,7 +792,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::Text("Debug");
 			ImGui::Separator();
 			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
-			ImGui::DragFloat3("Probe position", &demoScene->GetProbePositionWS().x, 0.1f);
+			ImGui::Checkbox("Visualize probe field", &visualizeProbeField);
+			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
 			ImGui::Separator();
 
 			ImGui::Text("Stats");
