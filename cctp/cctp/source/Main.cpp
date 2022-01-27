@@ -17,8 +17,8 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 	IMGUI_DESCRIPTOR_INDEX = 0,
 
 	SCENE_BVH_SRV_DESCRIPTOR_INDEX,
-	RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX,
-	RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX,
+	RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX,
+	RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX,
 	SCENE_SRV_DESCRIPTOR_INDEX,
 	SCENE_DEPTH_SRV_DESCRIPTOR_INDEX,
 	SHADOW_MAP_SRV_DESCRIPTOR_INDEX,
@@ -229,7 +229,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytrace output texture resource.");
 	}
-	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX);
 
 	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
@@ -248,7 +248,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytrace output 2 texture resource.");
 	}
-	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX);
 
 	// Scene texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneBufferResource;
@@ -516,7 +516,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
-		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
+		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
 																															// This is a Pointer to the start of a descriptor range (UAV x 2) 
 																															// in a descriptor table
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
@@ -678,7 +678,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * passIndex));
 
 		// Set descriptor table pointer for pipeline
-		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX);
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX);
 
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
@@ -756,11 +756,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			// Irradiance texture
 			ImGui::Text("Irradiance");
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(RAYTRACE_OUTPUT_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
+				GetGPUDescriptorHandle(RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
 			// Visibility texture
 			ImGui::Text("Visibility");
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(RAYTRACE_OUTPUT2_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
+				GetGPUDescriptorHandle(RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
 			ImGui::End();
 		}
 
@@ -793,7 +793,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::Separator();
 			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
 			ImGui::Checkbox("Visualize probe field", &visualizeProbeField);
-			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
+			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbePositionWS().x, 0.1f);
 			ImGui::Separator();
 
 			ImGui::Text("Stats");
