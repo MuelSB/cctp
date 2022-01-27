@@ -12,7 +12,7 @@ bool IsInputPressed(InputCode input)
 }
 
 DemoScene::DemoScene()
-	: ProbeVolume(glm::vec3(0.5f, 2.25f, 0.0f), glm::vec3(5.0f, 5.0f, 5.0f), 1.0f, 0.1f)
+	: ProbeVolume(glm::vec3(0.5f, 2.25f, 0.0f), glm::vec3(5.0f, 5.0f, 5.0f), 1.0f, 0.05f)
 {
 	// Subscribe input event function
 	EventSystem::SubscribeToEvent<InputEvent>([this](InputEvent&& event)

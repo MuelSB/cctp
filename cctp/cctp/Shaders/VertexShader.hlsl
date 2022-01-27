@@ -40,7 +40,6 @@ struct VertexOut
     float3 LightVectorWS : LIGHT_VECTOR_WS;
     uint Lit : Lit;
     float4 LightSpacePosition : POSITION_LS;
-    float3 ProbePositionWS : PROBE_POSITION_WS;
     float3 WorldPosition : POSITION_WS;
 };
 
@@ -58,7 +57,6 @@ VertexOut main(VertexIn input)
     output.BaseColor = Color;
     output.Lit = Lit;
     output.LightSpacePosition = mul(LightMatrix, worldSpacePosition);
-    output.ProbePositionWS = ProbePositionsWS[0].xyz;
     output.WorldPosition = worldSpacePosition.xyz;
     return output;
 }

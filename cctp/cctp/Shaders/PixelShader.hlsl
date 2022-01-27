@@ -1,6 +1,14 @@
 #include "Octahedral.hlsl"
 #include "Common.hlsl"
 
+cbuffer PerFrameConstants : register(b0)
+{
+    float4x4 LightMatrix;
+    float4 ProbePositionsWS[MAX_PROBE_COUNT];
+    float4 LightDirectionWS;
+    int ProbeCount;
+}
+
 struct VertexOut
 {
     float4 ProjectionSpacePosition : SV_POSITION;
@@ -11,7 +19,6 @@ struct VertexOut
     float3 LightVectorWS : LIGHT_VECTOR_WS;
     uint Lit : Lit;
     float4 LightSpacePosition : POSITION_LS;
-    float3 ProbePositionWS : PROBE_POSITION_WS;
     float3 WorldPosition : POSITION_WS;
 };
 
@@ -56,7 +63,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
     return 1.0;
 }
 
-float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow, float3 giIrradiance, float giVisibility)
+float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow)
 {
     // Ambient
     const float3 ambient = float3(0.0, 0.0, 0.0);
@@ -72,24 +79,27 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return (shadow * (diffuse + specular) + ambient) /*+ (giIrradiance * giVisibility)*/;
+    return shadow * (diffuse + specular) + ambient;
 }
 
 float4 main(VertexOut input) : SV_TARGET
 {
-    // Calculate the direction from the shaded point to the probe
-    float3 probeDirection = normalize(input.ProbePositionWS - input.WorldPosition);
-    // Encode the direction to oct texture coordinate in [0, 1] range
-    float2 normalizedOctCoordZeroOne = (OctEncode(probeDirection) + 1.0) * 0.5;
-    // Calculate the oct coordinate in the dimensions of the probe texture
-    float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_IRRADIANCE);
-    float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_VISIBILITY);
-    // Calculate the top left texel of this probe's data in the texture
-    float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
-    // Read irradiance
-    float3 giIrradiance = textureResources[1][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
-    // Read visibility
-    float giVisibility = textureResources[2][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
+    for (int p = 0; p < ProbeCount; ++p)
+    {
+         // Calculate the direction from the shaded point to the probe
+        float3 probeDirection = normalize(ProbePositionsWS[p].xyz - input.WorldPosition);
+        // Encode the direction to oct texture coordinate in [0, 1] range
+        float2 normalizedOctCoordZeroOne = (OctEncode(probeDirection) + 1.0) * 0.5;
+        // Calculate the oct coordinate in the dimensions of the probe texture
+        float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_IRRADIANCE);
+        float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_VISIBILITY);
+        // Calculate the top left texel of this probe's data in the texture
+        float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
+        // Read irradiance
+        float3 giIrradiance = textureResources[1][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
+        // Read visibility
+        float giVisibility = textureResources[2][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
+    }
 
     const float shadowBias = 0.05;
     const float4 baseColor = input.BaseColor;
@@ -101,10 +111,10 @@ float4 main(VertexOut input) : SV_TARGET
         finalColor = float4(baseColor.xyz * Lighting(input.VertexNormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, shadowBias, saturate(dot(input.LightVectorWS, input.VertexNormalWS))),
-                                                giIrradiance,
-                                                giVisibility),
+                                                CalculateShadow(input.LightSpacePosition, shadowBias, saturate(dot(input.LightVectorWS, input.VertexNormalWS)))),
                             baseColor.a);
+
+        /*+ (giIrradiance * giVisibility)*/
     }
     else
     {

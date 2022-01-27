@@ -666,6 +666,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Set descriptor table pointer for pipeline
 		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, Renderer::SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 
+		// Set pixel shader per frame constant buffer view for pipeline
+		Renderer::Commands::SetGraphicsConstantBufferViewRootParam(4, Renderer::GetPerFrameConstantBufferGPUVirtualAddress());
+
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
 

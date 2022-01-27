@@ -34,6 +34,10 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     perPassConstantBufferDescriptorDesc.ShaderRegister = 2;
     perPassConstantBufferDescriptorDesc.RegisterSpace = 0;
 
+    D3D12_ROOT_DESCRIPTOR perFrameConstantBufferDescriptorPixelDesc = {};
+    perFrameConstantBufferDescriptorPixelDesc.ShaderRegister = 0;
+    perFrameConstantBufferDescriptorPixelDesc.RegisterSpace = 0;
+
     D3D12_DESCRIPTOR_RANGE tableRanges[1];
     tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     tableRanges[0].BaseShaderRegister = 0;
@@ -45,7 +49,7 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     dTable.NumDescriptorRanges = _countof(tableRanges);
     dTable.pDescriptorRanges = tableRanges;
 
-    D3D12_ROOT_PARAMETER rootParameters[4];
+    D3D12_ROOT_PARAMETER rootParameters[5];
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[0].Descriptor = perObjectConstantBufferDescriptorDesc;
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
@@ -61,6 +65,10 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[3].DescriptorTable = dTable;
     rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+    rootParameters[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[4].Descriptor = perFrameConstantBufferDescriptorPixelDesc;
+    rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
     rootSignatureDesc.Init(_countof(rootParameters),
         rootParameters,
