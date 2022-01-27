@@ -12,9 +12,9 @@ struct RayPayload
 };
 
 // The number of probes in the probe field
-#define PROBE_COUNT 1
+#define MAX_PROBE_COUNT 200
 // The number of rays traced from a probe. McGuire uses up to 256 rays
-#define PROBE_RAY_COUNT 1024
+#define PROBE_RAY_COUNT 64
 // The amount of texels in a square side to use to store a probes irradiance data in
 #define PROBE_WIDTH_IRRADIANCE 8 
 // The amount of texels in a square side to use to store a probes visibility data in

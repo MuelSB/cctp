@@ -1,3 +1,5 @@
+#include "Common.hlsl"
+
 cbuffer PerObjectConstants : register(b0)
 {
     float4x4 WorldMatrix;
@@ -9,8 +11,9 @@ cbuffer PerObjectConstants : register(b0)
 cbuffer PerFrameConstants : register(b1)
 {
     float4x4 LightMatrix;
-    float4 ProbePositionWS;
+    float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
+    int ProbeCount;
 }
 
 cbuffer PerPassConstants : register(b2)
@@ -55,7 +58,7 @@ VertexOut main(VertexIn input)
     output.BaseColor = Color;
     output.Lit = Lit;
     output.LightSpacePosition = mul(LightMatrix, worldSpacePosition);
-    output.ProbePositionWS = ProbePositionWS.xyz;
+    output.ProbePositionWS = ProbePositionsWS[0].xyz;
     output.WorldPosition = worldSpacePosition.xyz;
     return output;
 }

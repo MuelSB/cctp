@@ -557,10 +557,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::SetDescriptorHeaps();
 
 		// Update per frame constants
-		static const auto& probePosition = demoScene->GetProbePositionWS();
-
+		static auto& probeVolume = demoScene->GetProbeVolume();
 		static const auto& lightDirection = demoScene->GetLightDirectionWS();
-		Renderer::Commands::UpdatePerFrameConstants(probePosition, lightDirection);
+		Renderer::Commands::UpdatePerFrameConstants(probeVolume.GetProbeTransforms(), lightDirection);
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//// Render shadow map pass
@@ -781,7 +780,6 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::Checkbox("Show visibility probe texture", &showVisibilityRaytraceOutput);
 			ImGui::Checkbox("Visualize probe volume", &visualizeProbeVolume);
 			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
-			static auto& probeVolume = demoScene->GetProbeVolume();
 			probeVolume.Update();
 			ImGui::Separator();
 

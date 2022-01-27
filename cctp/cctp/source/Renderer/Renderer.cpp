@@ -1,6 +1,7 @@
 #include "Pch.h"
 #include "Renderer.h"
 #include "Math/Math.h"
+#include "Math/Transform.h"
 #include "Window/Window.h"
 
 #include "Pipeline/GraphicsPipeline.h"
@@ -49,8 +50,9 @@ struct PerObjectConstants
 struct PerFrameConstants
 {
     glm::mat4 LightMatrix = glm::identity<glm::mat4>();
-    glm::vec4 ProbePositionWS = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec4 ProbePositionsWS[Renderer::MAX_PROBE_COUNT];
     glm::vec4 LightDirectionWS = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    int32_t ProbeCount = 0;
 };
 
 struct PerPassConstants
@@ -1043,15 +1045,21 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS)
+void Renderer::Commands::UpdatePerFrameConstants(const std::vector<Transform>& probeTransformsWS, const glm::vec3& lightDirectionWS)
 {
     PerFrameConstants perFrameConstants = {};
 
     // Update probe position
-    perFrameConstants.ProbePositionWS.x = probePositionWS.x;
-    perFrameConstants.ProbePositionWS.y = probePositionWS.y;
-    perFrameConstants.ProbePositionWS.z = probePositionWS.z;
-    perFrameConstants.ProbePositionWS.w = 1.0f;
+    assert(probeTransformsWS.size() <= Renderer::MAX_PROBE_COUNT && "Attempting to use more probes than the max probe count.");
+    size_t index = 0;
+    for (const auto& transform : probeTransformsWS)
+    {
+        perFrameConstants.ProbePositionsWS[index] = glm::vec4(transform.Position.x, transform.Position.y, transform.Position.z, 1.0f);
+        ++index;
+    }
+
+    // Update probe count
+    perFrameConstants.ProbeCount = static_cast<int32_t>(probeTransformsWS.size());
 
     // Update light direction
     perFrameConstants.LightDirectionWS.x = lightDirectionWS.x;

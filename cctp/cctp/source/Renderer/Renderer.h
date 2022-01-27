@@ -32,13 +32,15 @@ namespace Renderer
 		SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 	};
 
-	constexpr glm::vec2 RAYTRACE_IRRADIANCE_OUTPUT_DIMS = glm::vec2(1300.0f, 20.0f);
-	constexpr glm::vec2 RAYTRACE_VISIBILITY_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
+	constexpr glm::vec2 RAYTRACE_IRRADIANCE_OUTPUT_DIMS = glm::vec2(1300.0f, 16.0f);
+	constexpr glm::vec2 RAYTRACE_VISIBILITY_OUTPUT_DIMS = glm::vec2(2600.0f, 32.0f);
 	constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
 	class Material;
 
 	constexpr size_t MAX_MATERIAL_COUNT = 7;
+
+	constexpr size_t MAX_PROBE_COUNT = 200;
 
 	bool Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount);
 	bool Shutdown();
@@ -84,7 +86,7 @@ namespace Renderer
 		void SetViewport(SwapChain* pSwapChain);
 		void SetViewport(const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissorRect);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
-		void UpdatePerFrameConstants(const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS);
+		void UpdatePerFrameConstants(const std::vector<Transform>& probeTransformsWS, const glm::vec3& lightDirectionWS);
 		void UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, const Camera& camera);
 		void UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount);
 		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit);

@@ -1,3 +1,5 @@
+#include "Common.hlsl"
+
 struct VertexIn
 {
     float3 LocalSpacePosition : LOCAL_SPACE_POSITION;
@@ -16,8 +18,9 @@ cbuffer PerObjectConstants : register(b0)
 cbuffer PerFrameConstants : register(b1)
 {
     float4x4 LightMatrix;
-    float4 ProbePositionWS;
+    float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
+    int ProbeCount;
 }
 
 float4 main(VertexIn input) : SV_POSITION

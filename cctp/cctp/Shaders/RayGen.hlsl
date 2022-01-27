@@ -7,8 +7,9 @@ RWTexture2D<float4> Output[2] : register(u0);
 cbuffer PerFrameConstants : register(b0)
 {
     float4x4 LightMatrix;
-    float4 ProbePositionWS;
+    float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
+    int ProbeCount;
 };
 
 // Majercik et al. https://jcgt.org/published/0008/02/01/
@@ -36,14 +37,14 @@ void RayGen()
     };
     
     // Shoot rays from each probe
-    for (int p = 0; p < PROBE_COUNT; ++p)
+    for (int p = 0; p < ProbeCount; ++p)
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
-            float3 rayDirection = -normalize(SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT));
+            float3 rayDirection = normalize(SphericalFibonacci((float) r, (float) PROBE_RAY_COUNT));
 
             RayDesc ray;
-            ray.Origin = ProbePositionWS.xyz;
+            ray.Origin = ProbePositionsWS[p].xyz;
             ray.Direction = rayDirection;
             ray.TMin = 0.0;
             // 1 unit is 1 metre. TODO: Decide scene units and adjust geometry and max ray distance here
