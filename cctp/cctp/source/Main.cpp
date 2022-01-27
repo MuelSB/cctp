@@ -12,25 +12,7 @@
 
 #define ALIGN_TO(size, alignment) (size + (alignment - 1) & ~(alignment-1))
 
-enum SHADER_VISIBLE_DESCRIPTOR_INDICES
-{
-	IMGUI_DESCRIPTOR_INDEX = 0,
-
-	SCENE_BVH_SRV_DESCRIPTOR_INDEX,
-	RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX,
-	RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX,
-	SCENE_SRV_DESCRIPTOR_INDEX,
-	SCENE_DEPTH_SRV_DESCRIPTOR_INDEX,
-	SHADOW_MAP_SRV_DESCRIPTOR_INDEX,
-	RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX,
-	RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX,
-
-	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
-};
-
 constexpr glm::vec2 WINDOW_DIMS = glm::vec2(1920.0f, 1080.0f);
-constexpr glm::vec2 RAYTRACE_OUTPUT_DIMS = glm::vec2(32.0f, 32.0f);
-constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
 void CreateConsole(const uint32_t maxLines)
 {
@@ -110,7 +92,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		});
 
 	// Init renderer
-	if (!Renderer::Init(SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT))
+	if (!Renderer::Init(Renderer::SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT))
 	{
 		assert(false && "Failed to initialize renderer.");
 	}
@@ -211,14 +193,14 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	sceneBVHSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
 	sceneBVHSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	sceneBVHSRVDesc.RaytracingAccelerationStructure.Location = demoScene->GetTlas()->GetTlasResource()->GetGPUVirtualAddress();
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(nullptr, &sceneBVHSRVDesc, SCENE_BVH_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(nullptr, &sceneBVHSRVDesc, Renderer::SCENE_BVH_SRV_DESCRIPTOR_INDEX);
 
 	// Create GBuffer
 	// Raytracing output texture (irradiance)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
 
 	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
-		static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.y));
+		static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.y));
 	raytraceOutputTextureResourceDesc.MipLevels = 1;
 	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutputTextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -231,14 +213,14 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytrace output texture resource.");
 	}
-	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX);
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, Renderer::RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, Renderer::RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX);
 
 	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
 
 	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
-		static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(RAYTRACE_OUTPUT_DIMS.y));
+		static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_OUTPUT_DIMS.y));
 	raytraceOutput2TextureResourceDesc.MipLevels = 1;
 	raytraceOutput2TextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	auto raytraceOutput2TextureHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -251,8 +233,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create raytrace output 2 texture resource.");
 	}
-	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX);
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, Renderer::RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, Renderer::RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX);
 
 	// Scene texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneBufferResource;
@@ -271,7 +253,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create scene buffer resource.");
 	}
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneBufferResource.Get(), nullptr, SCENE_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneBufferResource.Get(), nullptr, Renderer::SCENE_SRV_DESCRIPTOR_INDEX);
 
 	// Scene depth texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneDepthBufferResource;
@@ -290,13 +272,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create scene depth buffer resource.");
 	}
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneDepthBufferResource.Get(), nullptr, SCENE_DEPTH_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(sceneDepthBufferResource.Get(), nullptr, Renderer::SCENE_DEPTH_SRV_DESCRIPTOR_INDEX);
 
 	// Shadow map texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> shadowMapBufferResource;
 
 	auto shadowMapBufferDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
-		static_cast<UINT>(SHADOW_MAP_DIMS.x), static_cast<UINT>(SHADOW_MAP_DIMS.y));
+		static_cast<UINT>(Renderer::SHADOW_MAP_DIMS.x), static_cast<UINT>(Renderer::SHADOW_MAP_DIMS.y));
 	auto shadowMapBufferHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
 	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&shadowMapBufferHeapProperties,
@@ -308,7 +290,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	{
 		assert(false && "Failed to create shadow map buffer resource.");
 	}
-	Renderer::AddSRVDescriptorToShaderVisibleHeap(shadowMapBufferResource.Get(), nullptr, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(shadowMapBufferResource.Get(), nullptr, Renderer::SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 
 	// Create shadow map depth stencil target
 	Microsoft::WRL::ComPtr<ID3D12Resource> shadowMapDepthStencilBuffer;
@@ -324,7 +306,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
 	auto shadowMapDSVHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	auto shadowMapDSVResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, static_cast<UINT64>(SHADOW_MAP_DIMS.x), static_cast<UINT64>(SHADOW_MAP_DIMS.y),
+	auto shadowMapDSVResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, static_cast<UINT64>(Renderer::SHADOW_MAP_DIMS.x), static_cast<UINT64>(Renderer::SHADOW_MAP_DIMS.y),
 		1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 	if (FAILED(Renderer::GetDevice()->CreateCommittedResource(&shadowMapDSVHeapProperties, D3D12_HEAP_FLAG_NONE,
 		&shadowMapDSVResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -520,9 +502,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
-		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
-																															// This is a Pointer to the start of a descriptor range (UAV x 2) 
-																															// in a descriptor table
+		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
+																																		  // This is a Pointer to the start of a descriptor range (UAV x 2) 
+																																		  // in a descriptor table
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
 
 	// Shader record 1: Miss
@@ -594,8 +576,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Set viewport
 		D3D12_VIEWPORT shadowMapViewport = {};
-		shadowMapViewport.Width = SHADOW_MAP_DIMS.x;
-		shadowMapViewport.Height = SHADOW_MAP_DIMS.y;
+		shadowMapViewport.Width = Renderer::SHADOW_MAP_DIMS.x;
+		shadowMapViewport.Height = Renderer::SHADOW_MAP_DIMS.y;
 		shadowMapViewport.TopLeftX = 0.0f;
 		shadowMapViewport.TopLeftY = 0.0f;
 		shadowMapViewport.MinDepth = 0.0f;
@@ -604,8 +586,8 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		D3D12_RECT shadowMapScissor = {};
 		shadowMapScissor.top = 0;
 		shadowMapScissor.left = 0;
-		shadowMapScissor.right = static_cast<LONG>(SHADOW_MAP_DIMS.x);
-		shadowMapScissor.bottom = static_cast<LONG>(SHADOW_MAP_DIMS.y);
+		shadowMapScissor.right = static_cast<LONG>(Renderer::SHADOW_MAP_DIMS.x);
+		shadowMapScissor.bottom = static_cast<LONG>(Renderer::SHADOW_MAP_DIMS.y);
 
 		Renderer::Commands::SetViewport(shadowMapViewport, shadowMapScissor);
 
@@ -683,7 +665,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * passIndex));
 
 		// Set descriptor table pointer for pipeline
-		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, Renderer::SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
@@ -721,7 +703,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		Renderer::Commands::SetGraphicsPipeline(screenPassPipeline.get());
 
 		// Set descriptor table pointer for pipeline
-		Renderer::Commands::SetGraphicsDescriptorTableRootParam(0, SCENE_SRV_DESCRIPTOR_INDEX);
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(0, Renderer::SCENE_SRV_DESCRIPTOR_INDEX);
 
 		// Draw screen quad mesh
 		Renderer::Commands::SubmitScreenMesh(*screenMesh.get());
@@ -761,11 +743,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			// Irradiance texture
 			ImGui::Text("Irradiance");
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
+				GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
 			// Visibility texture
 			ImGui::Text("Visibility");
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
+				GetGPUDescriptorHandle(Renderer::RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX).ptr, ImVec2(475.0f, 475.0f));
 			ImGui::End();
 		}
 
