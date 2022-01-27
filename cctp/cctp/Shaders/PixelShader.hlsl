@@ -15,9 +15,8 @@ struct VertexOut
     float3 WorldPosition : POSITION_WS;
 };
 
-SamplerState pointBorderSampler : register(s0, space0);
-Texture2D<float4> shadowMap : register(t0);
-RWTexture2D<float4> probeData[2] : register(u0);
+SamplerState pointBorderSampler : register(s0);
+Texture2D<float4> textureResources[3] : register(t0);
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
 {
@@ -39,7 +38,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
         const float minShadowBias = 0.001;
         float shadow = 0.0;
         float2 shadowMapDims;
-        shadowMap.GetDimensions(shadowMapDims.x, shadowMapDims.y);
+        textureResources[0].GetDimensions(shadowMapDims.x, shadowMapDims.y);
         float2 texelSize = 1.0 / shadowMapDims;
         float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
         bias = max(bias * (1.0 - LoN), minShadowBias);
@@ -47,7 +46,7 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN)
         {
             for (int y = -1; y <= 1; ++y)
             {
-                float pcfDepth = shadowMap.Sample(pointBorderSampler, projectedCoord + float2(x, y) * texelSize).r;
+                float pcfDepth = textureResources[0].Sample(pointBorderSampler, projectedCoord + float2(x, y) * texelSize).r;
                 shadow += currentDepth - bias < pcfDepth ? 1.0 : 0.0;
             }
         }
@@ -88,9 +87,9 @@ float4 main(VertexOut input) : SV_TARGET
     // Calculate the top left texel of this probe's data in the texture
     float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
     // Read irradiance
-    float3 giIrradiance = probeData[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
+    float3 giIrradiance = textureResources[1][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
     // Read visibility
-    float giVisibility = probeData[1][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
+    float giVisibility = textureResources[2][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
 
     const float shadowBias = 0.05;
     const float4 baseColor = input.BaseColor;

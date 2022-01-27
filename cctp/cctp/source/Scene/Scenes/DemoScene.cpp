@@ -125,7 +125,6 @@ void DemoScene::Begin()
 void DemoScene::Tick(float deltaTime)
 {
 	PollInputs(deltaTime);
-	ProbeVolume.Update();
 }
 
 void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)

@@ -34,18 +34,12 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     perPassConstantBufferDescriptorDesc.ShaderRegister = 2;
     perPassConstantBufferDescriptorDesc.RegisterSpace = 0;
 
-    D3D12_DESCRIPTOR_RANGE tableRanges[2];
-    tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+    D3D12_DESCRIPTOR_RANGE tableRanges[1];
+    tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     tableRanges[0].BaseShaderRegister = 0;
     tableRanges[0].RegisterSpace = 0;
-    tableRanges[0].NumDescriptors = 2;
+    tableRanges[0].NumDescriptors = 3;
     tableRanges[0].OffsetInDescriptorsFromTableStart = 0;
-
-    tableRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    tableRanges[1].BaseShaderRegister = 0;
-    tableRanges[1].RegisterSpace = 0;
-    tableRanges[1].NumDescriptors = 1;
-    tableRanges[1].OffsetInDescriptorsFromTableStart = 4;
 
     D3D12_ROOT_DESCRIPTOR_TABLE dTable = {};
     dTable.NumDescriptorRanges = _countof(tableRanges);

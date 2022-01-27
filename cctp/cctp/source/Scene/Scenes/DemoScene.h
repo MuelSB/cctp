@@ -20,6 +20,7 @@ public:
 	const glm::vec3& GetProbePositionWS() const { return ProbeTransformWS.Position; }
 	glm::vec3& GetProbePositionWS() { return ProbeTransformWS.Position; }
 	glm::vec3& GetProbeVolumePositionWS() { return ProbeVolume.GetVolumePosition(); }
+	Renderer::ProbeVolume& GetProbeVolume() { return ProbeVolume; }
 	glm::vec3& GetLightDirectionWS() { return LightDirectionWS; }
 	const Renderer::Material* GetMaterialsPtr() const { return MeshMaterials.data(); }
 	size_t GetMaterialCount() const { return MeshMaterials.size(); }

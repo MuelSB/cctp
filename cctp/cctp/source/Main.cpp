@@ -22,6 +22,8 @@ enum SHADER_VISIBLE_DESCRIPTOR_INDICES
 	SCENE_SRV_DESCRIPTOR_INDEX,
 	SCENE_DEPTH_SRV_DESCRIPTOR_INDEX,
 	SHADOW_MAP_SRV_DESCRIPTOR_INDEX,
+	RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX,
+	RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX,
 
 	SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 };
@@ -230,6 +232,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create raytrace output texture resource.");
 	}
 	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(raytraceOutputResource.Get(), nullptr, RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX);
 
 	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
@@ -249,6 +252,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		assert(false && "Failed to create raytrace output 2 texture resource.");
 	}
 	Renderer::AddUAVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_VISIBILITY_UAV_DESCRIPTOR_INDEX);
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(raytraceOutput2Resource.Get(), nullptr, RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX);
 
 	// Scene texture
 	Microsoft::WRL::ComPtr<ID3D12Resource> sceneBufferResource;
@@ -572,6 +576,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Update per frame constants
 		static const auto& probePosition = demoScene->GetProbePositionWS();
+
 		static const auto& lightDirection = demoScene->GetLightDirectionWS();
 		Renderer::Commands::UpdatePerFrameConstants(probePosition, lightDirection);
 
@@ -678,7 +683,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			Renderer::GetPerPassConstantBufferGPUVirtualAddress() + (Renderer::GetConstantBufferAllignmentSize() * passIndex));
 
 		// Set descriptor table pointer for pipeline
-		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX);
+		Renderer::Commands::SetGraphicsDescriptorTableRootParam(3, SHADOW_MAP_SRV_DESCRIPTOR_INDEX);
 
 		// Set viewport
 		Renderer::Commands::SetViewport(pSwapChain);
@@ -793,7 +798,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::Separator();
 			ImGui::Checkbox("Show raytrace output", &showRaytraceOutput);
 			ImGui::Checkbox("Visualize probe field", &visualizeProbeField);
-			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbePositionWS().x, 0.1f);
+			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
+			static auto& probeVolume = demoScene->GetProbeVolume();
+			probeVolume.Update();
 			ImGui::Separator();
 
 			ImGui::Text("Stats");
