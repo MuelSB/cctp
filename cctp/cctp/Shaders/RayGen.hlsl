@@ -60,7 +60,7 @@ void RayGen()
             float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_VISIBILITY);
 
             // Calculate the top left texel of this probe's output in the texture
-            float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
+            float2 probeTopLeftPosition = float2((float) PADDING + (p * PROBE_WIDTH_IRRADIANCE), (float) PADDING);
             
             // Store irradiance for probe
             Output[0][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions] = float4(payload.HitIrradiance, 1.0);
