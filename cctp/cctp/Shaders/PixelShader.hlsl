@@ -84,22 +84,22 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
 
 float4 main(VertexOut input) : SV_TARGET
 {
-    for (int p = 0; p < ProbeCount; ++p)
-    {
-         // Calculate the direction from the shaded point to the probe
-        float3 probeDirection = normalize(ProbePositionsWS[p].xyz - input.WorldPosition);
-        // Encode the direction to oct texture coordinate in [0, 1] range
-        float2 normalizedOctCoordZeroOne = (OctEncode(probeDirection) + 1.0) * 0.5;
-        // Calculate the oct coordinate in the dimensions of the probe texture
-        float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_IRRADIANCE);
-        float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) PROBE_WIDTH_VISIBILITY);
-        // Calculate the top left texel of this probe's data in the texture
-        float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
-        // Read irradiance
-        float3 giIrradiance = textureResources[1][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
-        // Read visibility
-        float giVisibility = textureResources[2][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
-    }
+    //for (int p = 0; p < ProbeCount; ++p)
+    //{
+    //     // Calculate the direction from the shaded point to the probe
+    //    float3 probeDirection = normalize(ProbePositionsWS[p].xyz - input.WorldPosition);
+    //    // Encode the direction to oct texture coordinate in [0, 1] range
+    //    float2 normalizedOctCoordZeroOne = (OctEncode(probeDirection) + 1.0) * 0.5;
+    //    // Calculate the oct coordinate in the dimensions of the probe texture
+    //    float2 normalizedOctCoordIrradianceTextureDimensions = (normalizedOctCoordZeroOne * (float) IRRADIANCE_PROBE_RESULTS_WIDTH);
+    //    float2 normalizedOctCoordVisibilityTextureDimensions = (normalizedOctCoordZeroOne * (float) VISIBILITY_PROBE_RESULTS_WIDTH);
+    //    // Calculate the top left texel of this probe's data in the texture
+    //    float2 probeTopLeftPosition = float2((float) PADDING, (float) PADDING);
+    //    // Read irradiance
+    //    float3 giIrradiance = textureResources[1][probeTopLeftPosition + normalizedOctCoordIrradianceTextureDimensions].rgb;
+    //    // Read visibility
+    //    float giVisibility = textureResources[2][probeTopLeftPosition + normalizedOctCoordVisibilityTextureDimensions].r;
+    //}
 
     const float shadowBias = 0.05;
     const float4 baseColor = input.BaseColor;
