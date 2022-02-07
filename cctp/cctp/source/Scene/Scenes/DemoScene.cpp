@@ -72,12 +72,12 @@ DemoScene::DemoScene()
 	MeshMaterials[1].SetColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
 	// Right wall
-	MeshTransforms[2].Position = glm::vec3(2.75f, 1.75f, 0.0f);
+	MeshTransforms[2].Position = glm::vec3(2.25f, 1.75f, 0.0f);
 	MeshTransforms[2].Scale = glm::vec3(0.5f, 5.0f, 5.0f);
 	MeshMaterials[2].SetColor(glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 
 	// Left wall
-	MeshTransforms[3].Position = glm::vec3(-2.75f, 1.75f, 0.0f);
+	MeshTransforms[3].Position = glm::vec3(-2.25f, 1.75f, 0.0f);
 	MeshTransforms[3].Scale = glm::vec3(0.5f, 5.0f, 5.0f);
 	MeshMaterials[3].SetColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 

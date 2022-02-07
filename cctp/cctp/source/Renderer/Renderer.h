@@ -32,15 +32,15 @@ namespace Renderer
 		SHADER_VISIBLE_CBV_SRV_UAV_DESCRIPTOR_COUNT
 	};
 
-	constexpr glm::vec2 RAYTRACE_IRRADIANCE_OUTPUT_DIMS = glm::vec2(2000.0f, 16.0f);
-	constexpr glm::vec2 RAYTRACE_VISIBILITY_OUTPUT_DIMS = glm::vec2(4000.0f, 32.0f);
+	constexpr glm::vec2 RAYTRACE_IRRADIANCE_OUTPUT_DIMS = glm::vec2(3500.0f, 16.0f);
+	constexpr glm::vec2 RAYTRACE_VISIBILITY_OUTPUT_DIMS = glm::vec2(7000.0f, 32.0f);
 	constexpr glm::vec2 SHADOW_MAP_DIMS = glm::vec2(1024.0f, 1024.0f);
 
 	class Material;
 
 	constexpr size_t MAX_MATERIAL_COUNT = 7;
 
-	constexpr size_t MAX_PROBE_COUNT = 200;
+	constexpr size_t MAX_PROBE_COUNT = 350;
 
 	bool Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount);
 	bool Shutdown();
