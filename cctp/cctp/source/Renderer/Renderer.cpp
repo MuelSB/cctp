@@ -438,7 +438,7 @@ bool Renderer::Init(const uint32_t shaderVisibleCBVSRVUAVDescriptorCount)
 
     // Create per object constant buffer
     auto perObjectHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    auto perObjectResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(SIZE_64KB*2);
+    auto perObjectResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(SIZE_64KB * 2);
 
     if (FAILED(Device->CreateCommittedResource(&perObjectHeapProperties,
         D3D12_HEAP_FLAG_NONE,

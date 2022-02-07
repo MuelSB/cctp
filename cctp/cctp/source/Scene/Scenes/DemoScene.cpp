@@ -63,7 +63,7 @@ DemoScene::DemoScene()
 
 	// Floor
 	MeshTransforms[0].Position = glm::vec3(0.0f, -0.5f, 0.0f);
-	MeshTransforms[0].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
+	MeshTransforms[0].Scale = glm::vec3(4.9f, 0.49f, 4.9f);
 	MeshMaterials[0].SetColor(glm::vec4(0.85f, 0.85f, 0.8f, 1.0f));
 
 	// Identity cube
@@ -94,7 +94,7 @@ DemoScene::DemoScene()
 
 	// Ceiling
 	MeshTransforms[6].Position = glm::vec3(0.0f, 4.0f, 0.0f);
-	MeshTransforms[6].Scale = glm::vec3(5.0f, 0.5f, 5.0f);
+	MeshTransforms[6].Scale = glm::vec3(4.9f, 0.49f, 4.9f);
 	MeshMaterials[6].SetColor(glm::vec4(0.85f, 0.85f, 0.8f, 1.0f));
 
 	// Create top level acceleration structure
