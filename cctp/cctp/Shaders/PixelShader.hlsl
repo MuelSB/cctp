@@ -99,20 +99,22 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Global illumination
-        for (int p = 0; p < ProbeCount; ++p)
-        {
-            // Calculate the direction from the shaded point to the probe
-            float3 probeDirection = normalize(ProbePositionsWS[p].xyz - input.WorldPosition);
 
-            // Read irradiance
-            float3 giIrradiance = textureResources[1][GetProbeTextureCoord(probeDirection, p, IRRADIANCE_PROBE_RESULTS_WIDTH, PROBE_RESULTS_PADDING)].rgb;
 
-            // Read visibility
-            float giVisibility = textureResources[2][GetProbeTextureCoord(probeDirection, p, VISIBILITY_PROBE_RESULTS_WIDTH, PROBE_RESULTS_PADDING)].r;
+        //for (int p = 0; p < ProbeCount; ++p)
+        //{
+        //    // Calculate the direction from the shaded point to the probe
+        //    float3 probeDirection = normalize(ProbePositionsWS[p].xyz - input.WorldPosition);
 
-            // Magic number to scale irradiance strength to prevent image blowout
-            finalColor += float4(giIrradiance * 0.007, 0.0);
-        }
+        //    // Read irradiance
+        //    float3 giIrradiance = textureResources[1][GetProbeTextureCoord(probeDirection, p, IRRADIANCE_PROBE_RESULTS_WIDTH, PROBE_RESULTS_PADDING)].rgb;
+
+        //    // Read visibility
+        //    float giVisibility = textureResources[2][GetProbeTextureCoord(probeDirection, p, VISIBILITY_PROBE_RESULTS_WIDTH, PROBE_RESULTS_PADDING)].r;
+
+        //    // Magic number to scale irradiance strength to prevent image blowout
+        //    finalColor += float4(giIrradiance * 0.007, 0.0);
+        //}
     }
     else
     {

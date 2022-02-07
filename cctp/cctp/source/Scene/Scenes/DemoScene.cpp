@@ -12,7 +12,7 @@ bool IsInputPressed(InputCode input)
 }
 
 DemoScene::DemoScene()
-	: ProbeVolume(glm::vec3(0.5f, 2.25f, 0.0f), glm::vec3(5.0f, 5.0f, 5.0f), 1.0f, 0.05f)
+	: ProbeVolume(ProbeVolumeStartPosition, ProbeVolumeExtents, ProbeVolumeProbeSpacing, ProbeVolumeDebugProbeScale)
 {
 	DEBUG_LOG("Total probe count: " + std::to_string(ProbeVolume.GetTotalProbeCount()));
 
@@ -114,10 +114,6 @@ DemoScene::DemoScene()
 
 	// Set main camera fov
 	MainCamera.Settings.PerspectiveFOV = 45.0f;
-
-	// Set probe visualisation properties
-	ProbeTransformWS.Position = glm::vec3(0.0f, 2.0f, 0.0f);
-	ProbeTransformWS.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
 }
 
 void DemoScene::Begin()
