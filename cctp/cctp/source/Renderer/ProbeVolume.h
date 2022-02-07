@@ -12,6 +12,7 @@ namespace Renderer
 
 		const auto& GetProbeTransforms() const { return ProbeTransforms; }
 		auto& GetVolumePosition() { return Position; }
+		auto GetTotalProbeCount() { return ProbeCountX * ProbeCountY * ProbeCountZ; }
 
 	private:
 		void UpdateProbePositions();

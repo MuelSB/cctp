@@ -14,6 +14,8 @@ bool IsInputPressed(InputCode input)
 DemoScene::DemoScene()
 	: ProbeVolume(glm::vec3(0.5f, 2.25f, 0.0f), glm::vec3(5.0f, 5.0f, 5.0f), 1.0f, 0.05f)
 {
+	DEBUG_LOG("Total probe count: " + std::to_string(ProbeVolume.GetTotalProbeCount()));
+
 	// Subscribe input event function
 	EventSystem::SubscribeToEvent<InputEvent>([this](InputEvent&& event)
 		{
