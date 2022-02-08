@@ -83,7 +83,6 @@ void RayGen()
             float visibility = 1.0 - payload.HitDistance;
             Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)] =
                 float4(visibility, visibility, visibility, 1.0);
-
         }
     }
 }

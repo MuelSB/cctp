@@ -21,7 +21,7 @@ struct RayPayload
 // The amount of texels in a square side to use to store a probes visibility data in
 #define VISIBILITY_PROBE_SIDE_LENGTH 16 
 // Border size in pixels around each probe's data pack
-#define PROBE_PADDING 0
+#define PROBE_PADDING 2
 
 float2 GetProbeTextureCoord(float3 direction, int probeIndex, float singleProbeResultsWidth, int resultPadding)
 {
@@ -33,8 +33,8 @@ float2 GetProbeTextureCoord(float3 direction, int probeIndex, float singleProbeR
 
     // Calculate the top left texel of this probe's output in the texture
     float2 probeTopLeftPosition = float2(
-                                         (float) resultPadding + ((float) probeIndex * singleProbeResultsWidth),
-                                         (float) resultPadding
+                                         ((float) resultPadding * (float) probeIndex) + ((float) probeIndex * singleProbeResultsWidth),
+                                         0.0
                                         );
 
     return probeTopLeftPosition + normalizedOctCoordTextureDimensions;
