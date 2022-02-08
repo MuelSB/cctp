@@ -608,13 +608,13 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		// Raytrace global illumination probe field
 		// Check raytracing is enabled
-		static float GIGatherRateS = 0.1f;
+		static float GIGatherRateSeconds = 0.2f;
 		static bool dispatchRays = true;
 		if (dispatchRays)
 		{
 			// Check if enough time has elapsed since last GI gather
 			std::chrono::duration<float, std::milli> GITime = currentTime - lastGIGatherTime;
-			if (GITime.count() >= (GIGatherRateS * 1000.0f))
+			if (GITime.count() >= (GIGatherRateSeconds * 1000.0f))
 			{
 				// Store time that this gather is happening on
 				lastGIGatherTime = currentTime;
@@ -738,8 +738,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		if (showIrradianceRaytraceOutput)
 		{
 			ImGui::Begin("Irradiance probe texture", &showIrradianceRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+			static float zoom = 1.0f;
+			ImGui::DragFloat("Zoom", &zoom);
+			if (zoom < 1.0f) zoom = 1.0f;
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX).ptr, ImVec2(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.x, Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.y));
+				GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_SRV_DESCRIPTOR_INDEX).ptr, 
+				ImVec2(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.x * zoom, Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.y * zoom));
 			ImGui::End();
 		}
 
@@ -747,8 +751,12 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		if (showVisibilityRaytraceOutput)
 		{
 			ImGui::Begin("Visibility probe texture", &showVisibilityRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+			static float zoom = 1.0f;
+			ImGui::DragFloat("Zoom", &zoom);
+			if (zoom < 1.0f) zoom = 1.0f;
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
-				GetGPUDescriptorHandle(Renderer::RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX).ptr, ImVec2(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x, Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y));
+				GetGPUDescriptorHandle(Renderer::RAYTRACE_VISIBILITY_SRV_DESCRIPTOR_INDEX).ptr, 
+				ImVec2(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x * zoom, Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y * zoom));
 			ImGui::End();
 		}
 
@@ -768,7 +776,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		{
 			ImGui::Text("Global illumination");
 			ImGui::Separator();
-			ImGui::InputFloat("Probe update rate (s)", &GIGatherRateS);
+			ImGui::InputFloat("Probe update rate (s)", &GIGatherRateSeconds);
 			ImGui::Checkbox("Enable raytracing", &dispatchRays);
 			ImGui::Separator();
 

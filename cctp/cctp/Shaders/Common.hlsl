@@ -17,11 +17,11 @@ struct RayPayload
 // The number of rays traced from a probe. McGuire uses up to 256 rays
 #define PROBE_RAY_COUNT 32
 // The amount of texels in a square side to use to store a probes irradiance data in
-#define IRRADIANCE_PROBE_RESULTS_WIDTH 8 
+#define IRRADIANCE_PROBE_SIDE_LENGTH 8 
 // The amount of texels in a square side to use to store a probes visibility data in
-#define VISIBILITY_PROBE_RESULTS_WIDTH 16 
+#define VISIBILITY_PROBE_SIDE_LENGTH 16 
 // Border size in pixels around each probe's data pack
-#define PROBE_RESULTS_PADDING 1
+#define PROBE_PADDING 0
 
 float2 GetProbeTextureCoord(float3 direction, int probeIndex, float singleProbeResultsWidth, int resultPadding)
 {
