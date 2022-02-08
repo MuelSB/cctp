@@ -23,17 +23,17 @@ struct RayPayload
 // Border size in pixels around each probe's data pack
 #define PROBE_PADDING 2
 
-float2 GetProbeTextureCoord(float3 direction, int probeIndex, float singleProbeResultsWidth, int resultPadding)
+float2 GetProbeTextureCoord(float3 direction, int probeIndex, float singleProbeSideLength, int resultPadding)
 {
     // Encode the direction to oct texture coordinate in [0, 1] range
     float2 normalizedOctCoordZeroOne = (OctEncode(direction) + 1.0) * 0.5;
 
     // Calculate the oct coordinate in the dimensions of the probe output texture
-    float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * singleProbeResultsWidth);
+    float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * singleProbeSideLength);
 
     // Calculate the top left texel of this probe's output in the texture
     float2 probeTopLeftPosition = float2(
-                                         ((float) resultPadding * (float) probeIndex) + ((float) probeIndex * singleProbeResultsWidth),
+                                         (float) (resultPadding * probeIndex) + ((float) probeIndex * singleProbeSideLength),
                                          0.0
                                         );
 

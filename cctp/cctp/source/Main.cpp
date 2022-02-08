@@ -199,7 +199,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Raytracing output texture (irradiance)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutputResource;
 
-	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
+	auto raytraceOutputTextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R11G11B10_FLOAT,
 		static_cast<UINT64>(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_IRRADIANCE_OUTPUT_DIMS.y));
 	raytraceOutputTextureResourceDesc.MipLevels = 1;
 	raytraceOutputTextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -219,7 +219,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
 
-	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,
+	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16_FLOAT,
 		static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y));
 	raytraceOutput2TextureResourceDesc.MipLevels = 1;
 	raytraceOutput2TextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
