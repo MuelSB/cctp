@@ -17,6 +17,7 @@ void ClearOutputTextures()
     uint height;
     Output[0].GetDimensions(width, height);
     
+    // Irradiance texture RGB
     for (uint x0 = 0; x0 < width; ++x0)
     {
         for (uint y0 = 0; y0 < height; ++y0)
@@ -27,6 +28,7 @@ void ClearOutputTextures()
     
     Output[1].GetDimensions(width, height);
     for (uint x1 = 0; x1 < width; ++x1)
+    // Visibility texture RG
     {
         for (uint y1 = 0; y1 < height; ++y1)
         {
