@@ -99,6 +99,8 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Global illumination
+        float3 irradiance = float3(0.0, 0.0, 0.0);
+
         for (int p = 0; p < ProbeCount; ++p)
         {
             float3 dir = input.WorldPosition - ProbePositionsWS[p].xyz;
@@ -106,11 +108,11 @@ float4 main(VertexOut input) : SV_TARGET
             if(length(dir) < /* probe spacing */ 2.0)
             {
                 // This is one of the 8 probes around the shaded point
-                float3 irradiance = textureResources[1][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)];
-                
-                finalColor += float4(irradiance * 0.05, 0.0);
+                irradiance += textureResources[1][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)];
             }
         }
+        
+        finalColor += float4(irradiance, 0.0);
     }
     else
     {
