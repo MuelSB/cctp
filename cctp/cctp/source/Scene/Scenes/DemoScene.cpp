@@ -15,6 +15,9 @@ DemoScene::DemoScene()
 	: ProbeVolume(ProbeVolumeStartPosition, ProbeVolumeExtents, ProbeVolumeProbeSpacing, ProbeVolumeDebugProbeScale)
 {
 	DEBUG_LOG("Total probe count: " + std::to_string(ProbeVolume.GetTotalProbeCount()));
+	DEBUG_LOG("Probe count X: " + std::to_string(ProbeVolume.GetProbeCountX()));
+	DEBUG_LOG("Probe count Y: " + std::to_string(ProbeVolume.GetProbeCountY()));
+	DEBUG_LOG("Probe count Z: " + std::to_string(ProbeVolume.GetProbeCountZ()));
 
 	// Subscribe input event function
 	EventSystem::SubscribeToEvent<InputEvent>([this](InputEvent&& event)

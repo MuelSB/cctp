@@ -1,6 +1,11 @@
 #include "Pch.h"
 #include "ProbeVolume.h"
 
+float CalculateBias(const float spacing)
+{
+	return (spacing - static_cast<int32_t>(spacing)) > 0.0f ? 0.0f : 1.0f;
+}
+
 Renderer::ProbeVolume::ProbeVolume(const glm::vec3& position, const glm::vec3& volumeExtents, float probeSpacing, float debugProbeSize)
 	: Position(position), Extents(volumeExtents), ProbeSpacing(probeSpacing)
 {
@@ -32,9 +37,9 @@ void Renderer::ProbeVolume::UpdateProbePositions()
 		{
 			for (auto z = 0; z < ProbeCountZ; ++z)
 			{
-				ProbeTransforms[index].Position = Position + glm::vec3((x * ProbeSpacing) - (Extents.x / 2.0f),
-																	   (y * ProbeSpacing) - (Extents.y / 2.0f),
-																	   (z * ProbeSpacing) - (Extents.z / 2.0f));
+				ProbeTransforms[index].Position = Position + glm::vec3((x * ProbeSpacing) - ((Extents.x - ProbeSpacing) / 2.0f),
+																	   (y * ProbeSpacing) - ((Extents.y - ProbeSpacing) / 2.0f),
+																	   (z * ProbeSpacing) - ((Extents.z - ProbeSpacing) / 2.0f));
 				++index;
 			}
 		}

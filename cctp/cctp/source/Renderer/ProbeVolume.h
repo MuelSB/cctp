@@ -11,8 +11,11 @@ namespace Renderer
 		void Update();
 
 		const auto& GetProbeTransforms() const { return ProbeTransforms; }
-		auto& GetVolumePosition() { return Position; }
-		auto GetTotalProbeCount() { return ProbeCountX * ProbeCountY * ProbeCountZ; }
+		auto& GetVolumePosition() { return Position; } // Returns the center of the probe volume in world space
+		auto GetTotalProbeCount() const { return ProbeCountX * ProbeCountY * ProbeCountZ; }
+		const auto& GetProbeCountX() const { return ProbeCountX; }
+		const auto& GetProbeCountY() const { return ProbeCountY; }
+		const auto& GetProbeCountZ() const { return ProbeCountZ; }
 
 	private:
 		void UpdateProbePositions();
