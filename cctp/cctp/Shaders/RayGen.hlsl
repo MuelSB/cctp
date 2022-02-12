@@ -84,7 +84,7 @@ void RayGen()
             // Store visibility for probe
             float visibility = 1.0 - payload.HitDistance;
             Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)] =
-                float4(visibility, visibility, visibility, 1.0);
+                float4(visibility, visibility, visibility, 1.0); // TODO This should store the mean in the g channel
         }
     }
 }

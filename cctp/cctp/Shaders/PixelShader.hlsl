@@ -105,10 +105,21 @@ float4 main(VertexOut input) : SV_TARGET
         {
             float3 dir = input.WorldPosition - ProbePositionsWS[p].xyz;
 
-            if(length(dir) < /* probe spacing */ 2.0)
+            if (length(dir) < /* probe spacing */2.0)
             {
                 // This is one of the 8 probes around the shaded point
-                irradiance += textureResources[1][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)];
+                dir = normalize(dir);
+                
+                // Smooth backface
+                float weight = (dot(dir, input.VertexNormalWS) + 1) * 0.5;
+                
+                // Adjacency
+                // TODO
+
+                // Visibility
+                float2 temp = textureResources[2][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].rg;
+
+                irradiance += textureResources[1][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb * weight * temp.r;
             }
         }
         
