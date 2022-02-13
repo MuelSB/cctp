@@ -104,8 +104,9 @@ float4 main(VertexOut input) : SV_TARGET
         for (int p = 0; p < ProbeCount; ++p)
         {
             float3 dir = input.WorldPosition - ProbePositionsWS[p].xyz;
+            float r = length(dir);
 
-            if (length(dir) < /* probe spacing */2.0)
+            if (r < /* probe spacing */ 2.0)
             {
                 // This is one of the 8 probes around the shaded point
                 dir = normalize(dir);
@@ -114,7 +115,8 @@ float4 main(VertexOut input) : SV_TARGET
                 float weight = (dot(dir, input.VertexNormalWS) + 1) * 0.5;
                 
                 // Adjacency
-                // TODO
+                // TODO Trilinear interpolation
+                // Weight probe contribution that is nearer to the shaded point higher
 
                 // Visibility
                 float2 temp = textureResources[2][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].rg;

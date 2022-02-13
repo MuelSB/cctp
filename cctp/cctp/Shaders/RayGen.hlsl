@@ -81,10 +81,10 @@ void RayGen()
             // Store irradiance for probe
             Output[0][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)] = float4(payload.HitIrradiance, 1.0);
             
-            // Store visibility for probe
-            float visibility = 1.0 - payload.HitDistance;
+            // Store visibility for probe as distance and square distance
+            float distance = 1.0 - payload.HitDistance;
             Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)] =
-                float4(visibility, visibility, visibility, 1.0); // TODO This should store the mean in the g channel
+                float4(distance, pow(distance, 2.0), 0.0, 1.0);
         }
     }
 }
