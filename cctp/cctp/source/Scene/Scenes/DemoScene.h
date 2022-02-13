@@ -23,6 +23,7 @@ public:
 	const Renderer::Material* GetMaterialsPtr() const { return MeshMaterials.data(); }
 	size_t GetMaterialCount() const { return MeshMaterials.size(); }
 	void SetDrawProbes(const bool draw) { DrawProbes = draw; }
+	const auto& GetMeshes() const { return Meshes; }
 
 public:
 	static constexpr glm::vec3 SceneForwardVector = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -41,7 +42,7 @@ private:
 	static constexpr float CameraPitchMax = 90.0f;
 	static constexpr float CameraFlySpeed = 0.0075f;
 	static constexpr glm::vec3 CameraStartPosition = glm::vec3(0.0f, 2.0f, -10.0f);
-	static constexpr glm::vec3 ProbeVolumeStartPosition = glm::vec3(0.25f, 2.0f, 0.2f);
+	static constexpr glm::vec3 ProbeVolumeStartPosition = glm::vec3(0.25f, 2.0f, 0.45f);
 
 	//static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(7.0f, 7.0f, 7.0f);
 	//static constexpr float ProbeVolumeProbeSpacing = 1.0f;	

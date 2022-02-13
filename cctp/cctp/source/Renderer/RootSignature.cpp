@@ -123,6 +123,19 @@ void RootSignature::AddStaticSampler(const SamplerType type,
 		desc.MinLOD = 0.0f;
 		desc.MaxLOD = D3D12_FLOAT32_MAX;
 		break;
+
+	case SamplerType::PointBorder:
+		desc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+		desc.MipLODBias = 0;
+		desc.MaxAnisotropy = D3D12_MAX_MAXANISOTROPY;
+		desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+		desc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+		desc.MinLOD = 0.0f;
+		desc.MaxLOD = D3D12_FLOAT32_MAX;
+		break;
 	}
 
 	desc.ShaderRegister = shaderRegister;

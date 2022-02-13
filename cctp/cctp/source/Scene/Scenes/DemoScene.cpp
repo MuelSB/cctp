@@ -46,6 +46,9 @@ DemoScene::DemoScene()
 		assert(false && "Failed to load mesh data onto GPU.");
 	}
 
+	// Add cube vertex srv descriptor to shader descriptor heap
+	Renderer::AddSRVDescriptorToShaderVisibleHeap(Meshes[0]->GetVertexBuffer(), &Meshes[0]->GetVertexBufferSRVDesc(), Renderer::CUBE_VERTEX_BUFFER_SRV_DESCRIPTOR_INDEX);
+
 	// Create bottom level acceleration structures
 	blAccelStructures.resize(1);
 

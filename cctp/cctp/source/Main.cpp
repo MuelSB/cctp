@@ -7,8 +7,8 @@
 
 #include "Scene/Scenes/DemoScene.h"
 
-// Temporary
 #include "Renderer/RootSignature.h"
+#include "Renderer/SamplerType.h"
 
 #define ALIGN_TO(size, alignment) (size + (alignment - 1) & ~(alignment-1))
 
@@ -423,6 +423,29 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	RootSignature hitGroupRootSignature;
 
 	hitGroupRootSignature.AddRootDescriptorParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
+	hitGroupRootSignature.AddRootDescriptorParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 1, 0, D3D12_SHADER_VISIBILITY_ALL);
+	hitGroupRootSignature.AddRootDescriptorParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 2, 0, D3D12_SHADER_VISIBILITY_ALL);
+
+	D3D12_DESCRIPTOR_RANGE closestHitDescriptorRanges[2];
+
+	// Shadow map srv
+	closestHitDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	closestHitDescriptorRanges[0].NumDescriptors = 1;
+	closestHitDescriptorRanges[0].BaseShaderRegister = 0;
+	closestHitDescriptorRanges[0].RegisterSpace = 0;
+	closestHitDescriptorRanges[0].OffsetInDescriptorsFromTableStart = 0;
+
+	// Cube vertex buffer srv
+	closestHitDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	closestHitDescriptorRanges[1].NumDescriptors = 1;
+	closestHitDescriptorRanges[1].BaseShaderRegister = 1;
+	closestHitDescriptorRanges[1].RegisterSpace = 0;
+	closestHitDescriptorRanges[1].OffsetInDescriptorsFromTableStart = 2;
+
+	hitGroupRootSignature.AddRootDescriptorTableParameter(closestHitDescriptorRanges, _countof(closestHitDescriptorRanges), D3D12_SHADER_VISIBILITY_ALL);
+
+	hitGroupRootSignature.AddStaticSampler(SamplerType::PointBorder, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
+
 	hitGroupRootSignature.SetFlags(D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE);
 	hitGroupRootSignature.Create(Renderer::GetDevice());
 
@@ -514,12 +537,18 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Shader record 2: Hit group
-	// Shader identifier + root descriptor
-	memcpy(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32), // Adding 32 bytes of padding to miss shader record for 64 byte table allignment
+	// Shader identifier + root descriptor + root descriptor + root descriptor + descriptor table
+	memcpy(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32), // Adding 32 bytes of padding to miss shader record for 64 byte table allignment requirement
 		raytracingPipelineStateObjectProperties->GetShaderIdentifier(hitGroupExportName),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) =
 		Renderer::GetMaterialConstantBufferGPUVirtualAddress();
+	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) =
+		Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
+	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8 + 8) =
+		Renderer::GetPerPassConstantBufferGPUVirtualAddress();
+	*(uint64_t*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8 + 8 + 8) =
+		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(Renderer::SHADOW_MAP_SRV_DESCRIPTOR_INDEX).ptr - 8);
 
 	// Begin demo scene
 	demoScene->Begin();
