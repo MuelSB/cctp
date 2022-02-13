@@ -4,9 +4,9 @@
 
 struct Vertex1Pos1UV1Norm
 {
-    float4 Position;
-    float4 UV;
-    float4 Normal;
+    float3 Position;
+    float2 UV;
+    float3 Normal;
 };
 
 cbuffer MaterialBuffer : register(b0)
@@ -50,9 +50,9 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     Vertex1Pos1UV1Norm v2 = cubeVertices[triangleIndex + 2];
 
     // Interpolate normal attribute
-    float3 normalWS = attribs.barycentrics.x * (mul((float3x3)ObjectToWorld3x4(), v0.Normal.xyz)) + 
-        attribs.barycentrics.y * (mul((float3x3)ObjectToWorld3x4(), v1.Normal.xyz)) +
-        attribs.barycentrics.g * (mul((float3x3)ObjectToWorld3x4(), v2.Normal.xyz));
+    float3 normalWS = -(attribs.barycentrics.x * (mul((float3x3) ObjectToWorld3x4(), v0.Normal.xyz)) +
+        attribs.barycentrics.y * (mul((float3x3) ObjectToWorld3x4(), v1.Normal.xyz)) +
+        attribs.barycentrics.g * (mul((float3x3) ObjectToWorld3x4(), v2.Normal.xyz)));
 
     float3 lightVectorWS = -normalize(LightDirectionWS.xyz);
     float3 cameraVectorWS = normalize(CameraPositionWS.xyz - shadingPointWS);
