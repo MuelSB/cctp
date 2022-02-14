@@ -22,7 +22,8 @@ struct VertexOut
     float3 WorldPosition : POSITION_WS;
 };
 
-SamplerState pointBorderSampler : register(s0);
+SamplerState pointSampler : register(s0, space0);
+SamplerState linearSampler : register(s0, space1);
 Texture2D<float4> textureResources[3] : register(t0);
 
 float4 main(VertexOut input) : SV_TARGET
@@ -38,18 +39,19 @@ float4 main(VertexOut input) : SV_TARGET
                                                 input.VertexNormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointBorderSampler)),
+                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointSampler)),
                             baseColor.a);
 
         // Global illumination
-        float3 irradiance = float3(0.0, 0.0, 0.0);
+        float3 shadingPoint = input.WorldPosition;
 
+        float3 irradiance = float3(0.0, 0.0, 0.0);
         for (int p = 0; p < ProbeCount; ++p)
         {
-            float3 dir = input.WorldPosition - ProbePositionsWS[p].xyz;
+            float3 dir = shadingPoint - ProbePositionsWS[p].xyz;
             float r = length(dir);
 
-            if (r < /* probe spacing */ 2.0)
+            if (r < /* probe spacing */ 1.5)
             {
                 // This is one of the 8 probes around the shaded point
                 dir = normalize(dir);
@@ -62,16 +64,16 @@ float4 main(VertexOut input) : SV_TARGET
                 // Weight probe contribution that is nearer to the shaded point higher
 
                 // Visibility
-                float2 temp = textureResources[2][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].rg;
+                float2 temp = textureResources[2].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rg;
                 float mean = temp.r;
                 float mean2 = temp.g;
-                if(r > mean)
+                if (r > mean)
                 {
                     float variance = abs(pow(mean, 2) - mean2);
                     weight *= variance / (variance + pow(r - mean, 2));
                 }
 
-                irradiance += sqrt(textureResources[1][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb) * weight;
+                irradiance += sqrt(textureResources[1].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb) * weight;
             }
         }
         

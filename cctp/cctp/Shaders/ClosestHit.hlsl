@@ -29,9 +29,33 @@ cbuffer PerPassConstants : register(b2)
     float4 CameraPositionWS;
 }
 
-SamplerState pointBorderSampler : register(s0);
+SamplerState pointSampler : register(s0);
 Texture2D<float4> shadowMap : register(t0);
 StructuredBuffer<Vertex1Pos1UV1Norm> cubeVertices : register(t1);
+
+// https://stackoverflow.com/questions/983999/simple-3x3-matrix-inverse-code-c
+float3x3 inverse(float3x3 m)
+{
+    // computes the inverse of a matrix m
+    float det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
+             m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+             m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+
+    float invdet = 1 / det;
+
+    float3x3 minv; // inverse of matrix m
+    minv[0][0] = (m[1][1] * m[2][2] - m[2][1] * m[1][2]) * invdet;
+    minv[0][1] = (m[0][2] * m[2][1] - m[0][1] * m[2][2]) * invdet;
+    minv[0][2] = (m[0][1] * m[1][2] - m[0][2] * m[1][1]) * invdet;
+    minv[1][0] = (m[1][2] * m[2][0] - m[1][0] * m[2][2]) * invdet;
+    minv[1][1] = (m[0][0] * m[2][2] - m[0][2] * m[2][0]) * invdet;
+    minv[1][2] = (m[1][0] * m[0][2] - m[0][0] * m[1][2]) * invdet;
+    minv[2][0] = (m[1][0] * m[2][1] - m[2][0] * m[1][1]) * invdet;
+    minv[2][1] = (m[2][0] * m[0][1] - m[0][0] * m[2][1]) * invdet;
+    minv[2][2] = (m[0][0] * m[1][1] - m[1][0] * m[0][1]) * invdet;
+    
+    return minv;
+}
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
@@ -48,28 +72,24 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     Vertex1Pos1UV1Norm v0 = cubeVertices[triangleIndex];
     Vertex1Pos1UV1Norm v1 = cubeVertices[triangleIndex + 1];
     Vertex1Pos1UV1Norm v2 = cubeVertices[triangleIndex + 2];
-
+    
     // Interpolate normal attribute
-    float3 normalWS = -(attribs.barycentrics.x * (mul((float3x3) ObjectToWorld3x4(), v0.Normal.xyz)) +
-        attribs.barycentrics.y * (mul((float3x3) ObjectToWorld3x4(), v1.Normal.xyz)) +
-        attribs.barycentrics.g * (mul((float3x3) ObjectToWorld3x4(), v2.Normal.xyz)));
+    float3x3 normalMatrix = inverse(transpose((float3x3) ObjectToWorld3x4())); // This is necessary as world matrix contains non uniform scaling
+                                                                               // Should be done on CPU and uploaded to GPU
+    float3 normalWS = -(
+        attribs.barycentrics.x * (mul(normalMatrix, v0.Normal.xyz)) +
+        attribs.barycentrics.y * (mul(normalMatrix, v1.Normal.xyz)) +
+        attribs.barycentrics.g * (mul(normalMatrix, v2.Normal.xyz))
+    );
 
     float3 lightVectorWS = -normalize(LightDirectionWS.xyz);
     float3 cameraVectorWS = normalize(CameraPositionWS.xyz - shadingPointWS);
-    
-    float shadow = CalculateShadow(
-        mul(LightMatrix, float4(shadingPointWS, 1.0)),
-        SHADOW_BIAS,
-        saturate(dot(lightVectorWS, normalWS)),
-        shadowMap,
-        pointBorderSampler
-    );
     
     float3 lighting = Lighting(
         normalWS,
         lightVectorWS,
         cameraVectorWS,
-        shadow
+        CalculateShadow(mul(LightMatrix, float4(shadingPointWS, 1.0)), SHADOW_BIAS, saturate(dot(lightVectorWS, normalWS)), shadowMap, pointSampler)
     );
     
     payload.HitIrradiance = Colors[hitInstanceID].xyz * lighting;

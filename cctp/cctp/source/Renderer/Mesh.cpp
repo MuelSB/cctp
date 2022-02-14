@@ -53,7 +53,7 @@ Renderer::Mesh::Mesh(ID3D12Device* pDevice, const std::vector<Vertex1Pos1UV1Norm
     VertexBufferSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
     IndexBufferSRVDesc.Buffer.FirstElement = 0;
-    IndexBufferSRVDesc.Buffer.NumElements = Indices.size();
+    IndexBufferSRVDesc.Buffer.NumElements = static_cast<UINT>(Indices.size());
     IndexBufferSRVDesc.Buffer.StructureByteStride = sizeof(UINT32);
     IndexBufferSRVDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
     IndexBufferSRVDesc.Format = DXGI_FORMAT_UNKNOWN;
