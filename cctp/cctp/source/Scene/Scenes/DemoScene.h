@@ -44,11 +44,11 @@ private:
 	static constexpr glm::vec3 CameraStartPosition = glm::vec3(0.0f, 2.0f, -10.0f);
 	static constexpr glm::vec3 ProbeVolumeStartPosition = glm::vec3(0.25f, 2.0f, 0.45f);
 
-	//static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(7.0f, 7.0f, 7.0f);
-	//static constexpr float ProbeVolumeProbeSpacing = 1.0f;	
+	static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(7.0f, 7.0f, 7.0f);
+	static constexpr float ProbeVolumeProbeSpacing = 1.0f;	
 
-	static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(8.0f, 8.0f, 8.0f); // Reduces the number of probes for performance
-	static constexpr float ProbeVolumeProbeSpacing = 1.5f;
+	//static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(8.0f, 8.0f, 8.0f); // Reduces the number of probes for performance
+	//static constexpr float ProbeVolumeProbeSpacing = 1.5f;
 
 	static constexpr float ProbeVolumeDebugProbeScale = 0.05f;
 

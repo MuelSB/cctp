@@ -588,7 +588,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Update per frame constants
 		static auto& probeVolume = demoScene->GetProbeVolume();
 		static const auto& lightDirection = demoScene->GetLightDirectionWS();
-		Renderer::Commands::UpdatePerFrameConstants(probeVolume.GetProbeTransforms(), lightDirection);
+		Renderer::Commands::UpdatePerFrameConstants(probeVolume.GetProbeTransforms(), lightDirection, demoScene->GetProbeVolume().GetProbeSpacing());
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//// Render shadow map pass

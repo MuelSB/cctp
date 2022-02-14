@@ -6,7 +6,7 @@ cbuffer PerFrameConstants : register(b0)
     float4x4 LightMatrix;
     float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
-    int ProbeCount;
+    float4 packedData; // Stores probe count in x and probe spacing in y
 }
 
 struct VertexOut
@@ -46,24 +46,30 @@ float4 main(VertexOut input) : SV_TARGET
         float3 shadingPoint = input.WorldPosition;
 
         float3 irradiance = float3(0.0, 0.0, 0.0);
-        for (int p = 0; p < ProbeCount; ++p)
+        float3 irradianceNoCheb = float3(0.0, 0.0, 0.0);
+        for (int p = 0; p < packedData.x; ++p) // For eaach probe
         {
-            float3 dir = shadingPoint - ProbePositionsWS[p].xyz;
+            float3 dir = ProbePositionsWS[p].xyz - shadingPoint;
             float r = length(dir);
 
-            if (r < /* probe spacing */ 1.5)
+            if (r < packedData.y /* Probe spacing */)
             {
                 // This is one of the 8 probes around the shaded point
                 dir = normalize(dir);
                 
                 // Smooth backface
-                float weight = (dot(dir, input.VertexNormalWS) + 1.0) * 0.5;
+                float weight = pow((dot(dir, input.VertexNormalWS) + 1.0) * 0.5, 2.0) + 0.2;
                 
                 // Adjacency
                 // TODO Trilinear interpolation
                 // Weight probe contribution that is nearer to the shaded point higher
 
                 // Visibility
+                float threshold = 0.2;
+                if(weight < threshold)
+                {
+                    weight *= pow(weight, 2.0) / pow(threshold, 2.0);
+                }
                 float2 temp = textureResources[2].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rg;
                 float mean = temp.r;
                 float mean2 = temp.g;
@@ -73,11 +79,13 @@ float4 main(VertexOut input) : SV_TARGET
                     weight *= variance / (variance + pow(r - mean, 2));
                 }
 
-                irradiance += sqrt(textureResources[1].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb) * weight;
+                irradiance += sqrt(textureResources[1].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb * weight);
             }
         }
         
-        finalColor += float4(irradiance, 0.0);
+        finalColor += 0.007 * lerp(float4(irradianceNoCheb, 0.0),
+                            float4(pow(irradiance, 2.0), 0.0),
+                             1.0);
     }
     else
     {

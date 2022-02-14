@@ -8,7 +8,7 @@ cbuffer PerFrameConstants : register(b0)
     float4x4 LightMatrix;
     float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
-    int ProbeCount;
+    float4 packedData; // Stores probe count in x and probe spacing in y
 };
 
 void ClearOutputTextures()
@@ -64,7 +64,7 @@ void RayGen()
     ClearOutputTextures();
     
     // Shoot rays from each probe
-    for (int p = 0; p < ProbeCount; ++p)
+    for (int p = 0; p < packedData.x; ++p)
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {

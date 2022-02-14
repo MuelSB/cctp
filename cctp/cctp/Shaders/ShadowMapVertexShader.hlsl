@@ -20,7 +20,7 @@ cbuffer PerFrameConstants : register(b1)
     float4x4 LightMatrix;
     float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
-    int ProbeCount;
+    float4 packedData; // Stores probe count in x and probe spacing in y
 }
 
 float4 main(VertexIn input) : SV_POSITION

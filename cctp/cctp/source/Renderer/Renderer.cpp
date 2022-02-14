@@ -52,7 +52,7 @@ struct PerFrameConstants
     glm::mat4 LightMatrix = glm::identity<glm::mat4>();
     glm::vec4 ProbePositionsWS[Renderer::MAX_PROBE_COUNT];
     glm::vec4 LightDirectionWS = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    int32_t ProbeCount = 0;
+    glm::vec4 PackedData = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 };
 
 struct PerPassConstants
@@ -1045,7 +1045,7 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(const std::vector<Transform>& probeTransformsWS, const glm::vec3& lightDirectionWS)
+void Renderer::Commands::UpdatePerFrameConstants(const std::vector<Transform>& probeTransformsWS, const glm::vec3& lightDirectionWS, const float probeSpacing)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -1058,8 +1058,9 @@ void Renderer::Commands::UpdatePerFrameConstants(const std::vector<Transform>& p
         ++index;
     }
 
-    // Update probe count
-    perFrameConstants.ProbeCount = static_cast<int32_t>(probeTransformsWS.size());
+    // Update probe count and spacing
+    perFrameConstants.PackedData.x = static_cast<float>(probeTransformsWS.size());
+    perFrameConstants.PackedData.y = probeSpacing;
 
     // Update light direction
     perFrameConstants.LightDirectionWS.x = lightDirectionWS.x;

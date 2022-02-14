@@ -16,6 +16,7 @@ namespace Renderer
 		const auto& GetProbeCountX() const { return ProbeCountX; }
 		const auto& GetProbeCountY() const { return ProbeCountY; }
 		const auto& GetProbeCountZ() const { return ProbeCountZ; }
+		const auto& GetProbeSpacing() const { return ProbeSpacing; }
 
 	private:
 		void UpdateProbePositions();
