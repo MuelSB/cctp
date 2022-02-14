@@ -83,7 +83,7 @@ float4 main(VertexOut input) : SV_TARGET
             }
         }
         
-        finalColor += 0.007 * lerp(float4(irradianceNoCheb, 0.0),
+        finalColor += lerp(float4(irradianceNoCheb, 0.0),
                             float4(pow(irradiance, 2.0), 0.0),
                              1.0);
     }
