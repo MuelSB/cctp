@@ -26,19 +26,18 @@ SamplerState pointSampler : register(s0, space0);
 SamplerState linearSampler : register(s0, space1);
 Texture2D<float4> textureResources[3] : register(t0);
 
-void GetAdjacentProbePositions(in float3 position, out float4 positions[8])
+void GetAdjacentProbeIndices(in float3 position, out uint indices[8])
 {
-    uint adjacentProbePositionIndex = 0;
-    for (uint p = 0; p < packedData.x /* Probe count */; ++p) // For each probe
+    uint currentAdjacentProbeIndex = 0;
+    for (int p = 0; p < packedData.x /* Probe count */; ++p)
     {
         float3 probePosition = ProbePositionsWS[p].xyz;
-        float3 dir = probePosition - position;
-        if (length(dir) < packedData.y /* Probe spacing */)
+        float3 dir = ProbePositionsWS[p].xyz - position;
+        if (length(dir) <= packedData.y /* Probe spacing */)
         {
-            positions[adjacentProbePositionIndex].xyz = probePosition;
-            positions[adjacentProbePositionIndex].w = (float)p;
-            ++adjacentProbePositionIndex;
-            if (adjacentProbePositionIndex == 8)
+            indices[currentAdjacentProbeIndex] = p;
+            ++currentAdjacentProbeIndex;
+            if (currentAdjacentProbeIndex == 8)
                 break;
         }
     }
@@ -50,6 +49,7 @@ float4 main(VertexOut input) : SV_TARGET
     
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
 
+    [branch]
     if (input.Lit)
     {
         // Light and shadow the point
@@ -63,22 +63,23 @@ float4 main(VertexOut input) : SV_TARGET
         // Global illumination
         float3 shadingPoint = input.WorldPosition;
         
-        // Find 8 adjacent probes to the shading point
-        float4 adjacentProbePositions[8];
-        GetAdjacentProbePositions(shadingPoint, adjacentProbePositions);
+        // Get 8 adjacent probes to the shading point
+        uint adjacentProbeIndices[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        GetAdjacentProbeIndices(shadingPoint, adjacentProbeIndices);
 
         // For each adjacent probe around the shading point
         float3 irradiance = float3(0.0, 0.0, 0.0);
         float3 irradianceNoCheb = float3(0.0, 0.0, 0.0);
         for (uint i = 0; i < 8; ++i)
         {
-            float3 dir = adjacentProbePositions[i].xyz - shadingPoint;
+            uint probeIndex = adjacentProbeIndices[i];
+            float3 dir = ProbePositionsWS[i].xyz - shadingPoint;
             float r = length(dir);
             dir *= 1.0 / r;
             
             // Smooth backface
             float weight = pow((dot(dir, input.VertexNormalWS) + 1.0) * 0.5, 2.0) + 0.2;
-                            
+
             // Adjacency
             // TODO Trilinear interpolation
             // Weight probe contribution that is nearer to the shaded point higher
@@ -89,8 +90,8 @@ float4 main(VertexOut input) : SV_TARGET
             {
                 weight *= pow(weight, 2.0) / pow(threshold, 2.0);
             }
-            //float2 temp = textureResources[2].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rg;
-            float2 temp = textureResources[2][GetProbeTextureCoord(dir, (uint)adjacentProbePositions[i].w, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].rg;
+            float2 temp = textureResources[2].SampleLevel(pointSampler, GetProbeTextureCoord(dir, probeIndex, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rg;
+            //float2 temp = textureResources[2][GetProbeTextureCoord(dir, probeIndex, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].rg;
             float mean = temp.r;
             float mean2 = temp.g;
             if (r > mean)
@@ -99,14 +100,15 @@ float4 main(VertexOut input) : SV_TARGET
                 weight *= variance / (variance + pow(r - mean, 2));
             }
             
-            //irradiance += sqrt(textureResources[1].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb * weight);
-            //irradiance += textureResources[1].SampleLevel(linearSampler, GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb;
-            irradiance += textureResources[1][GetProbeTextureCoord(dir, (uint)adjacentProbePositions[i].w, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb;
+            irradiance += sqrt(textureResources[1].SampleLevel(pointSampler, GetProbeTextureCoord(dir, probeIndex, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb * weight);
+            //irradiance += sqrt(textureResources[1][GetProbeTextureCoord(dir, probeIndex, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb * weight);
         }
 
-        //finalColor += lerp(float4(irradianceNoCheb, 0.0),
-        //                   float4(pow(irradiance, 2.0), 0.0),
-        //                   1.0);
+        return float4(irradiance, 1.0);
+
+        finalColor += lerp(float4(irradianceNoCheb, 0.0),
+                           float4(pow(irradiance, 2.0), 0.0),
+                           1.0);
     }
     else
     {

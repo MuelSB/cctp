@@ -23,7 +23,7 @@ struct RayPayload
 // Border size in pixels around each probe's data pack
 #define PROBE_PADDING 4
 
-#define SHADOW_BIAS 0.01
+#define SHADOW_BIAS 0.04
 
 int2 GetProbeTextureCoord(float3 direction, uint probeIndex, float singleProbeSideLength, uint padding)
 {

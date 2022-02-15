@@ -61,7 +61,7 @@ void RayGen()
         0.0
     };
     
-    ClearOutputTextures();
+    //ClearOutputTextures();
     
     // Shoot rays from each probe
     for (int p = 0; p < packedData.x; ++p)
@@ -79,11 +79,11 @@ void RayGen()
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
             // Store irradiance for probe
-            Output[0][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)] = float4(payload.HitIrradiance, 1.0);
+            Output[0][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].xyz = float3(payload.HitIrradiance);
             
             // Store visibility for probe as distance and square distance
             float distance = payload.HitDistance;
-            Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)] = float4(distance, pow(distance, 2.0), 0.0, 1.0);
+            Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].xy = float2(distance, pow(distance, 2.0));
         }
     }
 }
