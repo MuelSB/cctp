@@ -92,6 +92,6 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
         CalculateShadow(mul(LightMatrix, float4(shadingPointWS, 1.0)), SHADOW_BIAS, saturate(dot(lightVectorWS, normalWS)), shadowMap, pointSampler)
     );
     
-    payload.HitIrradiance = Colors[hitInstanceID].xyz * lighting;
+    payload.HitIrradiance = Colors[hitInstanceID].xyz /** lighting*/;
     payload.HitDistance = RayTCurrent();
 }

@@ -65,15 +65,15 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2
 {
     // Cascaded shadow maps can be implemented to reduce swimming at the edges of the map
     // Alternatively, the shadow map can be raytraced with DXR for an accurate shadow map 
-    
-    float2 projectedCoord;
-    projectedCoord.x = lightSpacePosition.x / lightSpacePosition.w / 2.0 + 0.5;
-    projectedCoord.y = -lightSpacePosition.y / lightSpacePosition.w / 2.0 + 0.5;
 
     float currentDepth = lightSpacePosition.z / lightSpacePosition.w;
     
     if (currentDepth > 1.0)
         return 1.0;
+
+    float2 projectedCoord;
+    projectedCoord.x = lightSpacePosition.x / lightSpacePosition.w / 2.0 + 0.5;
+    projectedCoord.y = -lightSpacePosition.y / lightSpacePosition.w / 2.0 + 0.5;
     
     if ((saturate(projectedCoord.x) == projectedCoord.x) && (saturate(projectedCoord.y) == projectedCoord.y))
     {
