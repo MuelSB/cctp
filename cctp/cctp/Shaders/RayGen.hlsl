@@ -61,7 +61,7 @@ void RayGen()
         0.0
     };
     
-    //ClearOutputTextures();
+    ClearOutputTextures();
     
     // Shoot rays from each probe
     for (int p = 0; p < packedData.x; ++p)
@@ -83,7 +83,7 @@ void RayGen()
             
             // Store visibility for probe as distance and square distance
             float distance = payload.HitDistance;
-            Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].xy = float2(distance, pow(distance, 2.0));
+            Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].xy = float2(distance, distance * distance);
         }
     }
 }

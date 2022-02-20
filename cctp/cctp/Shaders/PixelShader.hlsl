@@ -65,12 +65,13 @@ float4 Irradiance(float3 shadingPoint, float3 N)
         // Adjacency
         // TODO Trilinear interpolation
         // Weight probe contribution that is nearer to the shaded point higher
+        weight *= r;
             
         // Visibility
         const float threshold = 0.2;
         if (weight < threshold)
         {
-            weight *= pow(weight, 2.0) / pow(threshold, 2.0);
+            weight *= (weight * weight) / (threshold * threshold);
         }
         float2 temp = textureResources[2].SampleLevel(linearSampler, GetProbeTextureCoord(dir, probeIndex, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rg;
         //float2 temp = textureResources[2][GetProbeTextureCoord(dir, probeIndex, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].rg;
@@ -78,8 +79,8 @@ float4 Irradiance(float3 shadingPoint, float3 N)
         float mean2 = temp.g;
         if (r > mean)
         {
-            float variance = abs(pow(mean, 2) - mean2);
-            weight *= variance / (variance + pow(r - mean, 2));
+            float variance = abs((mean * mean) - mean2);
+            weight *= variance / (variance + ((r - mean) * (r - mean)));
         }
             
         irradiance += sqrt(textureResources[1].SampleLevel(linearSampler, GetProbeTextureCoord(dir, probeIndex, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb * weight);
@@ -87,7 +88,7 @@ float4 Irradiance(float3 shadingPoint, float3 N)
     }
 
     return lerp(float4(irradianceNoCheb, 0.0),
-                float4(pow(irradiance, 2.0), 0.0),
+                float4((irradiance.rgb * irradiance.rgb), 0.0),
                 1.0);
 }
 
@@ -101,11 +102,11 @@ float4 main(VertexOut input) : SV_TARGET
     if (input.Lit)
     {
         // Light and shadow the point
-        finalColor = float4(baseColor.xyz * Lighting(
+        finalColor = float4(baseColor.xyz * saturate(Lighting(
                                                 input.VertexNormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointSampler)),
+                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointSampler))),
                             baseColor.a);
         
         //finalColor += Irradiance(input.WorldPosition, input.VertexNormalWS);

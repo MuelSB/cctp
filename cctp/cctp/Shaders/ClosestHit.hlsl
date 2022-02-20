@@ -36,7 +36,7 @@ StructuredBuffer<Vertex1Pos1UV1Norm> cubeVertices : register(t1);
 // https://stackoverflow.com/questions/983999/simple-3x3-matrix-inverse-code-c
 float3x3 inverse(float3x3 m)
 {
-    // computes the inverse of a matrix m
+    // computes the inverse of matrix m
     float det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
              m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
              m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
@@ -76,10 +76,11 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     // Interpolate normal attribute
     float3x3 normalMatrix = inverse(transpose((float3x3) ObjectToWorld3x4())); // This is necessary as world matrix contains non uniform scaling
                                                                                // Should be done on CPU and uploaded to GPU
+
     float3 normalWS = -(
-        attribs.barycentrics.x * (mul(normalMatrix, v0.Normal.xyz)) +
-        attribs.barycentrics.y * (mul(normalMatrix, v1.Normal.xyz)) +
-        attribs.barycentrics.g * (mul(normalMatrix, v2.Normal.xyz))
+        attribs.barycentrics.x * mul(normalMatrix, v0.Normal.xyz) +
+        attribs.barycentrics.y * mul(normalMatrix, v1.Normal.xyz) +
+        attribs.barycentrics.g * mul(normalMatrix, v2.Normal.xyz)
     );
 
     float3 lightVectorWS = -normalize(LightDirectionWS.xyz);

@@ -525,9 +525,9 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		raytracingPipelineStateObjectProperties->GetShaderIdentifier(rayGenExportName),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	*(uint64_t*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = 
-		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr - 8); // Moving pointer back to start of the descriptor which is 8 bytes
-																																		  // This is a Pointer to the start of a descriptor range (UAV x 2) 
+		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(Renderer::RAYTRACE_IRRADIANCE_UAV_DESCRIPTOR_INDEX).ptr - 8); // This is a Pointer to the start of a descriptor range (UAV x 2) 
 																																		  // in a descriptor table
+																																		  
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8) = Renderer::GetPerFrameConstantBufferGPUVirtualAddress();
 
 	// Shader record 1: Miss
@@ -548,7 +548,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	*(D3D12_GPU_VIRTUAL_ADDRESS*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8 + 8) =
 		Renderer::GetPerPassConstantBufferGPUVirtualAddress();
 	*(uint64_t*)(pShaderTableStart + rayGenShaderRecordSize + (missShaderRecordSize + 32) + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + 8 + 8 + 8) =
-		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(Renderer::SHADOW_MAP_SRV_DESCRIPTOR_INDEX).ptr - 8);
+		(Renderer::GetShaderVisibleDescriptorHeap()->GetGPUDescriptorHandle(Renderer::SHADOW_MAP_SRV_DESCRIPTOR_INDEX).ptr);
 
 	// Begin demo scene
 	demoScene->Begin();
@@ -763,11 +763,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Raytrace output texture view
-		static bool showIrradianceRaytraceOutput = false;
+		static bool showIrradianceRaytraceOutput = true;
 		if (showIrradianceRaytraceOutput)
 		{
 			ImGui::Begin("Irradiance probe texture", &showIrradianceRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-			static float zoom = 1.0f;
+			static float zoom = 10.0f;
 			ImGui::DragFloat("Zoom", &zoom);
 			if (zoom < 1.0f) zoom = 1.0f;
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
@@ -776,11 +776,11 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::End();
 		}
 
-		static bool showVisibilityRaytraceOutput = false;
+		static bool showVisibilityRaytraceOutput = true;
 		if (showVisibilityRaytraceOutput)
 		{
 			ImGui::Begin("Visibility probe texture", &showVisibilityRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-			static float zoom = 1.0f;
+			static float zoom = 7.0f;
 			ImGui::DragFloat("Zoom", &zoom);
 			if (zoom < 1.0f) zoom = 1.0f;
 			ImGui::Image((void*)Renderer::GetShaderVisibleDescriptorHeap()->
