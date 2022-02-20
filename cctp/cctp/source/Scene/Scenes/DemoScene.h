@@ -30,6 +30,8 @@ public:
 	static constexpr glm::vec3 SceneRightVector = glm::vec3(1.0f, 0.0f, 0.0f);
 	static constexpr glm::vec3 SceneUpVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
+	glm::vec3 ProbePositionWS = glm::vec3(0.0f, 0.0f, 0.0f);
+
 private:
 	void OnInputEvent(InputEvent&& event);
 	void PollInputs(float deltaTime);

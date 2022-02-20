@@ -108,7 +108,7 @@ float4 main(VertexOut input) : SV_TARGET
                                                 CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointSampler)),
                             baseColor.a);
         
-        finalColor += Irradiance(input.WorldPosition, input.VertexNormalWS);
+        //finalColor += Irradiance(input.WorldPosition, input.VertexNormalWS);
     }
     else
     {
