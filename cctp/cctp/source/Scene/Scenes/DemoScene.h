@@ -20,6 +20,7 @@ public:
 	glm::vec3& GetProbeVolumePositionWS() { return ProbeVolume.GetVolumePosition(); }
 	Renderer::ProbeVolume& GetProbeVolume() { return ProbeVolume; }
 	glm::vec3& GetLightDirectionWS() { return LightDirectionWS; }
+	float& GetLightIntensity() { return LightIntensity; }
 	const Renderer::Material* GetMaterialsPtr() const { return MeshMaterials.data(); }
 	size_t GetMaterialCount() const { return MeshMaterials.size(); }
 	void SetDrawProbes(const bool draw) { DrawProbes = draw; }
@@ -63,6 +64,7 @@ private:
 	std::vector<Renderer::Material> MeshMaterials;
 
 	glm::vec3 LightDirectionWS = glm::vec3(-0.1f, -0.3f, 1.0f);
+	float LightIntensity = 1.0f;
 
 	bool DrawProbes = true;
 };

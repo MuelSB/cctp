@@ -13,7 +13,7 @@ cbuffer PerFrameConstants : register(b1)
     float4x4 LightMatrix;
     float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
-    float4 packedData; // Stores probe count in x and probe spacing in y
+    float4 packedData; // Stores probe count (x), probe spacing (y), light intensity (z)
 }
 
 cbuffer PerPassConstants : register(b2)

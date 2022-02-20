@@ -42,7 +42,7 @@ int2 GetProbeTextureCoord(float3 direction, uint probeIndex, float singleProbeSi
     return probeTopLeftPosition + normalizedOctCoordTextureDimensions;
 }
 
-float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow)
+float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow, float lightIntensity)
 {
     // Ambient
     const float3 ambient = float3(0.0, 0.0, 0.0);
@@ -58,7 +58,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return shadow * ((diffuse + specular) + ambient);
+    return shadow * (((diffuse + specular) + ambient) * lightIntensity);
 }
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2D shadowMap, SamplerState shadowMapSampler)
@@ -96,8 +96,10 @@ float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2
         }
         return shadow / 9.0;
     }
-    
-    return 1.0;
+    else
+    {
+        return 1.0;
+    }
 }
 
 #endif // COMMON_INCLUDE

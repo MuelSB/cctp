@@ -6,7 +6,7 @@ cbuffer PerFrameConstants : register(b0)
     float4x4 LightMatrix;
     float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
-    float4 packedData; // Stores probe count in x and probe spacing in y
+    float4 packedData; // Stores probe count (x), probe spacing (y), light intensity (z)
 }
 
 struct VertexOut
@@ -106,7 +106,8 @@ float4 main(VertexOut input) : SV_TARGET
                                                 input.VertexNormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointSampler))),
+                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.VertexNormalWS)), textureResources[0], pointSampler),
+                                                packedData.z)),
                             baseColor.a);
         
         //finalColor += Irradiance(input.WorldPosition, input.VertexNormalWS);

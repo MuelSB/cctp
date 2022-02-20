@@ -19,7 +19,7 @@ cbuffer PerFrameConstants : register(b1)
     float4x4 LightMatrix;
     float4 ProbePositionsWS[MAX_PROBE_COUNT];
     float4 LightDirectionWS;
-    float4 packedData; // Stores probe count in x and probe spacing in y
+    float4 packedData; // Stores probe count (x), probe spacing (y), light intensity (z)
 }
 
 cbuffer PerPassConstants : register(b2)
@@ -90,7 +90,8 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
         normalWS,
         lightVectorWS,
         cameraVectorWS,
-        CalculateShadow(mul(LightMatrix, float4(shadingPointWS, 1.0)), SHADOW_BIAS, saturate(dot(lightVectorWS, normalWS)), shadowMap, pointSampler)
+        CalculateShadow(mul(LightMatrix, float4(shadingPointWS, 1.0)), SHADOW_BIAS, saturate(dot(lightVectorWS, normalWS)), shadowMap, pointSampler),
+        packedData.z
     );
     
     payload.HitIrradiance = Colors[hitInstanceID].xyz * lighting;

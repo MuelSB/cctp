@@ -588,7 +588,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Update per frame constants
 		static auto& probeVolume = demoScene->GetProbeVolume();
 		static const auto& lightDirection = demoScene->GetLightDirectionWS();
-		Renderer::Commands::UpdatePerFrameConstants(/*probeVolume.GetProbeTransforms()*/demoScene->ProbePositionWS, lightDirection, demoScene->GetProbeVolume().GetProbeSpacing());
+		Renderer::Commands::UpdatePerFrameConstants(/*probeVolume.GetProbeTransforms()*/demoScene->ProbePositionWS, lightDirection, demoScene->GetLightIntensity(), demoScene->GetProbeVolume().GetProbeSpacing());
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//// Render shadow map pass
@@ -812,6 +812,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::Text("Light");
 			ImGui::Separator();
 			ImGui::DragFloat3("Light direction", &demoScene->GetLightDirectionWS().x, 0.01f, -1.0f, 1.0f);
+			ImGui::DragFloat("Light intensity", &demoScene->GetLightIntensity(), 0.01f, 0.01f, 10.0f);
 			ImGui::Separator();
 
 			ImGui::Text("Debug");

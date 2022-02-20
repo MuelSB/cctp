@@ -52,7 +52,7 @@ struct PerFrameConstants
     glm::mat4 LightMatrix = glm::identity<glm::mat4>();
     glm::vec4 ProbePositionsWS[Renderer::MAX_PROBE_COUNT];
     glm::vec4 LightDirectionWS = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    glm::vec4 PackedData = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Stores probe count in x and probe spacing in y
+    glm::vec4 PackedData = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f); // Stores probe count (x), probe spacing (y), light intensity (z)
 };
 
 struct PerPassConstants
@@ -1045,7 +1045,7 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(/*const std::vector<Transform>& probeTransformsWS*/const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS, const float probeSpacing)
+void Renderer::Commands::UpdatePerFrameConstants(/*const std::vector<Transform>& probeTransformsWS*/const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS, const float lightIntensity, const float probeSpacing)
 {
     PerFrameConstants perFrameConstants = {};
 
@@ -1060,10 +1060,11 @@ void Renderer::Commands::UpdatePerFrameConstants(/*const std::vector<Transform>&
 
     perFrameConstants.ProbePositionsWS[0] = glm::vec4(probePositionWS.x, probePositionWS.y, probePositionWS.z, 1.0f); // For 1 probe
 
-    // Update probe count and spacing
+    // Update probe count, spacing and light intensity
     //perFrameConstants.PackedData.x = static_cast<float>(probeTransformsWS.size());
     perFrameConstants.PackedData.x = 1.0f; // For 1 probe
     perFrameConstants.PackedData.y = probeSpacing;
+    perFrameConstants.PackedData.z = lightIntensity;
 
     // Update light direction
     perFrameConstants.LightDirectionWS.x = lightDirectionWS.x;

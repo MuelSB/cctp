@@ -87,7 +87,7 @@ namespace Renderer
 		void SetViewport(SwapChain* pSwapChain);
 		void SetViewport(const D3D12_VIEWPORT& viewport, const D3D12_RECT& scissorRect);
 		void SetGraphicsPipeline(GraphicsPipelineBase* pPipeline);
-		void UpdatePerFrameConstants(/*const std::vector<Transform>& probeTransformsWS*/const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS, const float probeSpacing);
+		void UpdatePerFrameConstants(/*const std::vector<Transform>& probeTransformsWS*/const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS, const float lightIntensity, const float probeSpacing);
 		void UpdatePerPassConstants(const uint32_t passIndex, const glm::vec2& viewportDims, const Camera& camera);
 		void UpdateMaterialConstants(const Renderer::Material* pMaterials, const uint32_t materialCount);
 		void SubmitMesh(UINT perObjectConstantsParameterIndex, const Mesh& mesh, const Transform& transform, const glm::vec4& color, const bool lit);
