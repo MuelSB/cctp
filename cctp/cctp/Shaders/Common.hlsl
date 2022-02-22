@@ -15,7 +15,7 @@ struct RayPayload
 // The number of probes in the probe field
 #define MAX_PROBE_COUNT 350
 // The number of rays traced from a probe. McGuire uses up to 256 rays
-#define PROBE_RAY_COUNT 64
+#define PROBE_RAY_COUNT 128
 // The amount of texels in a square side to use to store a probes irradiance data in
 #define IRRADIANCE_PROBE_SIDE_LENGTH 8 
 // The amount of texels in a square side to use to store a probes visibility data in
@@ -58,10 +58,10 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return saturate(shadow * (((diffuse + specular) + ambient) * lightIntensity));
+    return saturate((shadow * ((diffuse + specular) * lightIntensity)) + ambient);
 }
 
-float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2D shadowMap, SamplerState shadowMapSampler)
+float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2D<float> shadowMap, SamplerState shadowMapSampler)
 {
     // Cascaded shadow maps can be implemented to reduce swimming at the edges of the map
     // Alternatively, the shadow map can be raytraced with DXR for an accurate shadow map 

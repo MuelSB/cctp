@@ -1,7 +1,8 @@
 #include "Common.hlsl"
 
 RaytracingAccelerationStructure SceneBVH : register(t0);
-RWTexture2D<float4> Output[2] : register(u0);
+RWTexture2D<float3> irradianceOutput : register(u0);
+RWTexture2D<float> visibilityOutput : register(u1);
 
 cbuffer PerFrameConstants : register(b0)
 {
@@ -10,32 +11,6 @@ cbuffer PerFrameConstants : register(b0)
     float4 LightDirectionWS;
     float4 packedData; // Stores probe count (x), probe spacing (y), light intensity (z)
 };
-
-void ClearOutputTextures()
-{
-    uint width;
-    uint height;
-    Output[0].GetDimensions(width, height);
-    
-    // Irradiance texture RGB
-    for (uint x0 = 0; x0 < width; ++x0)
-    {
-        for (uint y0 = 0; y0 < height; ++y0)
-        {
-            Output[0][uint2(x0, y0)] = float4(0.0f, 0.0f, 0.0f, 1.0f);
-        }
-    }
-    
-    Output[1].GetDimensions(width, height);
-    for (uint x1 = 0; x1 < width; ++x1)
-    // Visibility texture RG
-    {
-        for (uint y1 = 0; y1 < height; ++y1)
-        {
-            Output[1][uint2(x1, y1)] = float4(0.0f, 0.0f, 0.0f, 1.0f);
-        }
-    }
-}
 
 // Majercik et al. https://jcgt.org/published/0008/02/01/
 float3 SphericalFibonacci(float i, float n)
@@ -61,8 +36,6 @@ void RayGen()
         0.0
     };
     
-    ClearOutputTextures();
-    
     // Shoot rays from each probe
     for (int p = 0; p < packedData.x; ++p)
     {
@@ -79,11 +52,11 @@ void RayGen()
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
             // Store irradiance for probe
-            Output[0][GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].xyz = float3(payload.HitIrradiance);
+            irradianceOutput[GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb = payload.HitIrradiance;
             
             // Store visibility for probe as distance and square distance
             float distance = payload.HitDistance;
-            Output[1][GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].xy = float2(distance, distance * distance);
+            visibilityOutput[GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r = distance;
         }
     }
 }

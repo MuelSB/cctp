@@ -219,7 +219,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
 
-	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16_FLOAT,
+	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
 		static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y));
 	raytraceOutput2TextureResourceDesc.MipLevels = 1;
 	raytraceOutput2TextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -390,7 +390,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Create ray gen shader local root signature
 	RootSignature rayGenRootSignature;
 
-	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[2];
+	D3D12_DESCRIPTOR_RANGE rayGenDescriptorRanges[3];
 
 	rayGenDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	rayGenDescriptorRanges[0].NumDescriptors = 1;
@@ -399,10 +399,16 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	rayGenDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	rayGenDescriptorRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-	rayGenDescriptorRanges[1].NumDescriptors = 2;
+	rayGenDescriptorRanges[1].NumDescriptors = 1;
 	rayGenDescriptorRanges[1].BaseShaderRegister = 0;
 	rayGenDescriptorRanges[1].RegisterSpace = 0;
 	rayGenDescriptorRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	rayGenDescriptorRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+	rayGenDescriptorRanges[2].NumDescriptors = 1;
+	rayGenDescriptorRanges[2].BaseShaderRegister = 1;
+	rayGenDescriptorRanges[2].RegisterSpace = 0;
+	rayGenDescriptorRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	rayGenRootSignature.AddRootDescriptorTableParameter(rayGenDescriptorRanges, _countof(rayGenDescriptorRanges), D3D12_SHADER_VISIBILITY_ALL);
 	rayGenRootSignature.AddRootDescriptorParameter(D3D12_ROOT_PARAMETER_TYPE_CBV, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
@@ -675,7 +681,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// Render scene color and depth pass applying lighting and shadow
+		// Render scene color and depth pass applying direct lighting and diffuse GI
 		++passIndex;
 
 		// Update per pass constants

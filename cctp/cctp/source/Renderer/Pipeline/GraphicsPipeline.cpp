@@ -52,12 +52,27 @@ bool Renderer::GraphicsPipeline::Init(ID3D12Device* pDevice, DXGI_FORMAT renderT
     perFrameConstantBufferDescriptorPixelDesc.ShaderRegister = 0;
     perFrameConstantBufferDescriptorPixelDesc.RegisterSpace = 0;
 
-    D3D12_DESCRIPTOR_RANGE tableRanges[1];
+    D3D12_DESCRIPTOR_RANGE tableRanges[3];
+    // Shadow map
     tableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     tableRanges[0].BaseShaderRegister = 0;
     tableRanges[0].RegisterSpace = 0;
-    tableRanges[0].NumDescriptors = 3;
+    tableRanges[0].NumDescriptors = 1;
     tableRanges[0].OffsetInDescriptorsFromTableStart = 0;
+
+    // Irradiance 
+    tableRanges[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    tableRanges[1].BaseShaderRegister = 1;
+    tableRanges[1].RegisterSpace = 0;
+    tableRanges[1].NumDescriptors = 1;
+    tableRanges[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    // Visibility
+    tableRanges[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    tableRanges[2].BaseShaderRegister = 2;
+    tableRanges[2].RegisterSpace = 0;
+    tableRanges[2].NumDescriptors = 1;
+    tableRanges[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
     D3D12_ROOT_DESCRIPTOR_TABLE dTable = {};
     dTable.NumDescriptorRanges = _countof(tableRanges);

@@ -30,7 +30,7 @@ cbuffer PerPassConstants : register(b2)
 }
 
 SamplerState pointSampler : register(s0);
-Texture2D<float4> shadowMap : register(t0);
+Texture2D<float> shadowMap : register(t0);
 StructuredBuffer<Vertex1Pos1UV1Norm> cubeVertices : register(t1);
 
 // https://stackoverflow.com/questions/983999/simple-3x3-matrix-inverse-code-c
@@ -94,6 +94,9 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
         packedData.z
     );
     
-    payload.HitIrradiance = Colors[hitInstanceID].xyz * lighting; // TODO Sample probe field
+    // Add an ambient term to avoid completely black diffuse GI
+    float3 ambient = float3(0.0, 0.0, 0.0);
+
+    payload.HitIrradiance = saturate((Colors[hitInstanceID].xyz * lighting) + ambient); // TODO Sample probe field
     payload.HitDistance = RayTCurrent();
 }
