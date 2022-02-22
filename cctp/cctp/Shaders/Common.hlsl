@@ -58,7 +58,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return shadow * (((diffuse + specular) + ambient) * lightIntensity);
+    return saturate(shadow * (((diffuse + specular) + ambient) * lightIntensity));
 }
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2D shadowMap, SamplerState shadowMapSampler)

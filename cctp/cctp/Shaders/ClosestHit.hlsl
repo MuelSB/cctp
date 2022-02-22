@@ -94,6 +94,6 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
         packedData.z
     );
     
-    payload.HitIrradiance = Colors[hitInstanceID].xyz * lighting;
+    payload.HitIrradiance = Colors[hitInstanceID].xyz * lighting; // TODO Sample probe field
     payload.HitDistance = RayTCurrent();
 }
