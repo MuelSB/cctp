@@ -1045,24 +1045,21 @@ void Renderer::Commands::SetGraphicsPipeline(GraphicsPipelineBase* pPipeline)
     DirectCommandList->SetGraphicsRootSignature(pPipeline->GetRootSignature());
 }
 
-void Renderer::Commands::UpdatePerFrameConstants(/*const std::vector<Transform>& probeTransformsWS*/const glm::vec3& probePositionWS, const glm::vec3& lightDirectionWS, const float lightIntensity, const float probeSpacing)
+void Renderer::Commands::UpdatePerFrameConstants(const std::vector<Transform>& probeTransformsWS, const glm::vec3& lightDirectionWS, const float lightIntensity, const float probeSpacing)
 {
     PerFrameConstants perFrameConstants = {};
 
     // Update probe position
-    //assert(probeTransformsWS.size() <= Renderer::MAX_PROBE_COUNT && "Attempting to use more probes than the max probe count.");
-    //size_t index = 0;
-    //for (const auto& transform : probeTransformsWS)
-    //{
-    //    perFrameConstants.ProbePositionsWS[index] = glm::vec4(transform.Position.x, transform.Position.y, transform.Position.z, 1.0f);
-    //    ++index;
-    //}
-
-    perFrameConstants.ProbePositionsWS[0] = glm::vec4(probePositionWS.x, probePositionWS.y, probePositionWS.z, 1.0f); // For 1 probe
+    assert(probeTransformsWS.size() <= Renderer::MAX_PROBE_COUNT && "Attempting to use more probes than the max probe count.");
+    size_t index = 0;
+    for (const auto& transform : probeTransformsWS)
+    {
+        perFrameConstants.ProbePositionsWS[index] = glm::vec4(transform.Position.x, transform.Position.y, transform.Position.z, 1.0f);
+        ++index;
+    }
 
     // Update probe count, spacing and light intensity
-    //perFrameConstants.PackedData.x = static_cast<float>(probeTransformsWS.size());
-    perFrameConstants.PackedData.x = 1.0f; // For 1 probe
+    perFrameConstants.PackedData.x = static_cast<float>(probeTransformsWS.size());
     perFrameConstants.PackedData.y = probeSpacing;
     perFrameConstants.PackedData.z = lightIntensity;
 

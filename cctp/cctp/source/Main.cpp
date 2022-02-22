@@ -594,7 +594,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		// Update per frame constants
 		static auto& probeVolume = demoScene->GetProbeVolume();
 		static const auto& lightDirection = demoScene->GetLightDirectionWS();
-		Renderer::Commands::UpdatePerFrameConstants(/*probeVolume.GetProbeTransforms()*/demoScene->ProbePositionWS, lightDirection, demoScene->GetLightIntensity(), demoScene->GetProbeVolume().GetProbeSpacing());
+		Renderer::Commands::UpdatePerFrameConstants(probeVolume.GetProbeTransforms(), lightDirection, demoScene->GetLightIntensity(), demoScene->GetProbeVolume().GetProbeSpacing());
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//// Render shadow map pass
@@ -826,8 +826,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::Checkbox("Show irradiance probe texture", &showIrradianceRaytraceOutput);
 			ImGui::Checkbox("Show visibility probe texture", &showVisibilityRaytraceOutput);
 			ImGui::Checkbox("Visualize probe volume", &visualizeProbeVolume);
-			ImGui::DragFloat3("Probe position", &demoScene->ProbePositionWS.x, 0.1f);
-			//ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
+			ImGui::DragFloat3("Probe volume position", &demoScene->GetProbeVolumePositionWS().x, 0.1f);
 			probeVolume.Update();
 			ImGui::Separator();
 

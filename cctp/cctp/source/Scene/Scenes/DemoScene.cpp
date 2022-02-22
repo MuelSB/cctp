@@ -142,17 +142,11 @@ void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)
 	// Probe debug spheres
 	if (DrawProbes)
 	{
-		// For 1 probe
-		Transform probeTransform = {};
-		probeTransform.Position = ProbePositionWS;
-		probeTransform.Scale = glm::vec3(0.05f);
-		Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[1].get(), probeTransform, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
-
-		//const auto& probeTransforms = ProbeVolume.GetProbeTransforms();
-		//for (const auto& transform : probeTransforms)
-		//{
-		//	Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[1].get(), transform, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
-		//}
+		const auto& probeTransforms = ProbeVolume.GetProbeTransforms();
+		for (const auto& transform : probeTransforms)
+		{
+			Renderer::Commands::SubmitMesh(perObjectConstantsRootParamIndex, *Meshes[1].get(), transform, glm::vec4(0.1f, 0.9f, 0.9f, 1.0f), false);
+		}
 	}
 }
 

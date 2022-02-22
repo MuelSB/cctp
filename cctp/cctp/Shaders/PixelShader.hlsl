@@ -28,7 +28,7 @@ Texture2D<float> shadowMap : register(t0);
 Texture2D<float3> irradianceData : register(t1);
 Texture2D<float> visibilityData : register(t2);
 
-void GetAdjacentProbeIndices(in float3 position, out uint indices[8])
+void GetAdjacentProbeIndices(in float3 position, out uint indexCount, out uint indices[8])
 {
     uint currentAdjacentProbeIndex = 0;
     for (int p = 0; p < packedData.x /* Probe count */; ++p)
@@ -39,41 +39,48 @@ void GetAdjacentProbeIndices(in float3 position, out uint indices[8])
         {
             indices[currentAdjacentProbeIndex] = p;
             ++currentAdjacentProbeIndex;
+            ++indexCount;
             if (currentAdjacentProbeIndex == 8)
                 break;
         }
     }
 }
 
-float4 Irradiance(float3 shadingPoint, float3 N)
+float3 Irradiance(float3 shadingPoint)
 {
     // Get 8 adjacent probes to the shading point
     uint adjacentProbeIndices[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    GetAdjacentProbeIndices(shadingPoint, adjacentProbeIndices);
+    uint availableIndices = 0;
+    GetAdjacentProbeIndices(shadingPoint, availableIndices, adjacentProbeIndices);
 
+    // Calculate total irradiance from 8 adjacent probes
     // For each adjacent probe around the shading point
-    return float4(0.0, 0.0, 0.0, 0.0);
+    float3 irradiance = float3(0.0, 0.0, 0.0);
+    for (uint i = 0; i < 8 && i < availableIndices; ++i)
+    {
+        uint probeIndex = adjacentProbeIndices[i];
+        float3 probePosition = ProbePositionsWS[probeIndex];
+        float3 pointToProbe = probePosition - shadingPoint; // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
+        float3 direction = normalize(pointToProbe);
+
+        float3 probeIrradiance = irradianceData[GetProbeTextureCoord(direction, probeIndex, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb;
+
+        float mask = packedData.y - pow(length(pointToProbe), 0.4f);
+        irradiance += saturate(mask);
+    }
+
+    return saturate(irradiance);
 }
 
 float4 main(VertexOut input) : SV_TARGET
 {    
     const float4 baseColor = input.BaseColor;
+
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
 
     [branch]
     if (input.Lit)
     {
-        // Debug
-
-        float3 shadingPoint = input.WorldPosition;
-        float3 probePosition = ProbePositionsWS[0];
-        float3 pointToProbe = probePosition - shadingPoint; // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
-        float3 direction = normalize(pointToProbe);
-        float3 irradiance = irradianceData[GetProbeTextureCoord(direction, 0, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb;
-        //float visibility = textureResources[2][GetProbeTextureCoord(direction, 0, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r;
-    
-        ////////
-
         // Light and shadow the point
         finalColor = float4(baseColor.xyz * saturate(Lighting(
                                                 input.VertexNormalWS,
@@ -84,8 +91,7 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
         
         // Diffuse global illumination
-        float mask = packedData.y - pow(length(pointToProbe), 0.4f);
-        finalColor.rgb = saturate(finalColor.rgb + irradiance * mask);
+        finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition));
     }
     else
     {

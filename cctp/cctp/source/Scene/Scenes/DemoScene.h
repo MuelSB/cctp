@@ -31,8 +31,6 @@ public:
 	static constexpr glm::vec3 SceneRightVector = glm::vec3(1.0f, 0.0f, 0.0f);
 	static constexpr glm::vec3 SceneUpVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	glm::vec3 ProbePositionWS = glm::vec3(0.0f, 0.0f, 0.0f);
-
 private:
 	void OnInputEvent(InputEvent&& event);
 	void PollInputs(float deltaTime);
@@ -46,13 +44,8 @@ private:
 	static constexpr float CameraFlySpeed = 0.0075f;
 	static constexpr glm::vec3 CameraStartPosition = glm::vec3(0.0f, 2.0f, -10.0f);
 	static constexpr glm::vec3 ProbeVolumeStartPosition = glm::vec3(0.25f, 2.0f, 0.45f);
-
-	//static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(7.0f, 7.0f, 7.0f);
-	//static constexpr float ProbeVolumeProbeSpacing = 1.0f;	
-
-	static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(8.0f, 8.0f, 8.0f); // Reduces the number of probes for performance
-	static constexpr float ProbeVolumeProbeSpacing = 1.5f;
-
+	static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(1.0f, 1.0f, 1.0f);
+	static constexpr float ProbeVolumeProbeSpacing = 1.0f;
 	static constexpr float ProbeVolumeDebugProbeScale = 0.05f;
 
 	Renderer::ProbeVolume ProbeVolume;
