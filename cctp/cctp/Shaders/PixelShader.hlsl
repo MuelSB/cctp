@@ -39,15 +39,18 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
         float3 pointToProbe = probePosition - shadingPoint; 
         float3 probeToPoint = shadingPoint - probePosition;
-        float3 direction = normalize(pointToProbe);
-
+        float3 direction = pointToProbe;
+        
         // Sample irradiance from this probe
-        int2 texelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        int2 irradianceTexelIndex = GetProbeTexelCoordinate(normalize(direction), i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        int2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
-        //float3 probeIrradiance = irradianceData.SampleLevel(linearSampler, texelIndex, 0).rgb;
-        float3 probeIrradiance = irradianceData[texelIndex].rgb;
+        float3 probeIrradiance = float3(0.0, 0.0, 0.0);
 
-        irradiance += probeIrradiance * 0.25;
+        //probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex, 0).rgb;
+        probeIrradiance = irradianceData[irradianceTexelIndex] * visibilityData[visibilityTexelIndex];
+        
+        irradiance += probeIrradiance;
     }
 
     return saturate(irradiance);
