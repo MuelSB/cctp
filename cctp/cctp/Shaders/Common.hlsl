@@ -12,7 +12,7 @@ struct RayPayload
     float HitDistance;
 };
 
-// The number of probes in the probe field
+// The max number of probes in the probe field
 #define MAX_PROBE_COUNT 350
 // The number of rays traced from a probe. McGuire uses up to 256 rays
 #define PROBE_RAY_COUNT 128

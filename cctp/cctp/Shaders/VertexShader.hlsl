@@ -36,7 +36,7 @@ struct VertexOut
     float2 TextureCoordinate : TEXTURE_COORDINATE;
     float4 BaseColor : BASE_COLOR;
     float3 CameraVectorWS : CAMERA_VECTOR_WS;
-    float3 VertexNormalWS : NORMAL_WS;
+    float3 NormalWS : NORMAL_WS;
     float3 LightVectorWS : LIGHT_VECTOR_WS;
     uint Lit : Lit;
     float4 LightSpacePosition : POSITION_LS;
@@ -51,7 +51,7 @@ VertexOut main(VertexIn input)
     VertexOut output;
     output.ProjectionSpacePosition = mul(ProjectionMatrix, viewSpacePosition);
     output.TextureCoordinate = input.UV;
-    output.VertexNormalWS = normalize(mul(NormalMatrix, float4(input.VertexNormal, 0.0f)).xyz);
+    output.NormalWS = normalize(mul(NormalMatrix, float4(input.VertexNormal, 0.0f)).xyz);
     output.LightVectorWS = -normalize(LightDirectionWS.xyz);
     output.CameraVectorWS = normalize(CameraPositionWS.xyz - worldSpacePosition.xyz);
     output.BaseColor = Color;

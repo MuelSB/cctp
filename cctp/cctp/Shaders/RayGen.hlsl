@@ -29,15 +29,9 @@ float3 SphericalFibonacci(float i, float n)
 
 [shader("raygeneration")]
 void RayGen()
-{
-    RayPayload payload =
-    {
-        float3(0.0, 0.0, 0.0),
-        0.0
-    };
-    
+{    
     // Shoot rays from each probe
-    for (int p = 0; p < packedData.x; ++p)
+    for (int p = 0; p < (int)packedData.x; ++p)
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
@@ -47,13 +41,18 @@ void RayGen()
             ray.Origin = ProbePositionsWS[p].xyz;
             ray.Direction = dir;
             ray.TMin = 0.0;
-            ray.TMax = 1e38f;
+            ray.TMax = packedData.y;
 
+            RayPayload payload =
+            {
+                float3(0.0, 0.0, 0.0),
+                0.0
+            };
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
             // Store irradiance for probe
             irradianceOutput[GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb = payload.HitIrradiance;
-            
+
             // Store visibility for probe as distance and square distance
             float distance = payload.HitDistance;
             visibilityOutput[GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r = distance;
