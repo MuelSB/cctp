@@ -25,7 +25,7 @@ struct RayPayload
 
 #define SHADOW_BIAS 0.04
 
-int2 GetProbeTextureCoord(float3 direction, uint probeIndex, float singleProbeSideLength, uint padding)
+int2 GetProbeTexelCoordinate(float3 direction, uint probeIndex, float singleProbeSideLength, uint padding)
 {
     // Encode the direction to oct texture coordinate in [0, 1] range
     float2 normalizedOctCoordZeroOne = (OctEncode(direction) + 1.0) * 0.5;

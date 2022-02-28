@@ -51,11 +51,11 @@ void RayGen()
             TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, ray, payload);
             
             // Store irradiance for probe
-            irradianceOutput[GetProbeTextureCoord(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb = payload.HitIrradiance;
+            irradianceOutput[GetProbeTexelCoordinate(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb = payload.HitIrradiance;
 
             // Store visibility for probe as distance and square distance
             float distance = payload.HitDistance;
-            visibilityOutput[GetProbeTextureCoord(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r = distance;
+            visibilityOutput[GetProbeTexelCoordinate(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r = distance;
         }
     }
 }

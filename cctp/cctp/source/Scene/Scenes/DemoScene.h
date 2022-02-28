@@ -43,9 +43,9 @@ private:
 	static constexpr float CameraPitchMax = 90.0f;
 	static constexpr float CameraFlySpeed = 0.0075f;
 	static constexpr glm::vec3 CameraStartPosition = glm::vec3(0.0f, 2.0f, -10.0f);
-	static constexpr glm::vec3 ProbeVolumeStartPosition = glm::vec3(0.05f, 1.8f, 0.45f);
-	static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(2.1f, 2.1f, 2.1f);
-	static constexpr float ProbeVolumeProbeSpacing = 1.0f;
+	static constexpr glm::vec3 ProbeVolumeStartPosition = glm::vec3(0.425f, 2.125f, 0.6f);
+	static constexpr glm::vec3 ProbeVolumeExtents = glm::vec3(7.1f, 7.1f, 6.1f);
+	static constexpr float ProbeVolumeProbeSpacing = 0.9f;
 	static constexpr float ProbeVolumeDebugProbeScale = 0.05f;
 
 	Renderer::ProbeVolume ProbeVolume;

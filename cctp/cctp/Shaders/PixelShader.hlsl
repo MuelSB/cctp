@@ -41,17 +41,13 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probeToPoint = shadingPoint - probePosition;
         float3 direction = normalize(pointToProbe);
 
-        // Check if the probe is within a grid spacing amount from the shading point
-        //if (length(pointToProbe) <= packedData.y)
-        {
-            // Sample irradiance from this probe
-            //float3 probeIrradiance = irradianceData.SampleLevel(linearSampler, GetProbeTextureCoord(direction, 0, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING), 0).rgb;
-            float3 probeIrradiance = irradianceData[GetProbeTextureCoord(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb;
+        // Sample irradiance from this probe
+        int2 texelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
-            //float mask = packedData.y - pow(length(pointToProbe), 0.4f);
+        //float3 probeIrradiance = irradianceData.SampleLevel(linearSampler, texelIndex, 0).rgb;
+        float3 probeIrradiance = irradianceData[texelIndex].rgb;
 
-            irradiance += probeIrradiance;
-        }
+        irradiance += probeIrradiance * 0.25;
     }
 
     return saturate(irradiance);
@@ -76,8 +72,8 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        //finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS));
-        finalColor.rgb = saturate(Irradiance(input.WorldPosition, input.NormalWS));
+        finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS));
+        //finalColor.rgb = saturate(Irradiance(input.WorldPosition, input.NormalWS));
     }
     else
     {
