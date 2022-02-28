@@ -39,7 +39,7 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
         float3 pointToProbe = probePosition - shadingPoint; 
         float3 probeToPoint = shadingPoint - probePosition;
-        float3 direction = pointToProbe;
+        float3 direction = normalize(pointToProbe);
         
         // Sample irradiance from this probe
         int2 irradianceTexelIndex = GetProbeTexelCoordinate(normalize(direction), i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
@@ -50,7 +50,9 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         //probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex, 0).rgb;
         probeIrradiance = irradianceData[irradianceTexelIndex] * visibilityData[visibilityTexelIndex];
         
-        irradiance += probeIrradiance;
+        float weight = (dot(direction, shadingPointNormal) /*+ 1.0*/) /* * 0.5*/;
+        
+        irradiance += probeIrradiance * weight;
     }
 
     return saturate(irradiance);
@@ -75,8 +77,8 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS));
-        //finalColor.rgb = saturate(Irradiance(input.WorldPosition, input.NormalWS));
+        //finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS));
+        finalColor.rgb = saturate(Irradiance(input.WorldPosition, input.NormalWS));
     }
     else
     {
