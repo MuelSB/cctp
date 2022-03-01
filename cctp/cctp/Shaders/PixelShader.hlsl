@@ -41,14 +41,13 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probeToPoint = shadingPoint - probePosition;
         float3 direction = normalize(pointToProbe);
         
-        // Sample irradiance from this probe
+        // Sample irradiance and visibility from this probe
         int2 irradianceTexelIndex = GetProbeTexelCoordinate(normalize(direction), i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
         int2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
         float3 probeIrradiance = float3(0.0, 0.0, 0.0);
 
-        //probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex, 0).rgb * visibilityData[visibilityTexelIndex];
-        probeIrradiance = irradianceData[irradianceTexelIndex] * visibilityData[visibilityTexelIndex];
+        probeIrradiance = irradianceData[irradianceTexelIndex].rgb * visibilityData[visibilityTexelIndex].r;
         
         float weight = (dot(direction, shadingPointNormal) + 1.0) * 0.5;
         
