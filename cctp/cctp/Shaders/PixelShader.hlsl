@@ -46,7 +46,7 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         int2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
         float3 probeIrradiance = float3(0.0, 0.0, 0.0);
-
+        
         probeIrradiance = irradianceData[irradianceTexelIndex].rgb * visibilityData[visibilityTexelIndex].r;
         
         float weight = (dot(direction, shadingPointNormal) + 1.0) * 0.5;
@@ -67,17 +67,17 @@ float4 main(VertexOut input) : SV_TARGET
     if (input.Lit)
     {
         // Light and shadow the point
-        finalColor = float4(baseColor.xyz * saturate(Lighting(
+        finalColor = float4(baseColor.xyz * Lighting(
                                                 input.NormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
                                                 CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, pointSampler),
-                                                packedData.z)),
+                                                packedData.z),
                             baseColor.a);
 
         // Diffuse global illumination
         //finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS));
-        finalColor.rgb = saturate(Irradiance(input.WorldPosition, input.NormalWS));
+        finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS);
     }
     else
     {
