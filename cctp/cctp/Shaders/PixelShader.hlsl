@@ -69,7 +69,7 @@ float4 main(VertexOut input) : SV_TARGET
                                                 input.NormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, linearSampler /*pointSampler*/),
+                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, pointSampler),
                                                 packedData.z),
                             baseColor.a);
 
