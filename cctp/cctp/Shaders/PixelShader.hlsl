@@ -32,33 +32,31 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 {
     // Calculate total irradiance from 8 adjacent probes
     float3 irradiance = float3(0.0, 0.0, 0.0);
-    for (int i = 0; i < (int)packedData.x; ++i) // Sample each probe in the field
+    for (int i = 0; i < (int) packedData.x; ++i) // Sample each probe in the field
     {
         float3 probePosition = ProbePositionsWS[i].rgb;
 
         // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
-        float3 pointToProbe = probePosition - shadingPoint; 
-        float3 probeToPoint = shadingPoint - probePosition;
+        float3 pointToProbe = probePosition - shadingPoint;
+        //float3 probeToPoint = shadingPoint - probePosition;
         float3 direction = normalize(pointToProbe);
+        //direction *= 1.0 / length(pointToProbe);
         
         // Sample irradiance and visibility from this probe
-        int2 irradianceTexelIndex = GetProbeTexelCoordinate(normalize(direction), i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
-        int2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        //float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
         float3 probeIrradiance = float3(0.0, 0.0, 0.0);
-        
-        probeIrradiance = irradianceData[irradianceTexelIndex].rgb * visibilityData[visibilityTexelIndex].r;
-        
-        float weight = (dot(direction, shadingPointNormal) + 1.0) * 0.5;
-        
-        irradiance += probeIrradiance * weight;
+        probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0);
+
+        irradiance += probeIrradiance;
     }
 
-    return saturate(irradiance);
+    return irradiance;
 }
 
 float4 main(VertexOut input) : SV_TARGET
-{    
+{
     const float4 baseColor = input.BaseColor;
 
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0);
@@ -71,12 +69,12 @@ float4 main(VertexOut input) : SV_TARGET
                                                 input.NormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, pointSampler),
+                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, linearSampler /*pointSampler*/),
                                                 packedData.z),
                             baseColor.a);
 
         // Diffuse global illumination
-        //finalColor.rgb = saturate(finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS));
+        //finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS);
         finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS);
     }
     else

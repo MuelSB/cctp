@@ -15,17 +15,33 @@ struct RayPayload
 // The max number of probes in the probe field
 #define MAX_PROBE_COUNT 350
 // The number of rays traced from a probe. McGuire uses up to 256 rays
-#define PROBE_RAY_COUNT 128
+#define PROBE_RAY_COUNT 32
 // The amount of texels in a square side to use to store a probes irradiance data in
 #define IRRADIANCE_PROBE_SIDE_LENGTH 8 
 // The amount of texels in a square side to use to store a probes visibility data in
 #define VISIBILITY_PROBE_SIDE_LENGTH 16 
-// Border size in pixels around each probe's data pack
-#define PROBE_PADDING 4
+// Border size in pixels around each probe's data pack. Should be at least 1 to protect data from blurring with next probe
+#define PROBE_PADDING 1
+
+// Irradiance texture dimension
+#define IRRADIANCE_TEXTURE_WIDTH 4300.0
+#define IRRADIANCE_TEXTURE_HEIGHT 16.0
+
+// Visibility texture dimension
+#define VISIBILITY_TEXTURE_WIDTH 7000.0
+#define VISIBILITY_TEXTURE_HEIGHT 32.0
 
 #define SHADOW_BIAS 0.04
 
-int2 GetProbeTexelCoordinate(float3 direction, uint probeIndex, float singleProbeSideLength, uint padding)
+float2 GetProbeTopLeftPosition(uint probeIndex, float singleProbeSideLength, uint padding)
+{
+    return float2(
+                    (float) (padding * probeIndex) + ((float) probeIndex * singleProbeSideLength),
+                    0.0
+                 );
+}
+
+float2 GetProbeTexelCoordinate(float3 direction, uint probeIndex, float singleProbeSideLength, uint padding)
 {
     // Encode the direction to oct texture coordinate in [0, 1] range
     float2 normalizedOctCoordZeroOne = (OctEncode(direction) + 1.0) * 0.5;
@@ -34,10 +50,7 @@ int2 GetProbeTexelCoordinate(float3 direction, uint probeIndex, float singleProb
     float2 normalizedOctCoordTextureDimensions = (normalizedOctCoordZeroOne * singleProbeSideLength);
 
     // Calculate the top left texel of this probe's output in the texture
-    float2 probeTopLeftPosition = float2(
-                                         (float) (padding * probeIndex) + ((float) probeIndex * singleProbeSideLength),
-                                         0.0
-                                        );
+    float2 probeTopLeftPosition = GetProbeTopLeftPosition(probeIndex, singleProbeSideLength, padding);
 
     return probeTopLeftPosition + normalizedOctCoordTextureDimensions;
 }

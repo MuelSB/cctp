@@ -41,7 +41,8 @@ void RayGen()
             ray.Origin = ProbePositionsWS[p].xyz;
             ray.Direction = dir;
             ray.TMin = 0.0;
-            ray.TMax = packedData.y;
+            //ray.TMax = packedData.y;
+            ray.TMax = 1e38;
 
             RayPayload payload =
             {
@@ -56,6 +57,37 @@ void RayGen()
             // Store visibility for probe as distance and square distance
             float distance = payload.HitDistance;
             visibilityOutput[GetProbeTexelCoordinate(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r = distance;
+        }
+    }
+    
+    // Blur irradiance output
+    int blurIterations = 1;
+    // For each blur iteration
+    for (int i = 0; i < blurIterations; ++i)
+    {
+        // For each probe
+        for (int p = 0; p < (int) packedData.x; ++p)
+        {
+            // Calculate probe top left position in output texture
+            float2 topLeft = GetProbeTopLeftPosition(p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
+
+            // Blur probe irradiance data
+            for (int y = topLeft.y; y < IRRADIANCE_PROBE_SIDE_LENGTH; ++y)
+            {
+                for (int x = topLeft.x; x < IRRADIANCE_PROBE_SIDE_LENGTH; ++x)
+                {
+                    int2 top = int2(x, y) + int2(0, 1);
+                    int2 right = int2(x, y) + int2(1, 0);
+                    int2 left = int2(x, y) + int2(-1, 0);
+                    int2 bottom = int2(x, y) + int2(0, -1);
+                    float3 newValue = irradianceOutput[int2(x, y)];
+                    newValue = lerp(newValue, irradianceOutput[top], 0.5f);
+                    newValue = lerp(newValue, irradianceOutput[left], 0.5f);
+                    newValue = lerp(newValue, irradianceOutput[bottom], 0.5f);
+                    newValue = lerp(newValue, irradianceOutput[right], 0.5f);
+                    irradianceOutput[int2(x, y)] = newValue;
+                }
+            }
         }
     }
 }
