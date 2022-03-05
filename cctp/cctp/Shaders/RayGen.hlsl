@@ -72,9 +72,9 @@ void RayGen()
             float2 topLeft = GetProbeTopLeftPosition(p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
             // Blur probe irradiance data
-            for (int y = topLeft.y; y < IRRADIANCE_PROBE_SIDE_LENGTH; ++y)
+            for (int y = topLeft.y; y < topLeft.y + IRRADIANCE_PROBE_SIDE_LENGTH; ++y)
             {
-                for (int x = topLeft.x; x < IRRADIANCE_PROBE_SIDE_LENGTH; ++x)
+                for (int x = topLeft.x; x < topLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH; ++x)
                 {
                     int2 top = int2(x, y) + int2(0, 1);
                     int2 right = int2(x, y) + int2(1, 0);
