@@ -64,7 +64,11 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     uint hitInstanceID = InstanceID();
     
     // Calculate hit point in world space
-    float3 shadingPointWS = WorldRayOrigin() + (WorldRayDirection() * RayTCurrent());
+    float3 hitPointWS = WorldRayOrigin() + (WorldRayDirection() * RayTCurrent());
+    
+    // Push the sampled point towards the camera a little way into open space
+    float3 hitToCamera = normalize(CameraPositionWS.xyz - hitPointWS);
+    float3 shadingPointWS = hitPointWS + (hitToCamera * 0.2f);
     
     // Get the base triangle index in the geometry object
     uint triangleIndex = PrimitiveIndex();
