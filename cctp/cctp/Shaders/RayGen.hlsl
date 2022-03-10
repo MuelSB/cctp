@@ -76,16 +76,25 @@ void RayGen()
             {
                 for (int x = topLeft.x; x < topLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH; ++x)
                 {
-                    int2 top = int2(x, y) + int2(0, 1);
-                    int2 right = int2(x, y) + int2(1, 0);
-                    int2 left = int2(x, y) + int2(-1, 0);
-                    int2 bottom = int2(x, y) + int2(0, -1);
-                    float3 newValue = irradianceOutput[int2(x, y)];
-                    newValue = lerp(newValue, irradianceOutput[top], 0.5f);
-                    newValue = lerp(newValue, irradianceOutput[left], 0.5f);
-                    newValue = lerp(newValue, irradianceOutput[bottom], 0.5f);
-                    newValue = lerp(newValue, irradianceOutput[right], 0.5f);
-                    irradianceOutput[int2(x, y)] = newValue;
+                    [branch]
+                    if(x < topLeft.x || x > topLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH || 
+                        y < topLeft.y || y > topLeft.y + IRRADIANCE_PROBE_SIDE_LENGTH)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        int2 top = int2(x, y) + int2(0, 1);
+                        int2 right = int2(x, y) + int2(1, 0);
+                        int2 left = int2(x, y) + int2(-1, 0);
+                        int2 bottom = int2(x, y) + int2(0, -1);
+                        float3 newValue = irradianceOutput[int2(x, y)];
+                        newValue = lerp(newValue, irradianceOutput[top], 0.5f);
+                        newValue = lerp(newValue, irradianceOutput[left], 0.5f);
+                        newValue = lerp(newValue, irradianceOutput[bottom], 0.5f);
+                        newValue = lerp(newValue, irradianceOutput[right], 0.5f);
+                        irradianceOutput[int2(x, y)] = newValue;
+                    }
                 }
             }
         }
