@@ -122,8 +122,7 @@ void RayGen()
             BlurIrradianceOutput(GetProbeTopLeftPosition(p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING));
         
         // Blur visibility output
-        for (int v = 0; v < VISIBILITY_BLUR_ITERATIONS; ++v)
-            BlurVisibilityOutput(GetProbeTopLeftPosition(p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING));
-
+        //for (int v = 0; v < VISIBILITY_BLUR_ITERATIONS; ++v)
+        //    BlurVisibilityOutput(GetProbeTopLeftPosition(p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING));
     }
 }

@@ -720,7 +720,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 
 		// Submit draw calls
 		// Draw scene
-		static bool visualizeProbeVolume = true;
+		static bool visualizeProbeVolume = false;
 		demoScene->SetDrawProbes(visualizeProbeVolume);
 		demoScene->Draw(0);
 
