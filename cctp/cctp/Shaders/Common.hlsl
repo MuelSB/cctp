@@ -33,6 +33,10 @@ struct RayPayload
 #define VISIBILITY_TEXTURE_WIDTH 7000.0
 #define VISIBILITY_TEXTURE_HEIGHT 32.0
 
+// The number of blur iterations to perform on each output texture
+#define IRRADIANCE_BLUR_ITERATIONS 1
+#define VISIBILITY_BLUR_ITERATIONS 1
+
 #define SHADOW_BIAS 0.04
 
 float2 GetProbeTopLeftPosition(uint probeIndex, float singleProbeSideLength, uint padding)

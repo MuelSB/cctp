@@ -26,7 +26,12 @@ SamplerState pointSampler : register(s0, space0);
 SamplerState linearSampler : register(s0, space1);
 Texture2D<float> shadowMap : register(t0);
 Texture2D<float3> irradianceData : register(t1);
-Texture2D<float> visibilityData : register(t2);
+Texture2D<float2> visibilityData : register(t2);
+
+float Square(float x)
+{
+    return x * x;
+}
 
 float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 {
@@ -41,16 +46,28 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         //float3 probeToPoint = shadingPoint - probePosition;
         float3 direction = normalize(pointToProbe);
 
-        //float distance = min(MAX_DISTANCE, length(pointToProbe));
+        float distance = min(MAX_DISTANCE, length(pointToProbe));
         
         // Sample irradiance and visibility from this probe
         float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
-        //float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
         float3 probeIrradiance = float3(0.0, 0.0, 0.0);
         probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0);
 
-        irradiance += probeIrradiance;
+        float weight = (dot(direction, shadingPointNormal) + 1.0) * 0.5;
+        
+        weight *= lerp(0.0, 1.0, distance);
+        
+        //float2 temp = visibilityData[visibilityTexelIndex].rg;
+        //float mean = temp.r, mean2 = temp.g; // These are not currently the mean average of a bunch of rays, they are a single ray's result
+        //if(distance > mean)
+        //{
+        //    float variance = abs(Square(mean) - mean2);
+        //    weight *= variance / (variance + Square(distance - mean));
+        //}
+        
+        irradiance += probeIrradiance * weight;
     }
 
     return irradiance;
@@ -75,7 +92,8 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS);
+        float ddgiPower = 0.2;
+        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS) * ddgiPower;
         //finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS);
     }
     else

@@ -219,7 +219,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 	// Raytracing output 2 texture (visibility)
 	Microsoft::WRL::ComPtr<ID3D12Resource> raytraceOutput2Resource;
 
-	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32_FLOAT,
+	auto raytraceOutput2TextureResourceDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R16G16_FLOAT,
 		static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.x), static_cast<UINT64>(Renderer::RAYTRACE_VISIBILITY_OUTPUT_DIMS.y));
 	raytraceOutput2TextureResourceDesc.MipLevels = 1;
 	raytraceOutput2TextureResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -643,7 +643,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		// Raytrace global illumination probe field
 		// Check raytracing is enabled
-		static float GIGatherRateSeconds = 0.2f;
+		static float GIGatherRateSeconds = 0.05f;
 		static bool dispatchRays = true;
 		if (dispatchRays)
 		{

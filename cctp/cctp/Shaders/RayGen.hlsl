@@ -2,7 +2,7 @@
 
 RaytracingAccelerationStructure SceneBVH : register(t0);
 RWTexture2D<float3> irradianceOutput : register(u0);
-RWTexture2D<float> visibilityOutput : register(u1);
+RWTexture2D<float2> visibilityOutput : register(u1);
 
 cbuffer PerFrameConstants : register(b0)
 {
@@ -27,11 +27,69 @@ float3 SphericalFibonacci(float i, float n)
 #undef madfrac
 }
 
+void BlurIrradianceOutput(const float2 probeTopLeft)
+{
+    for (int y = probeTopLeft.y; y < probeTopLeft.y + IRRADIANCE_PROBE_SIDE_LENGTH; ++y)
+    {
+        for (int x = probeTopLeft.x; x < probeTopLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH; ++x)
+        {
+            [branch]
+            if (x < probeTopLeft.x || x > probeTopLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH ||
+                        y < probeTopLeft.y || y > probeTopLeft.y + IRRADIANCE_PROBE_SIDE_LENGTH)
+            {
+                continue;
+            }
+            else
+            {
+                float2 top = float2(x, y) + float2(0, 1);
+                float2 right = float2(x, y) + float2(1, 0);
+                float2 left = float2(x, y) + float2(-1, 0);
+                float2 bottom = float2(x, y) + float2(0, -1);
+                float3 newValue = irradianceOutput[float2(x, y)];
+                newValue = lerp(newValue, irradianceOutput[top], 0.5f);
+                newValue = lerp(newValue, irradianceOutput[left], 0.5f);
+                newValue = lerp(newValue, irradianceOutput[bottom], 0.5f);
+                newValue = lerp(newValue, irradianceOutput[right], 0.5f);
+                irradianceOutput[float2(x, y)] = newValue;
+            }
+        }
+    }
+}
+
+void BlurVisibilityOutput(const float2 probeTopLeft)
+{
+    for (int y = probeTopLeft.y; y < probeTopLeft.y + VISIBILITY_PROBE_SIDE_LENGTH; ++y)
+    {
+        for (int x = probeTopLeft.x; x < probeTopLeft.x + VISIBILITY_PROBE_SIDE_LENGTH; ++x)
+        {
+            [branch]
+            if (x < probeTopLeft.x || x > probeTopLeft.x + VISIBILITY_PROBE_SIDE_LENGTH ||
+                        y < probeTopLeft.y || y > probeTopLeft.y + VISIBILITY_PROBE_SIDE_LENGTH)
+            {
+                continue;
+            }
+            else
+            {
+                float2 top = float2(x, y) + float2(0, 1);
+                float2 right = float2(x, y) + float2(1, 0);
+                float2 left = float2(x, y) + float2(-1, 0);
+                float2 bottom = float2(x, y) + float2(0, -1);
+                float2 newValue = visibilityOutput[float2(x, y)].rg;
+                newValue = lerp(newValue, visibilityOutput[top], 0.5f);
+                newValue = lerp(newValue, visibilityOutput[left], 0.5f);
+                newValue = lerp(newValue, visibilityOutput[bottom], 0.5f);
+                newValue = lerp(newValue, visibilityOutput[right], 0.5f);
+                visibilityOutput[float2(x, y)] = newValue;
+            }
+        }
+    }
+}
+
 [shader("raygeneration")]
 void RayGen()
 {    
     // Shoot rays from each probe
-    for (int p = 0; p < (int)packedData.x; ++p)
+    for (int p = 0; p < (int) packedData.x; ++p)
     {
         for (int r = 0; r < PROBE_RAY_COUNT; ++r)
         {
@@ -41,8 +99,7 @@ void RayGen()
             ray.Origin = ProbePositionsWS[p].xyz;
             ray.Direction = dir;
             ray.TMin = 0.0;
-            //ray.TMax = MAX_DISTANCE;
-            ray.TMax = 1e38f;
+            ray.TMax = MAX_DISTANCE;
 
             RayPayload payload =
             {
@@ -55,48 +112,18 @@ void RayGen()
             irradianceOutput[GetProbeTexelCoordinate(dir, p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING)].rgb = payload.HitIrradiance;
 
             // Store visibility for probe as distance and square distance
-            float distance = payload.HitDistance;
-            visibilityOutput[GetProbeTexelCoordinate(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING)].r = distance;
+            float2 visibilityTexel = GetProbeTexelCoordinate(dir, p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
+            visibilityOutput[visibilityTexel].r = payload.HitDistance;
+            visibilityOutput[visibilityTexel].g = payload.HitDistance * payload.HitDistance;
         }
-    }
-    
-    // Blur irradiance output
-    int blurIterations = 1;
-    // For each blur iteration
-    for (int i = 0; i < blurIterations; ++i)
-    {
-        // For each probe
-        for (int p = 0; p < (int) packedData.x; ++p)
-        {
-            // Calculate probe top left position in output texture
-            float2 topLeft = GetProbeTopLeftPosition(p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        
+        // Blur irradiance output
+        for (int i = 0; i < IRRADIANCE_BLUR_ITERATIONS; ++i)
+            BlurIrradianceOutput(GetProbeTopLeftPosition(p, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING));
+        
+        // Blur visibility output
+        for (int v = 0; v < VISIBILITY_BLUR_ITERATIONS; ++v)
+            BlurVisibilityOutput(GetProbeTopLeftPosition(p, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING));
 
-            // Blur probe irradiance data
-            for (int y = topLeft.y; y < topLeft.y + IRRADIANCE_PROBE_SIDE_LENGTH; ++y)
-            {
-                for (int x = topLeft.x; x < topLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH; ++x)
-                {
-                    [branch]
-                    if(x < topLeft.x || x > topLeft.x + IRRADIANCE_PROBE_SIDE_LENGTH || 
-                        y < topLeft.y || y > topLeft.y + IRRADIANCE_PROBE_SIDE_LENGTH)
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        int2 top = int2(x, y) + int2(0, 1);
-                        int2 right = int2(x, y) + int2(1, 0);
-                        int2 left = int2(x, y) + int2(-1, 0);
-                        int2 bottom = int2(x, y) + int2(0, -1);
-                        float3 newValue = irradianceOutput[int2(x, y)];
-                        newValue = lerp(newValue, irradianceOutput[top], 0.5f);
-                        newValue = lerp(newValue, irradianceOutput[left], 0.5f);
-                        newValue = lerp(newValue, irradianceOutput[bottom], 0.5f);
-                        newValue = lerp(newValue, irradianceOutput[right], 0.5f);
-                        irradianceOutput[int2(x, y)] = newValue;
-                    }
-                }
-            }
-        }
     }
 }
