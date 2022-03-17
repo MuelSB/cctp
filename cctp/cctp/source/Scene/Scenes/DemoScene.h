@@ -36,7 +36,7 @@ private:
 	void PollInputs(float deltaTime);
 
 private:
-	static constexpr size_t SceneMeshTransformCount = 7;
+	static constexpr size_t SceneMeshTransformCount = 8;
 	static constexpr float CameraYawSensitivity = 0.075f;
 	static constexpr float CameraPitchSensitivity = 0.075f;
 	static constexpr float CameraPitchMin = -90.0f;
@@ -56,8 +56,15 @@ private:
 	std::vector<Transform> MeshTransforms;
 	std::vector<Renderer::Material> MeshMaterials;
 
-	glm::vec3 LightDirectionWS = glm::vec3(-0.1f, -0.3f, 1.0f);
+	glm::vec3 LightDirectionWS = glm::vec3(-0.5f, -0.3f, 1.0f);
 	float LightIntensity = 1.0f;
 
 	bool DrawProbes = true;
+
+	float DoorStartX;
+	float DoorTargetX;
+	float LerpAccum = 0.0f;
+	bool OpenDoor = false;
+	static constexpr float DoorOpenSpeed = 0.0001f;
+	static constexpr float DoorOpenX = 5.0f;
 };

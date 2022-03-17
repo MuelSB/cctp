@@ -643,7 +643,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		// Raytrace global illumination probe field
 		// Check raytracing is enabled
-		static float GIGatherRateSeconds = 0.05f;
+		static float GIGatherRateSeconds = 0.01f;
 		static bool dispatchRays = true;
 		if (dispatchRays)
 		{

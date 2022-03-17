@@ -103,6 +103,13 @@ DemoScene::DemoScene()
 	MeshTransforms[6].Scale = glm::vec3(4.9f, 0.49f, 4.9f);
 	MeshMaterials[6].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
 
+	// Door
+	MeshTransforms[7].Position = glm::vec3(0.0f, 1.75f, -2.65f);
+	MeshTransforms[7].Scale = glm::vec3(5.0f, 5.0f, 0.5f);
+	MeshMaterials[7].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+	DoorStartX = MeshTransforms[7].Position.x;
+	DoorTargetX = DoorStartX;
+
 	// Create top level acceleration structure
 	Renderer::CreateTopLevelAccelerationStructure(tlAccelStructure, true, static_cast<uint32_t>(SceneMeshTransformCount));
 
@@ -129,6 +136,14 @@ void DemoScene::Begin()
 void DemoScene::Tick(float deltaTime)
 {
 	PollInputs(deltaTime);
+
+	float doorX = glm::lerp(DoorStartX, DoorTargetX, LerpAccum);
+	MeshTransforms[7].Position.x = doorX;
+
+	if (OpenDoor)
+	{
+		LerpAccum = std::clamp(LerpAccum + deltaTime * DoorOpenSpeed, 0.0f, 1.0f);
+	}
 }
 
 void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)
@@ -152,7 +167,17 @@ void DemoScene::Draw(UINT perObjectConstantsRootParamIndex)
 
 void DemoScene::DrawImGui()
 {
-
+	ImGui::SetNextWindowSize(ImVec2(100.0f, 60.0f));
+	ImGui::SetNextWindowPos(ImVec2(50.0f, 50.0f));
+	ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+	if (ImGui::Button("Slide Door"))
+	{
+		OpenDoor = true;
+		MeshTransforms[7].Position.x = 0.0f;
+		LerpAccum = 0.0f;
+		DoorTargetX = DoorOpenX;
+	}
+	ImGui::End();
 }
 
 void DemoScene::OnInputEvent(InputEvent&& event)

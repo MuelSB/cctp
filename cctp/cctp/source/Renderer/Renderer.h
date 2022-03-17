@@ -39,7 +39,7 @@ namespace Renderer
 
 	class Material;
 
-	constexpr size_t MAX_MATERIAL_COUNT = 7;
+	constexpr size_t MAX_MATERIAL_COUNT = 8;
 
 	constexpr size_t MAX_PROBE_COUNT = 350;
 
