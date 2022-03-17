@@ -59,6 +59,9 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         
         weight *= lerp(0.0, 1.0, distance);
         
+        //float visibility = visibilityData[visibilityTexelIndex].r;
+        //float visibility2 = visibilityData[visibilityTexelIndex].g;
+        
         //float2 temp = visibilityData[visibilityTexelIndex].rg;
         //float mean = temp.r, mean2 = temp.g; // These are not currently the mean average of a bunch of rays, they are a single ray's result
         //if(distance > mean)

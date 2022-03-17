@@ -34,8 +34,8 @@ struct RayPayload
 #define VISIBILITY_TEXTURE_HEIGHT 32.0
 
 // The number of blur iterations to perform on each output texture
-#define IRRADIANCE_BLUR_ITERATIONS 1
-#define VISIBILITY_BLUR_ITERATIONS 1
+#define IRRADIANCE_BLUR_ITERATIONS 2
+#define VISIBILITY_BLUR_ITERATIONS 0
 
 #define SHADOW_BIAS 0.04
 
