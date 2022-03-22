@@ -104,7 +104,7 @@ DemoScene::DemoScene()
 	MeshMaterials[6].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
 
 	// Door
-	MeshTransforms[7].Position = glm::vec3(0.0f, 1.75f, -2.65f);
+	MeshTransforms[7].Position = glm::vec3(DoorOpenX, 1.75f, -2.65f);
 	MeshTransforms[7].Scale = glm::vec3(5.0f, 5.0f, 0.5f);
 	MeshMaterials[7].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
 	DoorStartX = MeshTransforms[7].Position.x;
@@ -137,7 +137,7 @@ void DemoScene::Tick(float deltaTime)
 {
 	PollInputs(deltaTime);
 
-	float doorX = glm::lerp(DoorStartX, DoorTargetX, LerpAccum);
+	float doorX = glm::lerp(0.0f, DoorTargetX, LerpAccum);
 	MeshTransforms[7].Position.x = doorX;
 
 	if (OpenDoor)

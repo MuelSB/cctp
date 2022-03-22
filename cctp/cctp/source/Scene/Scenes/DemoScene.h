@@ -63,7 +63,7 @@ private:
 
 	float DoorStartX;
 	float DoorTargetX;
-	float LerpAccum = 0.0f;
+	float LerpAccum = 1.0f;
 	bool OpenDoor = false;
 	static constexpr float DoorOpenSpeed = 0.0001f;
 	static constexpr float DoorOpenX = 5.0f;
