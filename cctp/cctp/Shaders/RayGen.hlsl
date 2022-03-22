@@ -99,7 +99,7 @@ void RayGen()
             ray.Origin = ProbePositionsWS[p].xyz;
             ray.Direction = dir;
             ray.TMin = 0.0;
-            ray.TMax = MAX_DISTANCE;
+            ray.TMax = 1e38f;
 
             RayPayload payload =
             {

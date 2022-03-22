@@ -80,7 +80,6 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     // Interpolate normal attribute
     float3x3 normalMatrix = inverse(transpose((float3x3) ObjectToWorld3x4())); // This is necessary as world matrix contains non uniform scaling
                                                                                // TODO Should be done on CPU and uploaded to GPU
-
     float3 normalWS = -(
         attribs.barycentrics.x * mul(normalMatrix, v0.Normal.xyz) +
         attribs.barycentrics.y * mul(normalMatrix, v1.Normal.xyz) +

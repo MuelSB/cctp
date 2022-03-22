@@ -42,11 +42,10 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probePosition = ProbePositionsWS[i].rgb;
 
         // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
-        float3 pointToProbe = probePosition - shadingPoint;
-        //float3 probeToPoint = shadingPoint - probePosition;
-        float3 direction = normalize(pointToProbe);
+        float3 probeToPoint = shadingPoint - probePosition;
+        float3 direction = normalize(probeToPoint);
 
-        float distance = min(MAX_DISTANCE, length(pointToProbe));
+        float distance = min(MAX_DISTANCE, length(probeToPoint));
         
         // Sample irradiance and visibility from this probe
         float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
@@ -54,26 +53,10 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 
         float3 probeIrradiance = float3(0.0, 0.0, 0.0);
         probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0);
-
-        float weight = (dot(direction, shadingPointNormal) + 1.0) * 0.5;
         
-        weight *= lerp(0.0, 1.0, distance);
-        
-        //float visibility = visibilityData[visibilityTexelIndex].r;
-        //float visibility2 = visibilityData[visibilityTexelIndex].g;
-        
-        //float2 temp = visibilityData[visibilityTexelIndex].rg;
-        //float mean = temp.r, mean2 = temp.g; // These are not currently the mean average of a bunch of rays, they are a single ray's result
-        //if(distance > mean)
-        //{
-        //    float variance = abs(Square(mean) - mean2);
-        //    weight *= variance / (variance + Square(distance - mean));
-        //}
-        
-        irradiance += probeIrradiance * weight;
+        irradiance += probeIrradiance;
     }
-
-    return irradiance;
+   return irradiance;
 }
 
 float4 main(VertexOut input) : SV_TARGET
@@ -95,9 +78,9 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        float ddgiPower = 0.2;
+        float ddgiPower = 0.4;
         finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS) * ddgiPower;
-        //finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS);
+        //finalCol//.rgb = Irradiance(input.WorldPosition, input.NormalWS);
     }
     else
     {
