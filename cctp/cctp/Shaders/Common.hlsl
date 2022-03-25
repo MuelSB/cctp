@@ -64,7 +64,7 @@ float2 GetProbeTexelCoordinate(float3 direction, uint probeIndex, float singlePr
 float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow, float lightIntensity)
 {
     // Ambient
-    const float3 ambient = float3(0.0, 0.0, 0.0);
+    const float3 ambient = float3(0.0001, 0.0001, 0.0001);
     
     // Diffuse
     const float3 lightColor = float3(1.0, 1.0, 1.0);
@@ -77,7 +77,7 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 specColor = float3(0.4, 0.4, 0.4);
     const float3 specular = specColor * pow(NoH, gloss);
     
-    return saturate((shadow * ((diffuse + specular) * lightIntensity)) + ambient);
+    return ambient + (((diffuse + specular) * lightIntensity * shadow));
 }
 
 float CalculateShadow(float4 lightSpacePosition, float bias, float LoN, Texture2D<float> shadowMap, SamplerState shadowMapSampler)

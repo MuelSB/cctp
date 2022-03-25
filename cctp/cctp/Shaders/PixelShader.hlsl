@@ -35,6 +35,22 @@ float Square(float x)
 
 float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 {
+    // Get 8 probes caging shading point
+    //int probeIds[8];
+    //int currentProbeId = 0;
+    //for (int i = 0; i < (int) packedData.x; ++i) // Sample each probe in the field
+    //{
+    //    if (length(shadingPoint - ProbePositionsWS[i].rgb) <= MAX_DISTANCE)
+    //    {
+    //        probeIds[currentProbeId] = i;
+    //        ++currentProbeId;
+    //        if(currentProbeId == 8)
+    //        {
+    //            break;
+    //        }
+    //    }
+    //}
+
     // Calculate total irradiance from 8 adjacent probes
     float3 irradiance = float3(0.0, 0.0, 0.0);
     for (int i = 0; i < (int) packedData.x; ++i) // Sample each probe in the field
@@ -67,17 +83,17 @@ float4 main(VertexOut input) : SV_TARGET
     if (input.Lit)
     {
         // Light and shadow the point
+        float shadow = CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, pointSampler);
         finalColor = float4(baseColor.xyz * Lighting(
                                                 input.NormalWS,
                                                 input.LightVectorWS,
                                                 input.CameraVectorWS,
-                                                CalculateShadow(input.LightSpacePosition, SHADOW_BIAS, saturate(dot(input.LightVectorWS, input.NormalWS)), shadowMap, pointSampler),
+                                                shadow,
                                                 packedData.z),
                             baseColor.a);
 
         // Diffuse global illumination
-        float ddgiPower = 0.4;
-        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS) * ddgiPower;
+        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS);
         //finalCol//.rgb = Irradiance(input.WorldPosition, input.NormalWS);
     }
     else

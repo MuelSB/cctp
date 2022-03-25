@@ -89,11 +89,12 @@ void ClosestHit(inout RayPayload payload, in BuiltInTriangleIntersectionAttribut
     float3 lightVectorWS = -normalize(LightDirectionWS.xyz);
     float3 cameraVectorWS = normalize(CameraPositionWS.xyz - shadingPointWS);
     
+    float shadow = CalculateShadow(mul(LightMatrix, float4(shadingPointWS, 1.0)), SHADOW_BIAS, saturate(dot(lightVectorWS, normalWS)), shadowMap, pointSampler);
     float3 lighting = Lighting(
         normalWS,
         lightVectorWS,
         cameraVectorWS,
-        CalculateShadow(mul(LightMatrix, float4(shadingPointWS, 1.0)), SHADOW_BIAS, saturate(dot(lightVectorWS, normalWS)), shadowMap, pointSampler),
+        shadow,
         packedData.z
     );
     
