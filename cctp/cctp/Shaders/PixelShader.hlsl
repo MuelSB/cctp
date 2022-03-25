@@ -87,5 +87,9 @@ float4 main(VertexOut input) : SV_TARGET
         finalColor = baseColor;
     }
 
+    // Gamma correct
+    float gamma = 2.2;
+    finalColor = pow(finalColor, 1.0 / gamma);
+    
     return finalColor;
 }
