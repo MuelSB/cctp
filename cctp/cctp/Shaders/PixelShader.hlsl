@@ -35,22 +35,6 @@ float Square(float x)
 
 float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 {
-    // Get 8 probes caging shading point
-    //int probeIds[8];
-    //int currentProbeId = 0;
-    //for (int i = 0; i < (int) packedData.x; ++i) // Sample each probe in the field
-    //{
-    //    if (length(shadingPoint - ProbePositionsWS[i].rgb) <= MAX_DISTANCE)
-    //    {
-    //        probeIds[currentProbeId] = i;
-    //        ++currentProbeId;
-    //        if(currentProbeId == 8)
-    //        {
-    //            break;
-    //        }
-    //    }
-    //}
-
     // Calculate total irradiance from 8 adjacent probes
     float3 irradiance = float3(0.0, 0.0, 0.0);
     for (int i = 0; i < (int) packedData.x; ++i) // Sample each probe in the field
@@ -58,8 +42,8 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probePosition = ProbePositionsWS[i].rgb;
 
         // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
-        float3 probeToPoint = shadingPoint - probePosition;
-        float3 direction = normalize(probeToPoint);
+        float3 pointToProbe = probePosition - shadingPoint;
+        float3 direction = normalize(pointToProbe);
 
         // Sample irradiance and visibility from this probe
         float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);

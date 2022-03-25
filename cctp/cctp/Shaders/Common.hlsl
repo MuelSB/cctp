@@ -71,11 +71,12 @@ float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVector
     const float3 diffuse = lightColor * saturate(dot(vertexNormalWS, lightVectorWS));
     
     // Specular
-    const float3 H = normalize(lightVectorWS + cameraVectorWS);
-    const float NoH = saturate(dot(vertexNormalWS, H));
-    const float gloss = 256.0;
-    const float3 specColor = float3(0.4, 0.4, 0.4);
-    const float3 specular = specColor * pow(NoH, gloss);
+    //const float3 H = normalize(lightVectorWS + cameraVectorWS);
+    //const float NoH = saturate(dot(vertexNormalWS, H));
+    //const float gloss = 256.0;
+    //const float3 specColor = float3(0.4, 0.4, 0.4);
+    //const float3 specular = specColor * pow(NoH, gloss);
+    const float3 specular = float3(0.0, 0.0, 0.0);
     
     return ambient + (((diffuse + specular) * lightIntensity * shadow));
 }
