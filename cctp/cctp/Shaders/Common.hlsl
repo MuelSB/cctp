@@ -64,7 +64,7 @@ float2 GetProbeTexelCoordinate(float3 direction, uint probeIndex, float singlePr
 float3 Lighting(float3 vertexNormalWS, float3 lightVectorWS, float3 cameraVectorWS, float shadow, float lightIntensity)
 {
     // Ambient
-    const float3 ambient = float3(0.0001, 0.0001, 0.0001);
+    const float3 ambient = float3(0.0, 0.0, 0.0);
     
     // Diffuse
     const float3 lightColor = float3(1.0, 1.0, 1.0);
