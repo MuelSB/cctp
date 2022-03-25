@@ -30,17 +30,15 @@ void Renderer::ProbeVolume::Update()
 
 void Renderer::ProbeVolume::UpdateProbePositions()
 {
-	size_t index = 0;
 	for (auto x = 0; x < ProbeCountX; ++x)
 	{
 		for (auto y = 0; y < ProbeCountY; ++y)
 		{
 			for (auto z = 0; z < ProbeCountZ; ++z)
 			{
-				ProbeTransforms[index].Position = Position + glm::vec3((x * ProbeSpacing) - ((Extents.x - ProbeSpacing) / 2.0f),
-																	   (y * ProbeSpacing) - ((Extents.y - ProbeSpacing) / 2.0f),
-																	   (z * ProbeSpacing) - ((Extents.z - ProbeSpacing) / 2.0f));
-				++index;
+				ProbeTransforms[x + ProbeCountX * (y + ProbeCountZ * z)].Position = Position + glm::vec3((x * ProbeSpacing) - ((Extents.x - ProbeSpacing) / 2.0f),
+													   (y * ProbeSpacing) - ((Extents.y - ProbeSpacing) / 2.0f),
+													   (z * ProbeSpacing) - ((Extents.z - ProbeSpacing) / 2.0f));
 			}
 		}
 	}
