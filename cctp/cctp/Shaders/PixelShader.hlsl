@@ -45,8 +45,6 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probeToPoint = shadingPoint - probePosition;
         float3 direction = normalize(probeToPoint);
 
-        float distance = min(MAX_DISTANCE, length(probeToPoint));
-        
         // Sample irradiance and visibility from this probe
         float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
         float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);

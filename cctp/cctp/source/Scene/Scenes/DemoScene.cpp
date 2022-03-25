@@ -88,7 +88,7 @@ DemoScene::DemoScene()
 	MeshMaterials[3].SetColor(glm::vec4(0.7f, 0.0f, 0.0f, 1.0f));
 
 	// Back wall
-	MeshTransforms[4].Position = glm::vec3(0.0f, 1.75f, 2.75f);
+	MeshTransforms[4].Position = glm::vec3(0.0f, 1.75f, 2.65f);
 	MeshTransforms[4].Scale = glm::vec3(5.0f, 5.0f, 0.5f);
 	MeshMaterials[4].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
 
