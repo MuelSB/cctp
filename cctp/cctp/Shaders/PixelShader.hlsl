@@ -42,7 +42,7 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probePosition = ProbePositionsWS[i].rgb;
 
         // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
-        float3 pointToProbe = probePosition - shadingPoint;
+        float3 pointToProbe = probePosition - shadingPoint; // Flip these to get different GI look
         float3 direction = normalize(pointToProbe);
 
         // Sample irradiance and visibility from this probe
