@@ -36,7 +36,7 @@ void Renderer::ProbeVolume::UpdateProbePositions()
 		{
 			for (auto z = 0; z < ProbeCountZ; ++z)
 			{
-				ProbeTransforms[x + ProbeCountX * (y + ProbeCountZ * z)].Position = Position + glm::vec3((x * ProbeSpacing) - ((Extents.x - ProbeSpacing) / 2.0f),
+				ProbeTransforms[(z * ProbeCountX * ProbeCountY) + (y * ProbeCountX) + x].Position = Position + glm::vec3((x * ProbeSpacing) - ((Extents.x - ProbeSpacing) / 2.0f),
 													   (y * ProbeSpacing) - ((Extents.y - ProbeSpacing) / 2.0f),
 													   (z * ProbeSpacing) - ((Extents.z - ProbeSpacing) / 2.0f));
 			}
