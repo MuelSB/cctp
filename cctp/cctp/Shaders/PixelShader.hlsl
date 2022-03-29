@@ -41,8 +41,8 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
     {
         float3 probePosition = ProbePositionsWS[i].rgb;
 
-        // Reverse the direction to the direction used to store irradiance as GI should be applied to the opposite side of the probe for reflection
         float3 pointToProbe = probePosition - shadingPoint; // Flip these to get different GI look
+        float distance = length(pointToProbe);
         float3 direction = normalize(pointToProbe);
 
         // Sample irradiance and visibility from this probe
@@ -51,8 +51,20 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 
         float3 probeIrradiance = float3(0.0, 0.0, 0.0);
         probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0);
+
+        // Investigate smoothstep function http://www.fundza.com/rman_shaders/smoothstep/
+        //irradiance += smoothstep(probeIrradiance, probeIrradiance * 0.01, length(pointToProbe) / MAX_DISTANCE *0.2);
         
-        irradiance += probeIrradiance;
+        if (distance < (2.0 * MAX_DISTANCE))
+        {
+            // Blur out the hard circles here. Soft radial falloff to default irradiance based on distance?
+            irradiance += probeIrradiance;
+        }
+        else
+        {
+            // Default amount of irradiance from distant probe to avoid black
+            irradiance += probeIrradiance * 0.0075;
+        }
     }
    return irradiance;
 }
@@ -78,7 +90,7 @@ float4 main(VertexOut input) : SV_TARGET
 
         // Diffuse global illumination
         finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS);
-        //finalCol//.rgb = Irradiance(input.WorldPosition, input.NormalWS);
+        //finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS);
     }
     else
     {
