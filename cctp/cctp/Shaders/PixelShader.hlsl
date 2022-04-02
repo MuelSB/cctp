@@ -35,13 +35,12 @@ float Square(float x)
 
 float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 {
-    // Calculate total irradiance from 8 adjacent probes
     float3 irradiance = float3(0.0, 0.0, 0.0);
-    for (int i = 0; i < (int) packedData.x; ++i) // Sample each probe in the field
+    for (int i = 0; i < (int) packedData.x; ++i)
     {
         float3 probePosition = ProbePositionsWS[i].rgb;
 
-        float3 pointToProbe = probePosition - shadingPoint; // Flip these to get different GI look
+        float3 pointToProbe = probePosition - shadingPoint;
         float distance = length(pointToProbe);
         float3 direction = normalize(pointToProbe);
 
@@ -49,24 +48,16 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
         float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
-        float3 probeIrradiance = float3(0.0, 0.0, 0.0);
-        probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0);
+        float3 probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0).rgb;
+        float2 probeVisibility = irradianceData.SampleLevel(linearSampler, visibilityTexelIndex / float2(VISIBILITY_TEXTURE_WIDTH, VISIBILITY_TEXTURE_HEIGHT), 0).rg;
 
-        // Investigate smoothstep function http://www.fundza.com/rman_shaders/smoothstep/
-        //irradiance += smoothstep(probeIrradiance, probeIrradiance * 0.01, length(pointToProbe) / MAX_DISTANCE *0.2);
+        // calculate weight
+        float weight = 1.0 / 8.0;
         
-        if (distance < (2.0 * MAX_DISTANCE))
-        {
-            // Blur out the hard circles here. Soft radial falloff to default irradiance based on distance?
-            irradiance += probeIrradiance;
-        }
-        else
-        {
-            // Default amount of irradiance from distant probe to avoid black
-            irradiance += probeIrradiance * 0.0075;
-        }
+        // Sum irradiance
+        irradiance += weight * probeIrradiance;
     }
-   return irradiance;
+    return irradiance;
 }
 
 float4 main(VertexOut input) : SV_TARGET
@@ -89,17 +80,13 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS);
-        //finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS);
+        const float ddgiPower = 0.5;
+        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS) * ddgiPower;
     }
     else
     {
         finalColor = baseColor;
     }
-
-    // Gamma correct
-    float gamma = 2.2;
-    finalColor = pow(finalColor, 1.0 / gamma);
     
     return finalColor;
 }

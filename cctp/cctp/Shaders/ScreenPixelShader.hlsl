@@ -27,7 +27,13 @@ float4 main(VertexOut input) : SV_TARGET
     GBuffer gbuffer;
     SetupGBuffer(gbuffer, input.TextureCoordinate);
     
-    return gbuffer.SceneColor;
+    float4 finalColor = gbuffer.SceneColor;
+
+    // Gamma correct
+    const float gamma = 2.2;
+    finalColor.rgb = pow(finalColor.rgb, 1.0 / gamma);
+    
+    return finalColor;
     //return float4(gbuffer.SceneDepth, gbuffer.SceneDepth, gbuffer.SceneDepth, 1.0);
     //return float4(gbuffer.ShadowMap, gbuffer.ShadowMap, gbuffer.ShadowMap, 1.0);
 }

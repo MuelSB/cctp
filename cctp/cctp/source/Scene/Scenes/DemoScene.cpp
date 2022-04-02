@@ -70,12 +70,12 @@ DemoScene::DemoScene()
 	// Floor
 	MeshTransforms[0].Position = glm::vec3(0.0f, -0.5f, 0.0f);
 	MeshTransforms[0].Scale = glm::vec3(4.9f, 0.49f, 4.9f);
-	MeshMaterials[0].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+	MeshMaterials[0].SetColor(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
 
 	// Identity cube
 	MeshTransforms[1].Position = glm::vec3(1.0f, 0.25f, -0.5f);
 	MeshTransforms[1].Scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	MeshMaterials[1].SetColor(glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	MeshMaterials[1].SetColor(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
 
 	// Right wall
 	MeshTransforms[2].Position = glm::vec3(2.25f, 1.75f, 0.0f);
@@ -90,18 +90,18 @@ DemoScene::DemoScene()
 	// Back wall
 	MeshTransforms[4].Position = glm::vec3(0.0f, 1.75f, 2.65f);
 	MeshTransforms[4].Scale = glm::vec3(5.0f, 5.0f, 0.5f);
-	MeshMaterials[4].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+	MeshMaterials[4].SetColor(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
 
 	// Transformed cube
 	MeshTransforms[5].Position = glm::vec3(-1.0f, 0.5f, 0.5f);
 	MeshTransforms[5].Rotation = glm::vec3(0.0f, 45.0f, 0.0f);
 	MeshTransforms[5].Scale = glm::vec3(1.0f, 2.0f, 1.0f);
-	MeshMaterials[5].SetColor(glm::vec4(0.9f, 0.9f, 0.9f, 1.0f));
+	MeshMaterials[5].SetColor(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
 
 	// Ceiling
 	MeshTransforms[6].Position = glm::vec3(0.0f, 4.0f, 0.0f);
 	MeshTransforms[6].Scale = glm::vec3(4.9f, 0.49f, 4.9f);
-	MeshMaterials[6].SetColor(glm::vec4(0.8f, 0.8f, 0.8f, 1.0f));
+	MeshMaterials[6].SetColor(glm::vec4(0.6f, 0.6f, 0.6f, 1.0f));
 
 	// Door
 	MeshTransforms[7].Position = glm::vec3(DoorOpenX, 1.75f, -2.65f);
