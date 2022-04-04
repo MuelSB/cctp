@@ -769,7 +769,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 		}
 
 		// Raytrace output texture view
-		static bool showIrradianceRaytraceOutput = true;
+		static bool showIrradianceRaytraceOutput = false;
 		if (showIrradianceRaytraceOutput)
 		{
 			ImGui::Begin("Irradiance probe texture", &showIrradianceRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
@@ -782,7 +782,7 @@ int WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPS
 			ImGui::End();
 		}
 
-		static bool showVisibilityRaytraceOutput = true;
+		static bool showVisibilityRaytraceOutput = false;
 		if (showVisibilityRaytraceOutput)
 		{
 			ImGui::Begin("Visibility probe texture", &showVisibilityRaytraceOutput, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
