@@ -178,8 +178,8 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        //finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS);
-        finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS, input.CameraVectorWS);
+        finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS, input.CameraVectorWS);
+        //finalColor.rgb = Irradiance(input.WorldPosition, input.NormalWS, input.CameraVectorWS);
     }
     else
     {
