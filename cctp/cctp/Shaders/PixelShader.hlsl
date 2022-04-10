@@ -35,7 +35,8 @@ float Square(float x)
 
 float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 {
-    float3 irradiance = float3(0.0, 0.0, 0.0);
+    shadingPointNormal = normalize(shadingPointNormal);
+    float3 sumIrradiance = float3(0.0, 0.0, 0.0);
     for (int i = 0; i < (int) packedData.x; ++i)
     {
         float3 probePosition = ProbePositionsWS[i].rgb;
@@ -51,13 +52,16 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float3 probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0).rgb;
         float2 probeVisibility = irradianceData.SampleLevel(linearSampler, visibilityTexelIndex / float2(VISIBILITY_TEXTURE_WIDTH, VISIBILITY_TEXTURE_HEIGHT), 0).rg;
 
-        // calculate weight
-        float weight = 1.0 / 8.0;
-        
+        // Weight irradiance by distance and orientation to the probe (Inspired by EA Surfel method)
+        float weight = 1.0 / max(distance, 0.001);
+
+        float orientation = dot(shadingPointNormal, direction);
+        weight *= max(0.0, orientation);
+
         // Sum irradiance
-        irradiance += weight * probeIrradiance;
+        sumIrradiance += weight * probeIrradiance;
     }
-    return irradiance;
+    return sumIrradiance;
 }
 
 float4 main(VertexOut input) : SV_TARGET
@@ -80,7 +84,7 @@ float4 main(VertexOut input) : SV_TARGET
                             baseColor.a);
 
         // Diffuse global illumination
-        const float ddgiPower = 0.5;
+        const float ddgiPower = 1.0;
         finalColor.rgb = finalColor.rgb + Irradiance(input.WorldPosition, input.NormalWS) * ddgiPower;
     }
     else
