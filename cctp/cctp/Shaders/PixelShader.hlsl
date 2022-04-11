@@ -58,6 +58,8 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
         float orientation = dot(shadingPointNormal, direction);
         weight *= max(0.0, orientation);
 
+        weight *= min(distance, 1.0);
+
         // Sum irradiance
         sumIrradiance += weight * probeIrradiance;
     }
