@@ -47,12 +47,12 @@ float3 Irradiance(float3 shadingPoint, float3 shadingPointNormal)
 
         // Sample irradiance and visibility from this probe
         float2 irradianceTexelIndex = GetProbeTexelCoordinate(direction, i, IRRADIANCE_PROBE_SIDE_LENGTH, PROBE_PADDING);
-        float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
+        //float2 visibilityTexelIndex = GetProbeTexelCoordinate(direction, i, VISIBILITY_PROBE_SIDE_LENGTH, PROBE_PADDING);
 
         float3 probeIrradiance = irradianceData.SampleLevel(linearSampler, irradianceTexelIndex / float2(IRRADIANCE_TEXTURE_WIDTH, IRRADIANCE_TEXTURE_HEIGHT), 0).rgb;
-        float2 probeVisibility = irradianceData.SampleLevel(linearSampler, visibilityTexelIndex / float2(VISIBILITY_TEXTURE_WIDTH, VISIBILITY_TEXTURE_HEIGHT), 0).rg;
+        //float2 probeVisibility = irradianceData.SampleLevel(linearSampler, visibilityTexelIndex / float2(VISIBILITY_TEXTURE_WIDTH, VISIBILITY_TEXTURE_HEIGHT), 0).rg;
 
-        // Weight irradiance by distance and orientation to the probe (Inspired by EA Surfel method)
+        // Weight irradiance by distance and orientation to the probe
         float weight = 1.0 / max(distance, 0.001);
 
         float orientation = dot(shadingPointNormal, direction);
